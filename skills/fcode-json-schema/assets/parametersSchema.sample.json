@@ -1,0 +1,205 @@
+{
+  "title": "Full [fcode forms](https://code.factorial.dev) form sample",
+  "description": "This is a sample form specification showing all available attribute types for [fcode forms](https://code.factorial.dev)",
+  "type": "object",
+  "properties": {
+    "oneStringField": {
+      "title": "![alt text](https://code.factorial.dev/logo.svg)  *[fcode](https://code.factorial.dev)* form title",
+      "description": "Visit [fcode](https://code.factorial.dev) form description",
+      "type": "string"
+    },
+    "onePasswordField": {
+      "title": "One password field",
+      "type": "string",
+      "description": "Password shoul be: \n 1. At least 12 characters long \n 2. Include a combination of uppercase and lowercase letters \n 3. At least one special character such as @, #, $, %",
+      "isSensitive": true,
+      "ui": {
+        "ui:placeholder": "Use a secure password"
+      }
+    },
+    "oneHiddenField": {
+      "title": "One hidden field",
+      "type": "string",
+      "ui": {
+        "ui:widget": "hidden"
+      }
+    },
+    "oneIntegerField": {
+      "title": "One integer field with range",
+      "description": "Values must be between 0 and 500",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 500
+    },
+    "oneBooleanField": {
+      "title": "One boolean field with [link](https://code.factorial.dev)",
+      "type": "boolean"
+    },
+    "oneEmailField": {
+      "title": "One email field",
+      "type": "string",
+      "format": "email"
+    },
+    "oneTextAreaField": {
+      "title": "One textarea field",
+      "type": "string",
+      "description": "> Block quote description",
+      "ui": {
+        "ui:widget": "textarea"
+      }
+    },
+    "oneColorField": {
+      "title": "One color field",
+      "type": "string",
+      "ui": {
+        "ui:widget": "color"
+      }
+    },
+    "oneFileField": {
+      "title": "One file field",
+      "type": "string",
+      "ui": {
+        "ui:widget": "file"
+      }
+    },
+    "oneObjectField": {
+      "title": "One object field",
+      "description": "This sample has two nested fields.",
+      "required": [
+        "anotherString",
+        "anotherInteger"
+      ],
+      "type": "object",
+      "properties": {
+        "anotherString": {
+          "type": "string"
+        },
+        "anotherInteger": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      }
+    },
+    "oneStringArrayField": {
+      "title": "One string array field",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "oneObjectsArrayField": {
+      "title": "One object array field",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "oneProperty": {
+            "description": "One property",
+            "type": "string"
+          },
+          "anotherProperty": {
+            "description": "Another property",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "oneRadioField": {
+      "title": "One string radio field",
+      "type": "string",
+      "ui": {
+        "ui:widget": "radio"
+      },
+      "oneOf": [
+        {
+          "const": "option-1",
+          "title": "Option 1 Label"
+        },
+        {
+          "const": "option-2",
+          "title": "Option 2 Label"
+        },
+        {
+          "const": "option-3",
+          "title": "Option 3 Label"
+        }
+      ]
+    },
+    "oneCheckboxField": {
+      "title": "One string checkboxes field",
+      "type": "array",
+      "ui": {
+        "ui:widget": "checkboxes"
+      },
+      "items": {
+        "type": "string",
+        "enum": [
+          "option 1",
+          "option 2",
+          "option 3"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "oneSelectField": {
+      "title": "One string select field",
+      "type": "string",
+      "ui": {
+        "ui:placeholder": "Pick one option"
+      },
+      "enum": [
+        "option 1",
+        "option 2",
+        "option 3"
+      ]
+    },
+    "oneJsonParameter": {
+      "title": "A JSON field",
+      "description": "Block quote description",
+      "type": "object",
+      "ui": {
+        "ui:field": "json"
+      }
+    },
+    "anotherBooleanField": {
+      "title": "A input that shows other inputs",
+      "type": "boolean"
+    }
+  },
+  "dependencies": {
+    "anotherBooleanField": {
+      "oneOf": [
+        {
+          "properties": {
+            "anotherBooleanField": {
+              "enum": [
+                true
+              ]
+            },
+            "aDependencyValueProperty": {
+              "title": "This is shown when anotherBooleanField is true",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "properties": {
+            "anotherBooleanField": {
+              "enum": [
+                false
+              ]
+            },
+            "aDependencyValueProperty": {
+              "title": "This is shown when anotherBooleanField is false",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "oneStringField"
+  ]
+}
