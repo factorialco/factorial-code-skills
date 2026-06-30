@@ -118,6 +118,36 @@ const stream = await fcode.storage.download(
 );
 ```
 
+## Variables & schedules
+
+Read/write team variables and manage process schedules at runtime — scoped to
+your own team, no API token needed (like datastore/storage):
+
+```javascript
+// Team variables (config/secrets)
+await fcode.variables.set("API_KEY", "secret", { sensitive: true });
+const v = await fcode.variables.get("API_KEY"); // { key, value, ... } or undefined
+const all = await fcode.variables.list();
+await fcode.variables.delete("API_KEY");
+
+// Schedules (cron or one-off dateTime) for a process
+const schedule = await fcode.schedule.create("my-process", {
+  cron: "0 0 6 * * SUN", // or: dateTime: "2026-04-24T12:30:00.000"
+  input: { parameters: { foo: "bar" } },
+});
+const schedules = await fcode.schedule.list({
+  processId: fcode.execution.process.id,
+});
+await fcode.schedule.pause(schedule.id);
+await fcode.schedule.resume(schedule.id);
+await fcode.schedule.delete(schedule.id);
+// delete every schedule for a process (pass the process UUID)
+await fcode.schedule.deleteForProcess(fcode.execution.process.id);
+```
+
+`fcode.variables.set/delete` only persist server-side; they are not reflected in
+`fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
+
 ## Return values
 
 ```javascript
