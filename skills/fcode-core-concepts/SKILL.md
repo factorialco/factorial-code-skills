@@ -72,6 +72,18 @@ Store base URLs, timeouts, API keys, and tokens as variables (never hardcode).
 `variables.env` holds team variables (`KEY=VALUE`); `variables.local.env` holds
 local-only overrides. See the overwrite gotcha above.
 
+Read them at runtime via `fcode.env.*`. To create/update/delete them
+programmatically from a process, use the `fcode.variables` helper
+(`set`/`get`/`list`/`delete`) — scoped to your team, no API token needed. See
+`fcode-javascript` / `fcode-python`.
+
+### Schedules
+
+Run a process on a cron or one-off date/time. Manage schedules from process code
+with the `fcode.schedule` helper (`create`/`list`/`get`/`update`/`pause`/
+`resume`/`delete`/`deleteForProcess`) — same out-of-the-box auth as the other
+helpers. See `fcode-javascript` / `fcode-python`.
+
 ### Datastore vs Storage
 
 - **Datastore** — persistent key-value state across runs (last-run timestamps,
