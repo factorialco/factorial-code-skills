@@ -121,6 +121,35 @@ uploaded_path = parameters.get("inputFile")
 content = fcode.storage.download(uploaded_path.replace("fcode.storage://", ""))
 ```
 
+## Variables & schedules
+
+Read/write team variables and manage process schedules at runtime — scoped to
+your own team, no API token needed (like datastore/storage):
+
+```python
+# Team variables (config/secrets)
+fcode.variables.set("API_KEY", "secret", sensitive=True)
+v = fcode.variables.get("API_KEY")  # TeamVariable or None
+all_vars = fcode.variables.list()
+fcode.variables.delete("API_KEY")
+
+# Schedules (cron or one-off date_time) for a process
+schedule = fcode.schedule.create(
+    "my-process",
+    cron="0 0 6 * * SUN",  # or: date_time="2026-04-24T12:30:00.000"
+    parameters={"foo": "bar"},
+)
+schedules = fcode.schedule.list(process_id=fcode.execution.process.id)
+fcode.schedule.pause(schedule["id"])
+fcode.schedule.resume(schedule["id"])
+fcode.schedule.delete(schedule["id"])
+# delete every schedule for a process (pass the process UUID)
+fcode.schedule.delete_for_process(fcode.execution.process.id)
+```
+
+`fcode.variables.set/delete` only persist server-side; they are not reflected in
+`fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
+
 ## Return values
 
 ```python
