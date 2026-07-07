@@ -55,6 +55,18 @@ Use `$ref` to `#/variables/<name>` to replace whole schema nodes (e.g. an
 `enum`'s options) per embed. Variables are also sent on submit — read them in
 process code via `fcode.context.parameters.metadata.variables`.
 
+### Server-side pre-render (`preRenderProcess`)
+
+To compute `variables` on the server before the form is shown (a dropdown loaded
+from an API, config from team variables), add a `preRenderProcess` at the schema
+root set to a process slug/id. When the form is served the API runs that process
+**synchronously** and merges the `variables` it returns into the schema, so the
+`$ref`s resolve — without a throwaway first step. The process must return
+`{ variables: { ... } }`. Form query-string params arrive as
+`fcode.context.parameters`. Failure/timeout fails the form load. Since it runs
+before any user input, it can't use data derived from user-submitted secrets —
+that still needs a multi-step form.
+
 ## Internationalization
 
 Use mustache tokens for visible text and supply `i18nVariables` per locale inside
