@@ -148,6 +148,24 @@ await fcode.schedule.deleteForProcess(fcode.execution.process.id);
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
 
+## Sending email
+
+Send email with the built-in `fcode.sendMail` — no SMTP setup required. The mail
+server and credentials live in the executor manager, never in your process.
+
+```javascript
+const info = await fcode.sendMail({
+  to: "user@example.com", // string or string[]
+  subject: "Report ready",
+  text: "Plain-text body", // provide text, html, or both
+  html: "<b>HTML body</b>",
+});
+// info => { messageId, accepted, rejected }
+```
+
+- The `From` address is fixed by the platform; a `from` you pass is ignored.
+- Locally (`fcode run`) there is no manager, so the email is logged, not sent.
+
 ## Return values
 
 ```javascript
