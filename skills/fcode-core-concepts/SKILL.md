@@ -42,6 +42,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Variables** | Configuration & secrets | Env vars; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only** |
 | **Storage** | File storage | Binary files, documents, large payloads |
+| **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
 
 ### Processes
 
@@ -90,6 +91,13 @@ helpers. See `fcode-javascript` / `fcode-python`.
   cursors, dedup IDs, small caches). Strings/numbers only.
 - **Storage** — files that don't belong in datastore (reports, exports, images,
   PDFs, data extracts).
+
+### Sending email
+
+Send email with the built-in `fcode.sendMail` (`fcode.send_mail` in Python) —
+pre-authenticated, no SMTP configuration. The mail server and credentials live in
+the executor manager, never in your process. Each execution can send up to 3
+emails by default. See `fcode-javascript` / `fcode-python` for usage.
 
 ## Decision guidelines
 

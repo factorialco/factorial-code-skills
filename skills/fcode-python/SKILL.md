@@ -150,6 +150,25 @@ fcode.schedule.delete_for_process(fcode.execution.process.id)
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
 
+## Sending email
+
+Send email with the built-in `fcode.send_mail` — no SMTP setup required. The mail
+server and credentials live in the executor manager, never in your process.
+
+```python
+info = fcode.send_mail(
+    to="user@example.com",   # string or list[str]
+    subject="Report ready",
+    text="Plain-text body",  # provide text, html, or both
+    html="<b>HTML body</b>",
+)
+# info => { "messageId", "accepted", "rejected" }
+```
+
+- The `From` address is fixed by the platform; a `from` you pass is ignored.
+- Each execution can send up to 3 emails by default; once the limit is reached, further calls throw.
+- Locally (`fcode run`) there is no manager, so the email is logged, not sent.
+
 ## Return values
 
 ```python
