@@ -166,6 +166,7 @@ info = fcode.send_mail(
 ```
 
 - The `From` address is fixed by the platform; a `from` you pass is ignored.
+- Each execution can send a limited number of emails; once the limit is reached, further calls throw.
 - Locally (`fcode run`) there is no manager, so the email is logged, not sent.
 
 ## Return values

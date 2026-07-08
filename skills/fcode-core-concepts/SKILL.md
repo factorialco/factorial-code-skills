@@ -96,8 +96,8 @@ helpers. See `fcode-javascript` / `fcode-python`.
 
 Send email with the built-in `fcode.sendMail` (`fcode.send_mail` in Python) —
 pre-authenticated, no SMTP configuration. The mail server and credentials live in
-the executor manager, never in your process. See `fcode-javascript` /
-`fcode-python` for usage.
+the executor manager, never in your process. Each execution can send a limited
+number of emails. See `fcode-javascript` / `fcode-python` for usage.
 
 ## Decision guidelines
 
