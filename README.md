@@ -30,6 +30,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | [`fcode-agent`](skills/fcode-agent) | The iterative, confirmation-driven workflow for building on Factorial Code end to end. |
 | [`fcode-cli`](skills/fcode-cli) | Using the `fcode` CLI for local development and cloud sync. |
 | [`fcode-forms`](skills/fcode-forms) | Embedding a process's input-parameter form on a webpage. |
+| [`fcode-examples`](skills/fcode-examples) | Reference implementations: a marketplace payroll integration, a custom app with install/uninstall lifecycle, and utility processes. |
 
 ## Format
 
