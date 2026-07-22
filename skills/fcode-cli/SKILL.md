@@ -75,6 +75,56 @@ Uploads local changes to the cloud. Run after local changes (run `fcode add`
 first only if you created new resources); recommended to `fcode run` first.
 `--force` only with user confirmation.
 
+## Process metadata — `metadata.json`
+
+Each process folder holds `processes/<slug>/metadata.json` — the source of
+truth for the process's name, description, tags, triggers, and settings. It
+round-trips with `push`/`pull`: edit the file and `fcode push` to change these
+settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
+`fcode status`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `name` | string | Display name (defaults to the slug) |
+| `description` | string, optional | Process description |
+| `tags` | string[] | Tags (defaults to `[]`) |
+| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; optional `username`/`password` add HTTP basic auth to it |
+| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, or `USER_FACING_FORM` |
+| `visibility` | object, optional | `isPublic` (boolean) — makes the process form publicly accessible (no Factorial login) |
+
+```json
+{
+  "name": "Order sync",
+  "description": "Syncs Shopify orders into Factorial",
+  "tags": ["integration", "shopify"],
+  "webhook": {
+    "enabled": true,
+    "username": "$WEBHOOK_USER",
+    "password": "$WEBHOOK_PASSWORD"
+  },
+  "form": { "enabled": false }
+}
+```
+
+```json
+{
+  "name": "Connect your account",
+  "tags": ["setup"],
+  "form": { "enabled": true, "appRole": "INSTALL" }
+}
+```
+
+Notes:
+
+- **Webhook basic-auth credentials: use `$VARIABLE` placeholders** (resolved
+  from team variables), never literal secrets — placeholders round-trip on
+  `pull`, literals would live in the repo.
+- Omit `form.appRole` unless the process belongs to a marketplace app; the
+  cloud default `NONE` is omitted on `pull`.
+- If `metadata.json` is missing, `fcode add` scaffolds
+  `{ "name": "<slug>", "tags": [] }`; invalid JSON falls back to those
+  defaults with a warning.
+
 ## Examples
 
 **Development cycle (new process):**

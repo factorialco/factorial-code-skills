@@ -37,6 +37,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Per-item API push vs aggregate-to-file delivery | integration-acme |
 | Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme |
 | Webhook entry point + challenge validation | integration-acme, custom-app-linear |
+| Activating webhook / form triggers (and marketplace `appRole`) in `metadata.json` | integration-acme, custom-app-linear |
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
@@ -78,8 +79,3 @@ variant differs only in idiom:
 | `module.exports = { main }` | top-level `def main():` |
 | camelCase helpers | snake_case helpers |
 
-## Source of truth
-
-The runnable samples live in the `factorialco/factorial-code` repository under
-`fcode-apps/` (`integration-app-sample-{js,py}`, `custom-app-sample-{js,py}`).
-When updating these references, update them from there.

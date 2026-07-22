@@ -142,6 +142,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 index.js          #   or main.py — the process entry file
 ┃   ┣ 📜 parametersSchema.json   # input parameter schema (the form)
 ┃   ┣ 📜 parameters.json   #   default test parameters for `fcode run`
+┃   ┣ 📜 metadata.json     #   name, description, tags, webhook/form/visibility settings
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
@@ -153,6 +154,10 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 Processes and modules also support `versions/` subfolders (e.g. `versions/v1.0/`)
 for versioned interfaces. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
+
+`metadata.json` is where a process's webhook trigger, form flag (with optional
+marketplace `appRole`), and public visibility are enabled — edit it and
+`fcode push`. Full field reference in `fcode-cli`.
 
 ## General rules
 

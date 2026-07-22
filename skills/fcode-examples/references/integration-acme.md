@@ -63,8 +63,22 @@ status per item back to Factorial.
 ## Entry process — `processes/sync/index.js`
 
 Factorial calls the webhook with `{ sync_run_id, integration_uuid, company_id }`
-(declared in `parametersSchema.json` with `form.enabled: false` in
-`metadata.json`). The process body stays minimal:
+(declared in `parametersSchema.json`). The process is webhook-triggered, not a
+form, so its `metadata.json` enables the webhook and disables the form:
+
+```json
+{
+  "name": "sync",
+  "tags": ["integration", "acme"],
+  "webhook": { "enabled": true },
+  "form": { "enabled": false }
+}
+```
+
+(To require HTTP basic auth on the webhook endpoint, add
+`"username": "$WEBHOOK_USER", "password": "$WEBHOOK_PASSWORD"` inside
+`webhook` — `$VARIABLE` placeholders resolve from team variables; see
+`fcode-cli`.) The process body stays minimal:
 
 ```javascript
 const { checkWebhookChallenge } = fcode.import("factorial-utils");
