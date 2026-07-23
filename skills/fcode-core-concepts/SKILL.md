@@ -73,6 +73,11 @@ Store base URLs, timeouts, API keys, and tokens as variables (never hardcode).
 `variables.env` holds team variables (`KEY=VALUE`); `variables.local.env` holds
 local-only overrides. See the overwrite gotcha above.
 
+`variables.meta.json` marks each variable's `isSensitive` flag. Sensitive
+values never leave the cloud — locally they appear as a `********` placeholder
+in `variables.env`; put real values in `variables.local.env`. Details in
+`fcode-cli`.
+
 Read them at runtime via `fcode.env.*`. To create/update/delete them
 programmatically from a process, use the `fcode.variables` helper
 (`set`/`get`/`list`/`delete`) — scoped to your team, no API token needed. See
@@ -146,8 +151,10 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
+┣ 📜 team.json             # team settings: inheritance, timezone, error handler
 ┣ 📜 variables.env         # team variables (KEY=VALUE)
 ┣ 📜 variables.local.env   # local overrides (not shared)
+┣ 📜 variables.meta.json   # per-variable isSensitive flags
 ┗ 📂 .fcode
 ```
 

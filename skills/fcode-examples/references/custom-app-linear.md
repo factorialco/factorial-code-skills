@@ -53,14 +53,16 @@ app's `INSTALL` role; the runtime push process is webhook-only:
 }
 ```
 
-`processes/linear-setup-mapping/metadata.json` — step 2, reached via
-`nextProcessId`, so no role of its own:
+`processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
+via `nextProcessId`. It also doubles as the app's post-install settings
+screen (re-map teams later), which is what `appRole: SETTINGS` marks — an
+app has at most one `INSTALL` and one `SETTINGS` process:
 
 ```json
 {
   "name": "Map Linear teams",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true }
+  "form": { "enabled": true, "appRole": "SETTINGS" }
 }
 ```
 
