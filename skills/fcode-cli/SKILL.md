@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, when to run each command, --force safety, and worked examples. Use when running fcode CLI commands, testing a Factorial Code process locally, or deploying/syncing Factorial Code (fcode) resources to the cloud.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook/form/appRole/visibility, team.json, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, or activating a process's webhook, form, or visibility settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -74,6 +74,100 @@ user confirmation.
 Uploads local changes to the cloud. Run after local changes (run `fcode add`
 first only if you created new resources); recommended to `fcode run` first.
 `--force` only with user confirmation.
+
+## Process metadata — `metadata.json`
+
+Each process folder holds `processes/<slug>/metadata.json` — the source of
+truth for the process's name, description, tags, triggers, and settings. It
+round-trips with `push`/`pull`: edit the file and `fcode push` to change these
+settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
+`fcode status`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `name` | string | Display name (defaults to the slug) |
+| `description` | string, optional | Process description |
+| `tags` | string[] | Tags (defaults to `[]`) |
+| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; optional `username`/`password` add HTTP basic auth to it |
+| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, or `USER_FACING_FORM` |
+| `visibility` | object, optional | `isPublic` (boolean) — makes the process form publicly accessible (no Factorial login) |
+
+```json
+{
+  "name": "Order sync",
+  "description": "Syncs Shopify orders into Factorial",
+  "tags": ["integration", "shopify"],
+  "webhook": {
+    "enabled": true,
+    "username": "$WEBHOOK_USER",
+    "password": "$WEBHOOK_PASSWORD"
+  },
+  "form": { "enabled": false }
+}
+```
+
+```json
+{
+  "name": "Connect your account",
+  "tags": ["setup"],
+  "form": { "enabled": true, "appRole": "INSTALL" }
+}
+```
+
+Notes:
+
+- **Webhook basic-auth credentials: use `$VARIABLE` placeholders** (resolved
+  from team variables), never literal secrets — placeholders round-trip on
+  `pull`, literals would live in the repo.
+- Omit `form.appRole` unless the process belongs to a marketplace app; the
+  cloud default `NONE` is omitted on `pull`.
+- If `metadata.json` is missing, `fcode add` scaffolds
+  `{ "name": "<slug>", "tags": [] }`; invalid JSON falls back to those
+  defaults with a warning.
+
+## Team settings — `team.json`
+
+A singleton file at the workspace root holding team-level settings. Synced by
+`fcode team:pull` / `team:push` / `team:status`, and included in plain
+`fcode push` / `pull` (pushed last, so a referenced error-handler process
+exists first).
+
+| Field | Type | Meaning |
+|---|---|---|
+| `parentTeamSlugs` | string[] | Teams this workspace inherits resources from |
+| `zoneId` | string, optional | Team timezone (e.g. for schedules) |
+| `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors |
+
+```json
+{
+  "parentTeamSlugs": ["base-app"],
+  "zoneId": "Europe/Madrid",
+  "errorHandlerConfig": { "processSlug": "error-handler", "tag": null }
+}
+```
+
+The error handler is referenced by **slug** (not id) so `team.json` is
+portable across teams; the CLI resolves it to the cloud id on push.
+
+## Variable sensitivity — `variables.meta.json`
+
+A workspace-root file mapping each variable to its sensitivity flag:
+
+```json
+{
+  "ACME_API_KEY": { "isSensitive": true },
+  "ACME_BASE_URL": { "isSensitive": false }
+}
+```
+
+- Create a sensitive variable with `fcode variables:add --sensitive` (then set
+  its value and push); the flag lands here.
+- **Sensitive values never leave the cloud**: `pull` writes the placeholder
+  `********` into `variables.env`. Don't replace the placeholder there — put
+  the real value in `variables.local.env` for local runs.
+- **`isSensitive` is immutable** once pushed. Editing it in
+  `variables.meta.json` is rejected on push (🚫 in `fcode status`) — revert to
+  match remote.
 
 ## Examples
 

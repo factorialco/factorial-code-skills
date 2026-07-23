@@ -37,6 +37,50 @@ processes/linear-uninstall/                # teardown
 modules/linear-client/                     # vendor API client (wraps @linear/sdk)
 ```
 
+## Triggers per process — `metadata.json`
+
+Each process declares how it's invoked in its `metadata.json` (full field
+reference in `fcode-cli`). The setup entry point is a form and carries the
+app's `INSTALL` role; the runtime push process is webhook-only:
+
+`processes/linear-setup/metadata.json` — the app's install form:
+
+```json
+{
+  "name": "Connect Linear",
+  "tags": ["linear", "setup"],
+  "form": { "enabled": true, "appRole": "INSTALL" }
+}
+```
+
+`processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
+via `nextProcessId`. It also doubles as the app's post-install settings
+screen (re-map teams later), which is what `appRole: SETTINGS` marks — an
+app has at most one `INSTALL` and one `SETTINGS` process:
+
+```json
+{
+  "name": "Map Linear teams",
+  "tags": ["linear", "setup"],
+  "form": { "enabled": true, "appRole": "SETTINGS" }
+}
+```
+
+`processes/linear-users-push/metadata.json` — webhook target, never a form:
+
+```json
+{
+  "name": "Linear users push",
+  "tags": ["linear"],
+  "webhook": { "enabled": true },
+  "form": { "enabled": false }
+}
+```
+
+`linear-projects-poll` needs neither webhook nor form — it's invoked by the
+schedule created at install time. Edit these files and `fcode push`; no
+dashboard clicking needed.
+
 ## The vendor client module
 
 One module encapsulates every vendor call; processes never touch the vendor

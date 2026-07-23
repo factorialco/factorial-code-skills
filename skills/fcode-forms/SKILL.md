@@ -19,8 +19,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   form definition. To change fields/validation/labels, edit the schema, **not**
   the embed code.
 - **`team` and `process`/`processId` are both mandatory** on every embed.
-- **The `Forms` flag must be enabled** on the process Dashboard or the embed
-  won't render.
+- **The `Forms` flag must be enabled** — on the process Dashboard, or via
+  `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
+  — or the embed won't render.
 - **Never put secrets in embed code, `options`, or behaviour functions** — they
   run in the browser.
 - Prefer driving UX from the **process return value** (below); reserve
@@ -29,7 +30,21 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 ## Enable a form
 
 1. Create the process and define its input parameters (these become the fields).
-2. Enable the `Forms` flag on the process Dashboard.
+2. Enable the `Forms` flag — either on the process Dashboard, or from the CLI
+   workspace in `processes/<slug>/metadata.json`, then `fcode push`:
+
+```json
+{
+  "name": "Contact request",
+  "tags": [],
+  "form": { "enabled": true }
+}
+```
+
+For marketplace app processes, `form` also takes an optional
+`"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM`) marking the
+process's role in the app; add `"visibility": { "isPublic": true }` to make
+the form publicly accessible. Field reference in `fcode-cli`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
