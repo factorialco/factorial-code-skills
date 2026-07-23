@@ -253,6 +253,12 @@ class AcmeApiSync extends OutboundSync {
 Vendor variables follow the `VENDOR__KEY` convention (matches
 `variableName()`).
 
+`FACTORIAL_TOKEN` is auto-populated in the remote environment — don't create
+it there. For local runs, obtain it via the OAuth flow in the Factorial Code
+app details page (copy dropdown in the OAuth Dev app) and put it in
+`variables.local.env`. Other sensitive variables must be created manually in
+the remote demo environment — local values aren't pushed (see `fcode-cli`).
+
 ## Adapting to a real vendor — checklist
 
 1. Pick the flavor; set the one-line import in `processes/sync/index.js`.

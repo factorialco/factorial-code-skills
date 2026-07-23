@@ -78,6 +78,12 @@ values never leave the cloud — locally they appear as a `********` placeholder
 in `variables.env`; put real values in `variables.local.env`. Details in
 `fcode-cli`.
 
+When a secret's real value is needed for local runs, ask the user for it — or
+have them put it in `variables.local.env` themselves if they prefer not to
+share it. `FACTORIAL_TOKEN` comes from the OAuth flow in the Factorial Code app
+details page and is only needed locally (auto-populated remotely); procedure in
+`fcode-cli`.
+
 Read them at runtime via `fcode.env.*`. To create/update/delete them
 programmatically from a process, use the `fcode.variables` helper
 (`set`/`get`/`list`/`delete`) — scoped to your team, no API token needed. See
