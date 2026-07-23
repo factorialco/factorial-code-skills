@@ -31,8 +31,9 @@ Guidelines for writing Python that runs on Factorial Code. Runtime is
 - **Datastore stores only strings/numbers** — `json.dumps` objects before
   `set`, `json.loads` after `get`.
 - **Use snake_case**, not camelCase; follow PEP 8; add type hints where helpful.
-- Wrap the main flow in `try/except` and raise actionable errors. Don't rely on
-  global variables for state — pass it through parameters or return values.
+- Wrap the main flow in `try/except`, log the caught error with context via
+  `fcode-logs` (see Logging), and raise actionable errors. Don't rely on global
+  variables for state — pass it through parameters or return values.
 - Never hardcode or log secrets — read them from `os.getenv`.
 
 ## Process template
@@ -70,8 +71,28 @@ fcode.processes.run("process-identifier", options)
 
 ## Logging
 
-`print(...)` emits an INFO log; `logger.debug/info/warn/error` map to their
-levels. Never log secrets.
+Log through the shared `fcode-logs` module — level-gated logging inherited by
+every workspace. It reads the `LOG_LEVEL` team variable
+(`debug | info | warn | error`, default `info`) and forwards to `print` (stdout
+for debug/info, stderr for warn/error), so call sites read like a plain `print`:
+
+```python
+log = fcode.import_module("fcode-logs")
+
+log.info("sync started", process_slug)  # stdout when LOG_LEVEL ≤ info
+log.debug(request_payload)               # stdout only when LOG_LEVEL=debug
+log.warn("token missing — skipping")      # stderr when LOG_LEVEL ≤ warn
+log.error("sync failed", str(err))         # stderr — always emitted
+```
+
+**Be verbose.** Log the start/end of the main flow, every external call, and each
+major decision at `info`; dump payloads and intermediate state at `debug` (free
+in production — gated off unless `LOG_LEVEL=debug`). **Always log inside `except`:**
+record the error with context — what operation, which inputs — at `error` before
+re-raising, or at `warn` for a recovered/skipped path. `error` is always emitted.
+
+Set `LOG_LEVEL=debug` in a local or dev workspace to trace a full run; production
+stays at `info`. Never log secrets.
 
 ## Dependencies
 

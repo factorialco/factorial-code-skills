@@ -175,7 +175,12 @@ marketplace `appRole`), and public visibility are enabled — edit it and
 ## General rules
 
 - Validate inputs early — check required parameters and types at the start.
-- Handle errors explicitly; throw meaningful, actionable errors.
+- Handle errors explicitly; throw meaningful, actionable errors, and log every
+  caught error with context (what operation, which inputs) before re-throwing.
 - Use timeouts/retries for external calls; mind rate limits.
-- Log key steps (start/end, major decisions, external calls) — never secrets.
+- Log generously through the shared `fcode-logs` module — level-gated logging via
+  the `LOG_LEVEL` team variable (default `info`). Log start/end, major decisions,
+  and external calls at `info`, and detail (payloads, intermediate state) at
+  `debug` (gated off in production). Never log secrets. Usage in
+  `fcode-javascript` / `fcode-python`.
 - Keep outputs structured (JSON that's easy to consume and debug).
