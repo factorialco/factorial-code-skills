@@ -24,6 +24,8 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   — or the embed won't render.
 - **Never put secrets in embed code, `options`, or behaviour functions** — they
   run in the browser.
+- **Form submissions run under a request timeout** (about a minute) — keep the
+  synchronous process fast, or run long work asynchronously (see below).
 - Prefer driving UX from the **process return value** (below); reserve
   `onSuccess`/`onError` for client-only logic.
 
@@ -118,6 +120,29 @@ return { status: 400, body: { formErrors: {                                 // i
 return { redirect: { url: "https://example.com", timeout: 2000 } };         // redirect after submit
 return { jsCallback: `analytics.track("User Registered");` };               // run JS in the page
 ```
+
+## Keep it fast, or go async
+
+The submission waits for the process to finish, under a request timeout (about a
+minute). Heavy work done inline — slow API calls, large exports, multi-record
+syncs — will blow the timeout and fail the submit.
+
+**Go async when the work can be slow:**
+
+- **Embed `async: true`** — the submission returns `201` + an execution ID
+  immediately instead of waiting for the result (see `references/advanced.md`).
+- **Hand off to another process** — kick off the heavy work with
+  `fcode.processes.run("process-identifier", options)` (see `fcode-javascript` /
+  `fcode-python`) and return a quick acknowledgement (`message`/`redirect`)
+  rather than awaiting it inline.
+
+**Stay synchronous only when** the request is genuinely fast, or when data must
+flow between steps. For passing data, don't block the submit — instead:
+
+- **`preRenderProcess`** computes server-side `variables` before the form
+  renders (see `references/advanced.md`).
+- **Multi-step forms** carry state forward via `nextProcessId` + `variables`
+  (below).
 
 ## Multi-step forms
 
