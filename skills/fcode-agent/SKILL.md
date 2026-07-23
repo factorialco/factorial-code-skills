@@ -51,6 +51,14 @@ Work in small steps, confirming at each one.
   to create the sensitive ones; if useful, write a **discovery script** and run
   it with `run_code` to validate connectivity and learn the API/data shapes.
   Share results.
+  - When a secret value is needed for discovery/testing, ask the user for it —
+    or, if they prefer not to share it, ask them to put it in
+    `variables.local.env` themselves (see `fcode-cli`). For `FACTORIAL_TOKEN`,
+    point them to the OAuth flow in the Factorial Code app details page and the
+    copy dropdown option in the OAuth Dev app.
+  - Remind the user that local secret values aren't pushed — they must create
+    those variables manually in the remote demo environment (except
+    `FACTORIAL_TOKEN`, which is auto-populated remotely).
 - **Iteration 2+:** for each step — explain it, get confirmation, implement
   following the language code rules (validation, error handling, logging),
   validate pieces with `run_code`, then create/update the process (code,
@@ -107,7 +115,9 @@ user rather than trial-and-error.
 
 Ask instead of guessing on: ambiguous requirements, missing info (credentials,
 endpoints, package names), repeated failures, architecture/trade-off decisions,
-security concerns, or uncertain root cause.
+security concerns, or uncertain root cause. For missing credentials, offer both
+options: the user shares the value, or places it in `variables.local.env`
+themselves (see `fcode-cli`).
 
 ## Example
 

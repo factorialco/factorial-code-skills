@@ -169,6 +169,24 @@ A workspace-root file mapping each variable to its sensitivity flag:
   `variables.meta.json` is rejected on push (🚫 in `fcode status`) — revert to
   match remote.
 
+### Getting secret values for local runs
+
+When a local run (`fcode run`, a discovery script) needs a real secret value
+that isn't in `variables.local.env` yet, ask the user to provide it. If they
+prefer not to share the value with the agent, ask them to add the
+`KEY=value` line to `variables.local.env` themselves — local runs pick it up
+without the value ever appearing in the conversation.
+
+- **`variables.local.env` values are never pushed.** Remind the user to also
+  create those secret variables manually in the remote demo environment —
+  `fcode push` won't carry the values.
+- **`FACTORIAL_TOKEN`**: needed **locally only** — the remote environment
+  populates it automatically, so don't create it there. To obtain it, the user
+  completes the OAuth flow in the Factorial Code app details page, then copies
+  the generated token with the copy dropdown option in the OAuth Dev app, and
+  puts it in `variables.local.env` (or shares it, per their preference).
+- Once obtained, never echo secret values back in output or logs.
+
 ## Examples
 
 **Development cycle (new process):**
