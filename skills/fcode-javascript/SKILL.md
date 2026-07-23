@@ -31,8 +31,9 @@ Guidelines for writing JavaScript that runs on Factorial Code. Runtime is
   `fcode.import("shopify-client")` ✅, `fcode.import(name)` ❌.
 - **Datastore stores only strings/numbers** — `JSON.stringify` objects before
   `set`, parse after `get`.
-- Use `async/await` for all async work; wrap the main flow in `try/catch` and
-  throw actionable errors. Use `const`/`let`, never `var`.
+- Use `async/await` for all async work; wrap the main flow in `try/catch`, log
+  the caught error with context via `fcode-logs` (see Logging), and throw
+  actionable errors. Use `const`/`let`, never `var`.
 - Never hardcode or log secrets — read them from `process.env`.
 
 ## Process template
@@ -71,8 +72,28 @@ await fcode.processes.run("process-identifier", options);
 
 ## Logging
 
-`console.log/debug/info/warn/error` — each maps to the matching log level.
-Never log secrets.
+Log through the shared `fcode-logs` module — level-gated logging inherited by
+every workspace. It reads the `LOG_LEVEL` team variable
+(`debug | info | warn | error`, default `info`) and forwards to the matching
+`console.*`, so call sites read like bare `console` calls:
+
+```javascript
+const log = fcode.import("fcode-logs");
+
+log.info("sync started", { processSlug }); // console.log  when LOG_LEVEL ≤ info
+log.debug({ requestPayload });              // console.debug only when LOG_LEVEL=debug
+log.warn("token missing — skipping");       // console.warn  when LOG_LEVEL ≤ warn
+log.error("sync failed", err.message);       // console.error — always emitted
+```
+
+**Be verbose.** Log the start/end of the main flow, every external call, and each
+major decision at `info`; dump payloads and intermediate state at `debug` (free
+in production — gated off unless `LOG_LEVEL=debug`). **Always log inside `catch`:**
+record the error with context — what operation, which inputs — at `error` before
+re-throwing, or at `warn` for a recovered/skipped path. `error` is always emitted.
+
+Set `LOG_LEVEL=debug` in a local or dev workspace to trace a full run; production
+stays at `info`. Never log secrets.
 
 ## Dependencies
 
