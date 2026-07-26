@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook/form/appRole/visibility, team.json, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, or activating a process's webhook, form, or visibility settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook/form/appRole, team.json, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, or activating a process's webhook or form settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -90,7 +90,6 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; optional `username`/`password` add HTTP basic auth to it |
 | `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, or `USER_FACING_FORM` |
-| `visibility` | object, optional | `isPublic` (boolean) — makes the process form publicly accessible (no Factorial login) |
 
 ```json
 {

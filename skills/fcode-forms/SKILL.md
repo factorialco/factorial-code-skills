@@ -45,8 +45,7 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 
 For marketplace app processes, `form` also takes an optional
 `"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM`) marking the
-process's role in the app; add `"visibility": { "isPublic": true }` to make
-the form publicly accessible. Field reference in `fcode-cli`.
+process's role in the app. Field reference in `fcode-cli`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
