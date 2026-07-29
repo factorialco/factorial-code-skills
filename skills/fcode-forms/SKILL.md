@@ -44,8 +44,8 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 ```
 
 For marketplace app processes, `form` also takes an optional
-`"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM`) marking the
-process's role in the app. Field reference in `fcode-cli`.
+`"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM` | `UNINSTALL`) marking
+the process's role in the app. Field reference in `fcode-cli`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`

@@ -168,9 +168,9 @@ Processes and modules also support `versions/` subfolders (e.g. `versions/v1.0/`
 for versioned interfaces. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
-`metadata.json` is where a process's webhook trigger and form flag (with optional
-marketplace `appRole`) are enabled — edit it and
-`fcode push`. Full field reference in `fcode-cli`.
+`metadata.json` is where a process's webhook trigger and form flag (with
+optional marketplace `appRole`) are enabled — edit it and `fcode push`. Full
+field reference in `fcode-cli`.
 
 ## General rules
 

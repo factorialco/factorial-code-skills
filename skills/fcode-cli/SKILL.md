@@ -89,7 +89,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; optional `username`/`password` add HTTP basic auth to it |
-| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, or `USER_FACING_FORM` |
+| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
 
 ```json
 {
