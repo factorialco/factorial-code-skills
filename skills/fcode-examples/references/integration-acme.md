@@ -75,10 +75,10 @@ form, so its `metadata.json` enables the webhook and disables the form:
 }
 ```
 
-(To require HTTP basic auth on the webhook endpoint, add
-`"username": "$WEBHOOK_USER", "password": "$WEBHOOK_PASSWORD"` inside
-`webhook` — `$VARIABLE` placeholders resolve from team variables; see
-`fcode-cli`.) The process body stays minimal:
+(To protect the webhook endpoint, add `"authVariable": "ACME_WEBHOOK_TOKEN"`
+inside `webhook` — it names the team variable whose value callers must send as
+`Authorization: Bearer <token>`. Only the name is stored, so the file stays
+committable; see `fcode-cli`.) The process body stays minimal:
 
 ```javascript
 const { checkWebhookChallenge } = fcode.import("factorial-utils");

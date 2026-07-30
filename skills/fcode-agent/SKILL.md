@@ -69,7 +69,8 @@ Work in small steps, confirming at each one.
 
 Propose a full execution test using the `fcode` CLI (see `fcode-cli`), get
 confirmation, run it with test parameters, review results together, and iterate.
-Then offer next steps: scheduling, webhooks (maybe with auth), a form, or
+Then offer next steps: scheduling, webhooks (public, or protected by a team
+variable), a form (public, or restricted to Factorial users), or
 exposing the process as an MCP tool — and pushing to cloud when ready.
 
 ## Creating MCP tools

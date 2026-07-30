@@ -54,3 +54,8 @@ so its `ui:` options apply.
   from a secret variable, never hardcode it.
 - The schema is the single source of the form's fields — to change fields, edit
   the schema, not the form embed code.
+- **The schema is data, not code.** It cannot carry executable JavaScript:
+  `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
+  were removed, and `rawHtml` content is sanitized (no `<script>`, no inline
+  `on*` handlers, no `javascript:` URLs). Client-side behaviour belongs in the
+  embedding page — see `fcode-forms`.

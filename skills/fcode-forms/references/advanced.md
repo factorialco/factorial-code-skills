@@ -24,14 +24,20 @@ schema:
 
 ```json
 {
-  "theme": "dark (default) | light",
+  "theme": "light (default)",
   "loadingOverlayDisabled": false,
-  "loadingOverlayContent": "Sending information..."
+  "loadingOverlayContent": "Sending information...",
+  "loadingContent": "Loading form..."
 }
 ```
 
-- **Themes** — built-in `dark` and `light`. Custom theme: extend a theme CSS file
-  and set `embedFormOptions.themeStylesheet` (a URL or inline CSS).
+- **Themes** — one built-in theme, `light`
+  (`https://code.factorial.dev/sdk/styles-theme-light.css`). Custom theme:
+  extend that CSS file and set `embedFormOptions.themeStylesheet` (a URL or
+  inline CSS).
+- **`loadingContent`** — the message shown while the form itself is loading (as
+  opposed to `loadingOverlayContent`, shown while a submission runs). Worth
+  setting when a `preRenderProcess` makes opening the form slow.
 - **CSS hooks** — `.fcode-form-container`, `.fcode-form-wrapper`,
   `form.fcode-form`; set `embedFormOptions.className` for a custom wrapper class.
 - **Submit button text** — in the schema:
@@ -67,6 +73,9 @@ root set to a process slug/id. When the form is served the API runs that process
 before any user input, it can't use data derived from user-submitted secrets —
 that still needs a multi-step form.
 
+Because the form is only served once the pre-render finishes, opening it takes as
+long as the process runs — set `loadingContent` (above) to say what's loading.
+
 ## Internationalization
 
 Use mustache tokens for visible text and supply `i18nVariables` per locale inside
@@ -85,23 +94,42 @@ embed `options`:
 The selected locale is sent on submit — available in process code as
 `fcode.context.parameters.metadata.locale`.
 
-## Behaviour functions
+## Reacting to user input
 
-Inside `embedFormOptions`, provide JavaScript (as a string) to react to input:
+**A schema cannot carry executable code.** It is served to every visitor of the
+form, so `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
+were removed in `@factorialco/fcode-react-forms` 2.0.0, and a `jsCallback`
+returned by a process execution is ignored. Reformatting a value or deriving one
+field from another belongs in the embedding page:
 
-- **`onChange`** — receives `formData` and `setFormData`; mutate and call
-  `setFormData(formData)`.
+- **React embed** — the `onChange` prop on `FcodeForm`.
+- **Hosted script** — the events the SDK dispatches on `document`:
+  `fcode-forms-sdk-init`, `fcode-forms-init-form`,
+  `fcode-forms-on-submit-success`, `fcode-forms-on-next-step` and
+  `fcode-forms-on-submit-error`.
 
-  ```json
-  "embedFormOptions": { "onChange": "formData['phonePrefix'] = {'ES':'+34','US':'+1'}[formData['countryCode']]; setFormData(formData);" }
-  ```
+```html
+<script>
+  document.addEventListener("fcode-forms-on-submit-success", (event) => {
+    const { formId, formSubmittedData, processExecutionResult } = event.detail;
+    analytics.track("User Registered", formSubmittedData);
+  });
+</script>
+```
 
-- **Field transformer** — `embedFormOptions.fields.<field>.transformFn` receives
-  `value`, returns the new value.
+For submission results specifically, the `onSuccess` / `onNextStep` / `onError`
+callbacks (see `SKILL.md`) carry the same information.
 
-  ```json
-  "embedFormOptions": { "fields": { "phone": { "transformFn": "return value && value.trim();" } } }
-  ```
+## Authored HTML is sanitized
+
+`rawHtml.before`/`rawHtml.after` in a schema, the result `message`, and error
+messages all pass through DOMPurify before rendering. Markup renders, but
+`<script>` tags, inline `on*` handlers and `javascript:` URLs do not execute.
+`iframe`, `object`, `embed`, `base` and `form` elements are forbidden, as are the
+`srcdoc` and `formaction` attributes, and `target="_blank"` links are forced to
+`rel="noreferrer"`. Dropped content is reported as a console warning.
+
+CSS injection via `stylesheet` / `themeStylesheet` is unaffected.
 
 ## Modal window
 
@@ -111,8 +139,8 @@ the `data-fcode-form-modal` attribute to that element.
 ```html
 <button
   data-fcode-form-modal
-  data-fcode-form-team="<fcode-team-id>"
-  data-fcode-form-process="<fcode-process-id>"
+  data-fcode-form-team="<fcode-team-slug>"
+  data-fcode-form-process="<fcode-process-slug>"
 >
   Open the form
 </button>
