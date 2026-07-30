@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component), driving behavior from the process return value (message/formErrors/redirect/jsCallback/nextProcessId), styling/themes, i18n, multi-step flows, and automatic file uploads to Storage. Use when embedding, configuring, styling, or wiring up submission callbacks for a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug, restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling/themes, i18n, multi-step flows, and automatic file uploads to Storage. Use when embedding, configuring, styling, restricting access to, or wiring up submission callbacks for a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -18,12 +18,18 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **The form *is* the process's `parametersSchema.json`** — there is no separate
   form definition. To change fields/validation/labels, edit the schema, **not**
   the embed code.
-- **`team` and `process`/`processId` are both mandatory** on every embed.
+- **`team` and `process`/`processId` are both mandatory** on every embed, and
+  both take **slugs** — not the per-workspace UUIDs.
 - **The `Forms` flag must be enabled** — on the process Dashboard, or via
   `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
-- **Never put secrets in embed code, `options`, or behaviour functions** — they
-  run in the browser.
+- **A new form requires a Factorial user by default** (`authMode: FACTORIAL`).
+  An embed on a public page needs `authMode: NONE`, or every request gets a
+  `401` (below).
+- **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
+  and field `transformFn` were removed, a returned `jsCallback` is ignored, and
+  authored HTML is sanitized. Client-side behaviour lives in the embedding page.
+- **Never put secrets in embed code or `options`** — they run in the browser.
 - **Form submissions run under a request timeout** (about a minute) — keep the
   synchronous process fast, or run long work asynchronously (see below).
 - Prefer driving UX from the **process return value** (below); reserve
@@ -50,12 +56,53 @@ the process's role in the app. Field reference in `fcode-cli`.
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
 
+## Restrict who can open the form
+
+The `Authentication` field next to the `Forms` flag (`form.authMode` in
+`metadata.json`) decides who may read the form schema **and** submit it:
+
+| `authMode` | Who gets in |
+|---|---|
+| `FACTORIAL` | Only Factorial users of the company that installed the app. Every request must carry a Factorial-issued user token in the `Fcode-Factorial-Token` header, and that token's company must own the workspace. Anything else gets a `401` |
+| `NONE` | Anyone who knows the form URL can open and submit it |
+
+- **New forms are created requiring a Factorial user.** Forms enabled before this
+  field existed keep behaving as public forms until you change them.
+- Forms embedded **inside Factorial** (the marketplace `INSTALL` / `SETTINGS` /
+  `USER_FACING_FORM` / `UNINSTALL` screens) send the token for you — this is what
+  `FACTORIAL` is for.
+- A protected form is still openable from the **playground link** on the process
+  Dashboard: the playground sends the developer's own Factorial Code token as
+  `Fcode-Platform-Token` and access is granted through workspace membership.
+
+```json
+{
+  "name": "Connect your account",
+  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
+}
+```
+
+Public forms carry no `authMode` entry. To lift protection, set
+`"authMode": "NONE"` **explicitly** — omitting the field leaves the form
+protected. Field reference in `fcode-cli`.
+
 ## Embed a form
 
-Two mandatory inputs, taken from the platform URLs:
+Two mandatory inputs, both **slugs**:
 
-- **`fcode-team-id`** — from `https://code.factorial.dev/platform/<fcode-team-id>`
-- **`fcode-process-id`** — from `.../<fcode-team-id>/processes/<fcode-process-id>`
+- **`fcode-team-slug`** — from `https://code.factorial.dev/platform/<fcode-team-slug>`
+- **`fcode-process-slug`** — the **Slug** field on the process Dashboard (e.g.
+  `send-welcome-email`)
+
+**Use the slug, not the process ID.** A process ID is a UUID that differs per
+workspace, so an id-based embed breaks when the snippet moves between workspaces
+(staging → production, or a customer's deploy workspace); with slugs, only the
+team slug changes. Existing id-based embeds keep working — the API resolves
+either — and the React prop is still named `processId`, but feed it a slug.
+
+The Slug field is editable and there is no redirect for the old value, so
+**renaming a process's slug breaks every embed already pasted into a page** (the
+same exposure webhooks have). Settle the slug before handing out embed code.
 
 Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 
@@ -66,7 +113,7 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 **Method 1 — data attributes** (SDK replaces the element):
 
 ```html
-<div data-fcode-form-team="<fcode-team-id>" data-fcode-form-process="<fcode-process-id>"></div>
+<div data-fcode-form-team="<fcode-team-slug>" data-fcode-form-process="<fcode-process-slug>"></div>
 ```
 
 **Method 2 — `Fcode.initForm`** (selector or DOM element):
@@ -74,7 +121,7 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 ```html
 <div id="my-fcode-form"></div>
 <script>
-  Fcode.initForm("#my-fcode-form", { team: "<fcode-team-id>", process: "<fcode-process-id>" });
+  Fcode.initForm("#my-fcode-form", { team: "<fcode-team-slug>", process: "<fcode-process-slug>" });
 </script>
 ```
 
@@ -85,7 +132,7 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 import FcodeForm from "@factorialco/fcode-react-forms";
 
 const MyComponent = () => (
-  <FcodeForm team={"<fcode-team-id>"} processId={"<fcode-process-id>"} />
+  <FcodeForm team={"<fcode-team-slug>"} processId={"<fcode-process-slug>"} />
 );
 ```
 
@@ -100,15 +147,16 @@ replaced with a success message, on error an error message.
 
 ```js
 Fcode.initForm("#my-fcode-form", {
-  team: "<fcode-team-id>",
-  process: "<fcode-process-id>",
+  team: "<fcode-team-slug>",
+  process: "<fcode-process-slug>",
   onSuccess: (formId, processExecutionResult, formSubmittedData) => {},
   onError: (formId, error, formSubmittedData) => {},
 });
 ```
 
 With data attributes, point to global functions via
-`data-fcode-form-on-success="HANDLER_NAME"` / `data-fcode-form-on-error="..."`.
+`data-fcode-form-on-success="HANDLER_NAME"`,
+`data-fcode-form-on-next-step="..."` and `data-fcode-form-on-error="..."`.
 
 **Drive behavior from the process return value** (no client code needed):
 
@@ -117,8 +165,12 @@ return { message: "Thanks, <b>we received your request</b>." };            // su
 return { status: 400, body: { formErrors: {                                 // inline validation errors
   fields: { email: "Invalid email." }, global: ["A global error."] } } };
 return { redirect: { url: "https://example.com", timeout: 2000 } };         // redirect after submit
-return { jsCallback: `analytics.track("User Registered");` };               // run JS in the page
 ```
+
+**Authored HTML is sanitized.** Markup in `message` (and in a schema's `rawHtml`
+blocks) renders, but `<script>` tags, inline `on*` handlers and `javascript:`
+URLs are stripped and never execute. A returned `jsCallback` is **ignored** — put
+behaviour in the success / next-step / error callbacks instead.
 
 ## Keep it fast, or go async
 
@@ -145,11 +197,14 @@ flow between steps. For passing data, don't block the submit — instead:
 
 ## Multi-step forms
 
-Each step is its own process. Return the next process ID to advance:
+Each step is its own process. Return the next process's **slug** to advance:
 
 ```js
-return { nextProcessId: "719d7c83-..." };
+return { nextProcessId: "collect-shipping-address" };
 ```
+
+The field name is still `nextProcessId` and it accepts a slug or an id — use the
+slug, so the same chain works in every workspace.
 
 The SDK then renders the form for `nextProcessId`. Each later step receives all
 previous steps' data and results in `fcode.context.parameters` under a `steps`
@@ -192,6 +247,6 @@ process if only needed transiently.
 ## Advanced
 
 For styling/themes, initial/hidden values, async submission, custom headers,
-API-host override, variables replacement, internationalization, client-side
-behaviour functions (`onChange`, field transformers), and modal rendering, read
-`references/advanced.md`.
+API-host override, variables replacement, internationalization, reacting to user
+input from your own page (the React `onChange` prop, the `fcode-forms-*` DOM
+events), and modal rendering, read `references/advanced.md`.

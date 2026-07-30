@@ -49,9 +49,14 @@ app's `INSTALL` role; the runtime push process is webhook-only:
 {
   "name": "Connect Linear",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "INSTALL" }
+  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
 }
 ```
+
+Both setup forms are opened from inside Factorial, so they carry
+`authMode: FACTORIAL` — only Factorial users of the company that installed the
+app can read the schema or submit it. A public app form would let anyone who
+knows the workspace and process slugs run app code against customer data.
 
 `processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
 via `nextProcessId`. It also doubles as the app's post-install settings
@@ -62,7 +67,7 @@ app has at most one `INSTALL` and one `SETTINGS` process:
 {
   "name": "Map Linear teams",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "SETTINGS" }
+  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "SETTINGS" }
 }
 ```
 
@@ -129,10 +134,8 @@ async function main() {
   // 2. Persist for the pre-render and runtime processes (sensitive by default).
   await fcode.variables.set("LINEAR_API_KEY", linear_api_key);
 
-  // 3. Chain to step 2. The id is per-workspace config with a slug fallback.
-  const nextProcessId =
-    process.env.LINEAR_SETUP_MAPPING_PROCESS_ID || "linear-setup-mapping";
-  return { nextProcessId };
+  // 3. Chain to step 2 by slug — slugs are identical in every workspace.
+  return { nextProcessId: "linear-setup-mapping" };
 }
 ```
 

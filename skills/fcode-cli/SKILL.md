@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook/form/appRole, team.json, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, or activating a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, the local webhook/forms server (fcode http), when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook authVariable and form authMode/appRole, team.json, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, or activating and protecting a process's webhook or form settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -62,6 +62,19 @@ fcode run my-process                                  # default parameters.json
 
 Prerequisite: run `fcode add` first if the resource was just created.
 
+### `fcode http`
+
+Starts a local HTTP server (`--port`, default `3000`) that replicates the cloud
+webhook environment and also serves the workspace's form schemas, so
+webhook-triggered processes and forms can be exercised without deploying.
+
+`--auth-user` / `--auth-password` protect the **whole** local server with basic
+auth. Per-process webhook auth is separate: when a process declares
+`webhook.authVariable`, the server looks that variable up in the workspace
+variables (`variables.env`, overridden by `variables.local.env`) and requires its
+value as `Authorization: Bearer <token>`, exactly like the cloud. A missing or
+non-bearer header, a mismatch, or an undefined variable gets a `403`.
+
 ### `fcode pull`
 
 Downloads the latest processes, modules, variables, and dependencies from the
@@ -88,8 +101,8 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `name` | string | Display name (defaults to the slug) |
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
-| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; optional `username`/`password` add HTTP basic auth to it |
-| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); optional `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
+| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authVariable` (string, optional) names the team variable whose value callers must send as `Authorization: Bearer <token>` — omit it for a public webhook |
+| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL` \| `NONE`) restricts who may open the form; `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
 
 ```json
 {
@@ -98,8 +111,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
   "tags": ["integration", "shopify"],
   "webhook": {
     "enabled": true,
-    "username": "$WEBHOOK_USER",
-    "password": "$WEBHOOK_PASSWORD"
+    "authVariable": "SHOPIFY_WEBHOOK_TOKEN"
   },
   "form": { "enabled": false }
 }
@@ -109,17 +121,21 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 {
   "name": "Connect your account",
   "tags": ["setup"],
-  "form": { "enabled": true, "appRole": "INSTALL" }
+  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
 }
 ```
 
 Notes:
 
-- **Webhook basic-auth credentials: use `$VARIABLE` placeholders** (resolved
-  from team variables), never literal secrets — placeholders round-trip on
-  `pull`, literals would live in the repo.
-- Omit `form.appRole` unless the process belongs to a marketplace app; the
-  cloud default `NONE` is omitted on `pull`.
+- **`webhook.authVariable` stores only the variable *name*, never a token** — so
+  the file is safe to commit. The variable doesn't have to exist yet; until it
+  does, every call to the webhook is rejected with `403`. Both plain and secret
+  variables work.
+- **`form.authMode` and `form.appRole` are omitted when they are `NONE`**, so a
+  plain public form carries only `"form": { "enabled": true }`. To lift
+  protection from a protected form, write `"authMode": "NONE"` **explicitly** —
+  omitting the field leaves the stored mode untouched.
+- Omit `form.appRole` unless the process belongs to a marketplace app.
 - If `metadata.json` is missing, `fcode add` scaffolds
   `{ "name": "<slug>", "tags": [] }`; invalid JSON falls back to those
   defaults with a warning.
