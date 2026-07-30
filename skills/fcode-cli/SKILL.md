@@ -161,6 +161,9 @@ A workspace-root file mapping each variable to its sensitivity flag:
 
 - Create a sensitive variable with `fcode variables:add --sensitive` (then set
   its value and push); the flag lands here.
+- Variables created at runtime with `fcode.variables.set` are **sensitive by
+  default** — pass `sensitive: false` (JS) / `sensitive=False` (Python) for
+  plain config. See `fcode-javascript` / `fcode-python`.
 - **Sensitive values never leave the cloud**: `pull` writes the placeholder
   `********` into `variables.env`. Don't replace the placeholder there — put
   the real value in `variables.local.env` for local runs.

@@ -149,7 +149,11 @@ your own team, no API token needed (like datastore/storage):
 
 ```python
 # Team variables (config/secrets)
-fcode.variables.set("API_KEY", "secret", sensitive=True)
+# Default is SENSITIVE: fcode.variables.set(key, value) creates a sensitive
+# (masked, immutable-sensitivity) variable. Pass sensitive=False for plain
+# config values.
+fcode.variables.set("API_KEY", "secret")  # sensitive by default
+fcode.variables.set("BASE_URL", "https://api.acme.com", sensitive=False)  # required for non-secret config
 v = fcode.variables.get("API_KEY")  # TeamVariable or None
 all_vars = fcode.variables.list()
 fcode.variables.delete("API_KEY")

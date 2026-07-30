@@ -157,7 +157,24 @@ array. Return a `variables` node alongside `nextProcessId` to pass state forward
 
 ## Automatic file uploads
 
-A file field is `"type": "string"` with `"ui": { "ui:widget": "file" }`. On
+A file field is `"type": "string"` with a `"ui": { "ui:widget": "file" }` key
+**inside the property**:
+
+```json
+{
+  "properties": {
+    "inputFile": { "type": "string", "ui": { "ui:widget": "file" } }
+  }
+}
+```
+
+(A root-level `ui` map keyed by field name — rjsf's `uiSchema` convention — is
+also merged, but per-property `ui` is the documented form; the root `ui` is
+mainly for form-level options like `ui:submitButtonOptions`. For secret inputs
+prefer `"isSensitive": true` on the property — it renders a password widget
+automatically; see `fcode-json-schema`.)
+
+On
 submit the file is **uploaded to Storage before the process starts**, and the
 parameter arrives as an `fcode.storage://…` reference (an **array** if multiple
 files allowed). Strip the prefix to download:

@@ -41,7 +41,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
-| Polling with a datastore cursor + idempotency (dedup map) | custom-app-linear |
+| Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |
 | Storage upload + signed download URL + email with `fcode.sendMail` | utility-processes |
 | Reading a form-uploaded file from Storage | utility-processes |
