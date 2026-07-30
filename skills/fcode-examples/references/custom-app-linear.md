@@ -294,6 +294,13 @@ async function main() {
 
 Per-item failures are collected and returned, never allowed to abort the run.
 
+The dedup map is needed here because the target (the Factorial API) has no
+native upsert. **When the target API offers a server-side upsert, prefer it**
+and drop the dedup state entirely — idempotency becomes a property of the API
+call (e.g. Airtable's `PATCH` with `performUpsert.fieldsToMergeOn`, 1–3
+non-computed fields). Keep the cursor either way; keep the dedup map only for
+targets without upsert.
+
 ## Runtime — webhook push
 
 `linear-users-push` receives the employee-created webhook and upserts the
@@ -367,7 +374,8 @@ async function main() {
    `selectField`/`toOptions`.
 4. Step 2: keep the discipline — persist config, create webhooks/schedules,
    **record every created id in the datastore**.
-5. Runtime processes: keep cursor + dedup for polling; keep challenge check +
+5. Runtime processes: keep cursor + dedup for polling (vendor-native upsert
+   instead of the dedup map when the target API has one); keep challenge check +
    HTTP-style error returns for webhooks.
 6. Uninstall: delete exactly what the install records say, best-effort,
    behind a `confirm` flag.

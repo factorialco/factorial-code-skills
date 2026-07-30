@@ -146,7 +146,13 @@ your own team, no API token needed (like datastore/storage):
 
 ```javascript
 // Team variables (config/secrets)
-await fcode.variables.set("API_KEY", "secret", { sensitive: true });
+// Default is SENSITIVE: fcode.variables.set(key, value) creates a sensitive
+// (masked, immutable-sensitivity) variable. Pass { sensitive: false } for
+// plain config values.
+await fcode.variables.set("API_KEY", "secret"); // sensitive by default
+await fcode.variables.set("BASE_URL", "https://api.acme.com", {
+  sensitive: false, // required for non-secret config
+});
 const v = await fcode.variables.get("API_KEY"); // { key, value, ... } or undefined
 const all = await fcode.variables.list();
 await fcode.variables.delete("API_KEY");
