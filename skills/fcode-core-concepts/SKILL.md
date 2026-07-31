@@ -162,7 +162,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
-┣ 📜 team.json             # team settings: inheritance, timezone, error handler
+┣ 📜 team.json             # team settings: inheritance, timezone, error handler, webhook auth
 ┣ 📜 variables.env         # team variables (KEY=VALUE)
 ┣ 📜 variables.local.env   # local overrides (not shared)
 ┣ 📜 variables.meta.json   # per-variable isSensitive flags
@@ -173,10 +173,11 @@ Processes and modules also support `versions/` subfolders (e.g. `versions/v1.0/`
 for versioned interfaces. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
-`metadata.json` is where a process's webhook trigger (optionally protected by a
-named team variable, `webhook.authVariable`) and form settings (`enabled`,
-`authMode`, and a marketplace `appRole`) are configured — edit it and
-`fcode push`. Full field reference in `fcode-cli`.
+`metadata.json` is where a process's webhook trigger and form settings
+(`enabled`, `authMode`, and a marketplace `appRole`) are configured — edit it and
+`fcode push`. A webhook is public (`authMode: NONE`), inherits the workspace
+`webhookAuth` from `team.json` (`TEAM`), or carries its own header and team
+variable (`CUSTOM`). Full field reference in `fcode-cli`.
 
 ## General rules
 
