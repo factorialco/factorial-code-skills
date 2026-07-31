@@ -9,7 +9,7 @@ This is the starting shape for any real payroll/HR integration.
 
 ```
 Factorial ──webhook──▶ processes/sync (entry point)
-                          │  validates challenge, delegates to the sync class
+                          │  authenticated by the platform, delegates to the sync class
                           ▼
               modules/sync-file  OR  modules/sync-api   (pick ONE flavor)
                           │ extends
@@ -70,25 +70,35 @@ form, so its `metadata.json` enables the webhook and disables the form:
 {
   "name": "sync",
   "tags": ["integration", "acme"],
-  "webhook": { "enabled": true },
+  "webhook": { "enabled": true, "authMode": "TEAM" },
   "form": { "enabled": false }
 }
 ```
 
-(To protect the webhook endpoint, add `"authVariable": "ACME_WEBHOOK_TOKEN"`
-inside `webhook` — it names the team variable whose value callers must send as
-`Authorization: Bearer <token>`. Only the name is stored, so the file stays
-committable; see `fcode-cli`.) The process body stays minimal:
+`authMode: TEAM` inherits the workspace configuration in `team.json`, which for a
+Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
+`x-factorial-wh-challenge` header Factorial's sender provides:
+
+```json
+{
+  "webhookAuth": {
+    "headerName": "x-factorial-wh-challenge",
+    "variableKey": "FACTORIAL_CHALLENGE_TOKEN"
+  }
+}
+```
+
+Set `webhookAuth` in **every** app workspace: it is not inherited through
+`parentTeamSlugs`, because auth resolves against the workspace addressed in the
+webhook URL rather than the one owning the code. Field reference in `fcode-cli`.
+
+The platform authenticates the caller before the process runs, so there is
+nothing to check in code and the body stays minimal:
 
 ```javascript
-const { checkWebhookChallenge } = fcode.import("factorial-utils");
 const AcmeSync = fcode.import("sync-file"); // ← the ONE line that picks the flavor
 
 async function main() {
-  // Enforced only when FACTORIAL_CHALLENGE_TOKEN is configured.
-  const challengeError = checkWebhookChallenge();
-  if (challengeError) return challengeError;
-
   const sync = new AcmeSync();
   return await sync.run(fcode.context.parameters);
 }
@@ -246,7 +256,7 @@ class AcmeApiSync extends OutboundSync {
 |---|---|---|
 | `FACTORIAL_TOKEN` | both flavors | Authenticates the Factorial SDK client |
 | `FACTORIAL_BASE_URL` | both | Optional API base URL override |
-| `FACTORIAL_CHALLENGE_TOKEN` | both | Optional; when set, the webhook challenge is enforced |
+| `FACTORIAL_CHALLENGE_TOKEN` | both | The token `setupWebhook` embeds in subscriptions and the workspace `webhookAuth` verifies — the webhook rejects every call without it |
 | `ACME__API_BASE_URL` | API flavor | Vendor API base URL |
 | `ACME__API_KEY` | API flavor | Vendor bearer token (sensitive) |
 

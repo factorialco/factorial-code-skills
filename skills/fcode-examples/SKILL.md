@@ -36,8 +36,8 @@ Where to find a specific pattern, regardless of which app you build:
 | Extending the `outbound-sync` base class (`OutboundSync`) | integration-acme |
 | Per-item API push vs aggregate-to-file delivery | integration-acme |
 | Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme |
-| Webhook entry point + challenge validation | integration-acme, custom-app-linear |
-| Activating and protecting webhook / form triggers in `metadata.json` (`webhook.authVariable`, `form.authMode`, marketplace `appRole`) | integration-acme, custom-app-linear |
+| Webhook entry point authenticated by the platform, not in process code | integration-acme, custom-app-linear |
+| Activating and protecting webhook / form triggers in `metadata.json` (`webhook.authMode` + the workspace `webhookAuth`, `form.authMode`, marketplace `appRole`) | integration-acme, custom-app-linear |
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
@@ -56,7 +56,7 @@ reimplement them:
 | Module | From | Provides |
 |---|---|---|
 | `factorial-sdk` | base-app | `createFactorialClient()` — authenticated `@factorialco/api-client` / `factorial-api-client` instance |
-| `factorial-utils` | base-app | `checkWebhookChallenge()`, `getCompanyId()`, `setupWebhook()`, `deleteWebhookSubscription()` |
+| `factorial-utils` | base-app | `getCompanyId()`, `setupWebhook()`, `listWebhookSubscriptions()`, `deleteWebhookSubscription()` |
 | `fcode-forms` | base-app | Form-schema builders: `selectField()`, `toOptions()`, … |
 | `mail-helper` | base-app | `brandedHtml()` for styled email bodies |
 | `error-handler` | base-app | Shared error handling |

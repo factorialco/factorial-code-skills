@@ -77,10 +77,17 @@ app has at most one `INSTALL` and one `SETTINGS` process:
 {
   "name": "Linear users push",
   "tags": ["linear"],
-  "webhook": { "enabled": true },
+  "webhook": { "enabled": true, "authMode": "TEAM" },
   "form": { "enabled": false }
 }
 ```
+
+`authMode: TEAM` inherits the workspace `webhookAuth` from `team.json`, which for a
+Factorial-sent webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
+`x-factorial-wh-challenge` header — the same token `setupWebhook` embeds in the
+subscription at install (see below). The platform checks it before the process
+runs, so webhook processes carry no auth code. Set `webhookAuth` per workspace; it
+is not inherited from `parentTeamSlugs`. See `fcode-cli`.
 
 `linear-projects-poll` needs neither webhook nor form — it's invoked by the
 schedule created at install time. Edit these files and `fcode push`; no
@@ -237,6 +244,9 @@ async function main() {
   const factorialClient = createFactorialClient();
   const companyId = await getCompanyId(factorialClient);
 
+  // setupWebhook embeds FACTORIAL_CHALLENGE_TOKEN as the subscription's challenge — the
+  // value Factorial then sends in x-factorial-wh-challenge and the workspace webhookAuth
+  // checks. It throws when the variable is unset, so the endpoint is never left open.
   const subscription = await setupWebhook({
     factorialClient,
     subscriptionType: "employees/employee/create_with_contract",
@@ -311,10 +321,9 @@ user in Linear (update if the email exists, invite otherwise):
 
 ```javascript
 async function main() {
-  const { checkWebhookChallenge } = fcode.import("factorial-utils");
-  const challengeError = checkWebhookChallenge();
-  if (challengeError) return challengeError;
-
+  // The caller is already authenticated: the webhook's authMode: TEAM resolves to the
+  // workspace webhookAuth, which checks FACTORIAL_CHALLENGE_TOKEN in
+  // x-factorial-wh-challenge. Validate the payload, not the credential.
   const { id, login_email, full_name, preferred_name } = fcode.context.parameters;
   if (!login_email) {
     // Bad payload → webhook-style HTTP response, not a crash.
@@ -378,7 +387,7 @@ async function main() {
 4. Step 2: keep the discipline — persist config, create webhooks/schedules,
    **record every created id in the datastore**.
 5. Runtime processes: keep cursor + dedup for polling (vendor-native upsert
-   instead of the dedup map when the target API has one); keep challenge check +
+   instead of the dedup map when the target API has one); keep `authMode: TEAM` +
    HTTP-style error returns for webhooks.
 6. Uninstall: delete exactly what the install records say, best-effort,
    behind a `confirm` flag.
