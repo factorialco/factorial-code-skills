@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug, restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling/themes, i18n, multi-step flows, and automatic file uploads to Storage. Use when embedding, configuring, styling, restricting access to, or wiring up submission callbacks for a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug and pinned to a process version (the stable alias, data-fcode-form-process-version / processVersion), restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling/themes, i18n, multi-step flows, and automatic file uploads to Storage. Use when embedding, configuring, styling, restricting access to, version-pinning, or wiring up submission callbacks for a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -20,6 +20,14 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   the embed code.
 - **`team` and `process`/`processId` are both mandatory** on every embed, and
   both take **slugs** — not the per-workspace UUIDs.
+- **Always pin the embed to the `stable` alias**
+  (`data-fcode-form-process-version="stable"` / `processVersion: "stable"`).
+  An unpinned form runs the current version, so every `fcode push` changes it
+  immediately. Details below.
+- **An unknown version or alias doesn't fail the form** — it silently loads and
+  submits on the current version, with only a server-side warning. A typo in the
+  version attribute is invisible in the page; check the execution's version when
+  a submission behaves unexpectedly.
 - **The `Forms` flag must be enabled** — on the process Dashboard, or via
   `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
@@ -88,11 +96,13 @@ protected. Field reference in `fcode-cli`.
 
 ## Embed a form
 
-Two mandatory inputs, both **slugs**:
+Two mandatory inputs, both **slugs**, plus the version pin you should always
+add:
 
 - **`fcode-team-slug`** — from `https://code.factorial.dev/platform/<fcode-team-slug>`
 - **`fcode-process-slug`** — the **Slug** field on the process Dashboard (e.g.
   `send-welcome-email`)
+- **process version** — pin it to the `stable` alias (next section)
 
 **Use the slug, not the process ID.** A process ID is a UUID that differs per
 workspace, so an id-based embed breaks when the snippet moves between workspaces
@@ -113,7 +123,11 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 **Method 1 — data attributes** (SDK replaces the element):
 
 ```html
-<div data-fcode-form-team="<fcode-team-slug>" data-fcode-form-process="<fcode-process-slug>"></div>
+<div
+  data-fcode-form-team="<fcode-team-slug>"
+  data-fcode-form-process="<fcode-process-slug>"
+  data-fcode-form-process-version="stable"
+></div>
 ```
 
 **Method 2 — `Fcode.initForm`** (selector or DOM element):
@@ -121,7 +135,11 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 ```html
 <div id="my-fcode-form"></div>
 <script>
-  Fcode.initForm("#my-fcode-form", { team: "<fcode-team-slug>", process: "<fcode-process-slug>" });
+  Fcode.initForm("#my-fcode-form", {
+    team: "<fcode-team-slug>",
+    process: "<fcode-process-slug>",
+    processVersion: "stable",
+  });
 </script>
 ```
 
@@ -132,11 +150,46 @@ Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 import FcodeForm from "@factorialco/fcode-react-forms";
 
 const MyComponent = () => (
-  <FcodeForm team={"<fcode-team-slug>"} processId={"<fcode-process-slug>"} />
+  <FcodeForm
+    team={"<fcode-team-slug>"}
+    processId={"<fcode-process-slug>"}
+    processVersion={"stable"}
+  />
 );
 ```
 
 In SSR frameworks (e.g. Next.js), import it dynamically with `ssr: false`.
+
+## Pin the form to a version
+
+The version pin (`data-fcode-form-process-version` /
+`processVersion`) takes a published process version tag (`v1.0.0`) or a version
+alias. **Always pin to the `stable` alias** — it always exists, points at the
+workspace's stable version, and:
+
+- **Pushes never change live forms.** An unpinned embed runs the current
+  version, so every `fcode push` hits it immediately. Pinned to `stable`, the
+  form only changes when a release moves the alias (from the web UI's team
+  settings → Versions tab; CLI equivalents in `fcode-cli`) — and rolling back
+  is re-pointing the alias, without editing the embedded page.
+- Pinning to `stable` rather than a hardcoded tag follows the same portability
+  logic as using slugs instead of IDs: the embed survives releases without
+  edits.
+
+The version applies to **both** requests the form makes — loading the form
+definition and submitting it. The process Dashboard writes the pin for you:
+pick a version or alias in the selector next to the embed code and copy the
+generated snippet.
+
+**An unknown version or alias falls back to the current one.** The form still
+loads and still submits — it runs the process's current version, and the
+platform records only a server-side warning. That keeps a page you no longer
+control working after a version is deleted, but a typo in the attribute is
+silent: check the execution's version if a submission behaves unexpectedly.
+
+Calling the form endpoints directly (not through the SDK)? They also accept a
+`version_tag` query parameter, which takes precedence over the underlying
+`Fcode-Version-Tag` header — same as webhooks (see `fcode-cli`).
 
 ## Handle submission results
 

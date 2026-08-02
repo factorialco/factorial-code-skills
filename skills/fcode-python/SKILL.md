@@ -63,7 +63,7 @@ api_key = os.getenv("API_KEY")  # or fcode.env.API_KEY
 
 # Import a Factorial Code module (hardcoded name only)
 client = fcode.import_module("module-name")
-client_v1 = fcode.import_module("module-name", "v1.0")  # pinned version
+client_v1 = fcode.import_module("module-name", "v1.0.0")  # pinned version tag or alias
 
 # Run another process
 fcode.processes.run("process-identifier", options)

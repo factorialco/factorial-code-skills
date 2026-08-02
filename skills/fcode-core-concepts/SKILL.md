@@ -39,6 +39,8 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 |---|---|---|
 | **Process** | The unit of execution (business logic) | Defines input parameters, returns structured results |
 | **Module** | Reusable code library | Shared across processes, can be versioned |
+| **Workspace version** | One tag (e.g. `v1.0.0`) published on every process and module the team owns | Published from the web UI; retrying the same tag is safe |
+| **Version alias** | Movable pointer to a version | `stable` always exists — pin consumers to it; moving it is rollout/rollback |
 | **Variables** | Configuration & secrets | Env vars; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only** |
 | **Storage** | File storage | Binary files, documents, large payloads |
@@ -115,6 +117,45 @@ pre-authenticated, no SMTP configuration. The mail server and credentials live i
 the executor manager, never in your process. Each execution can send up to 3
 emails by default. See `fcode-javascript` / `fcode-python` for usage.
 
+### Versioning & aliases
+
+Processes and modules can be versioned individually, and a **workspace version**
+publishes one tag (e.g. `v1.0.0`) on **every process and module the team owns**
+at once — resources inherited through `parentTeamSlugs` are never touched. Each
+entity's outcome (created / skipped / failed) is recorded in the version's
+**manifest**, so re-creating the same tag after a partial failure only publishes
+what is still missing.
+
+When a workspace version is published, bare `fcode.import("mod")` /
+`fcode.import_module("mod")` calls of workspace-owned modules are pinned to the
+tag **inside the published snapshots only** — the working copy is never
+modified, and imports that already carry a tag or alias are left untouched.
+
+A **version alias** is a movable pointer to a version. The `stable` alias
+always exists and points at the workspace's stable version. Webhooks, forms,
+schedules, and module imports accept an alias wherever they accept a tag, so
+moving `stable` to another version re-points the whole workspace in one
+operation — **rollout and rollback are a single alias change**. Always pin
+consumers (webhook URLs, form embeds) to `stable`; how in `fcode-cli` and
+`fcode-forms`.
+
+Two consequences of that model:
+
+- **`fcode push` never affects consumers pinned to `stable`.** Pushing updates
+  the current (unversioned) code; pinned consumers keep running the released
+  version until the alias moves.
+- **Deleting a workspace version cascades** — every owned process/module
+  version carrying the tag is deleted, together with the aliases, executions,
+  and schedules referencing them.
+
+Versions are published and aliases linked from the web UI (team settings →
+**Versions** tab). The CLI equivalents (`fcode team:versions:*` /
+`team:aliases:*`) are documented in `fcode-cli` — don't create versions or move
+`stable` unless explicitly asked.
+
+A **version tag** (`v1.0.0`) is unrelated to `metadata.json` `tags` — those are
+process labels (used e.g. for MCP-tool exposure, see `fcode-agent`).
+
 ## Decision guidelines
 
 **Module vs inline code**
@@ -169,8 +210,9 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┗ 📂 .fcode
 ```
 
-Processes and modules also support `versions/` subfolders (e.g. `versions/v1.0/`)
-for versioned interfaces. `dependencies/package.json` holds only the inner
+Processes and modules also carry `versions/<tag>/` subfolders (e.g.
+`versions/v1.0.0/`) holding their published version snapshots — see the
+versioning section above. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
 `metadata.json` is where a process's webhook trigger and form settings

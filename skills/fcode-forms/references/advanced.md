@@ -8,6 +8,9 @@ result handling, multi-step, and file uploads are in `SKILL.md`.
 
 Configurable via data attributes, `Fcode.initForm` options, or React props:
 
+- **Process version** — `processVersion` (`data-fcode-form-process-version`): a
+  version tag or alias the form loads and submits against — always pin `stable`
+  (see `SKILL.md`).
 - **Initial / hidden values** — `defaultValues` (`data-fcode-form-default-values`):
   JSON of pre-filled field values.
 - **Async execution** — `async: true` (`data-fcode-form-async`): returns `201` +
@@ -141,6 +144,7 @@ the `data-fcode-form-modal` attribute to that element.
   data-fcode-form-modal
   data-fcode-form-team="<fcode-team-slug>"
   data-fcode-form-process="<fcode-process-slug>"
+  data-fcode-form-process-version="stable"
 >
   Open the form
 </button>
