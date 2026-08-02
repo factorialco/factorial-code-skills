@@ -72,7 +72,11 @@ confirmation, run it with test parameters, review results together, and iterate.
 Then offer next steps: scheduling, webhooks (public, inheriting the workspace
 `webhookAuth` configuration, or with their own header and team variable), a form
 (public, or restricted to Factorial users), or exposing the process as an MCP
-tool — and pushing to cloud when ready.
+tool — and pushing to cloud when ready. Pushing only updates the current code:
+consumers pinned to the `stable` alias (as webhook URLs and form embeds should
+be) are unaffected until a release moves the alias, which is done from the web
+UI — don't create workspace versions or move `stable` unless explicitly asked
+(see `fcode-core-concepts` and `fcode-cli`).
 
 ## Creating MCP tools
 
