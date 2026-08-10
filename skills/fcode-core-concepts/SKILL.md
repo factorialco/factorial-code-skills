@@ -1,6 +1,6 @@
 ---
 name: fcode-core-concepts
-description: Factorial Code platform architecture and core concepts — processes, modules, execution context, team variables, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
+description: Factorial Code platform architecture and core concepts — processes, modules, execution context, team variables and their inheritance from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
 license: MIT
 metadata:
   category: factorial-code
@@ -29,6 +29,9 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Never overwrite the whole `variables.env`.** Read it first and append/patch
   only the specific variable(s); rewriting the file drops every variable not in
   the new content and can break other processes.
+- **Never edit `variables.inherited.env`.** It is regenerated on every pull and
+  owned by the parent workspace. To change an inherited value for this
+  workspace, add the key to `variables.env` — that overrides it.
 - **Never hardcode or log secrets.** Use variables/env vars; mask or omit
   secrets from logs.
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
@@ -41,7 +44,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Module** | Reusable code library | Shared across processes, can be versioned |
 | **Workspace version** | One tag (e.g. `v1.0.0`) published on every process and module the team owns | Published from the web UI; retrying the same tag is safe |
 | **Version alias** | Movable pointer to a version | `stable` always exists — pin consumers to it; moving it is rollout/rollback |
-| **Variables** | Configuration & secrets | Env vars; never hardcode secrets |
+| **Variables** | Configuration & secrets | Env vars; inherited from parent workspaces; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only** |
 | **Storage** | File storage | Binary files, documents, large payloads |
 | **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
@@ -95,6 +98,34 @@ Read them at runtime via `fcode.env.*`. To create/update/delete them
 programmatically from a process, use the `fcode.variables` helper
 (`set`/`get`/`list`/`delete`) — scoped to your team, no API token needed. See
 `fcode-javascript` / `fcode-python`.
+
+#### Variables are inherited from parent workspaces
+
+A workspace uses the variables defined in any of its `parentTeamSlugs` parents
+without redefining them, alongside processes and modules. Inheritance follows the
+same rule those already use: the workspace first, then its **direct** parents
+sorted by slug, capped at 5 — so it is **not transitive** (a grandparent's
+variables don't reach a grandchild).
+
+- **Don't re-create a parent's variables in a child.** They already resolve
+  there. This is why a `deploy-{deployId}` workspace carries only the values
+  specific to that customer, while shared defaults and credentials stay in
+  `prod-{appId}` / `base-app`.
+- **Defining the same key in the child overrides the inherited one** for that
+  workspace — the child's value is what its executions see, and the parent's
+  entry disappears from the child's list entirely (one entry per key, never two).
+  Deleting the override brings the parent's value back.
+- **Inherited variables are read-only where they're inherited.** Edit or delete
+  them in the workspace that owns them, or override them locally. In the web UI
+  they carry an inherited badge and offer **Override here**; the CLI and SDK
+  behaviours are in `fcode-cli` and `fcode-javascript` / `fcode-python`.
+- **Secrets inherit too, and their real values reach the sandbox.** A process in
+  a child workspace reads a parent's secret at execution time. They stay masked
+  everywhere else (`null` over GraphQL, `******` over REST, `********` in the
+  CLI's inherited file), so process code is the only place a value is readable.
+  Treat code in a child workspace as trusted with its parents' credentials.
+- **Local runs get the placeholder, not the secret** — put real values in
+  `variables.local.env` (see `fcode-cli`).
 
 ### Schedules
 
@@ -204,7 +235,8 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
 ┣ 📜 team.json             # team settings: inheritance, timezone, error handler, webhook auth
-┣ 📜 variables.env         # team variables (KEY=VALUE)
+┣ 📜 variables.env         # team variables this workspace owns (KEY=VALUE)
+┣ 📜 variables.inherited.env  # variables from parent workspaces (read-only, gitignored)
 ┣ 📜 variables.local.env   # local overrides (not shared)
 ┣ 📜 variables.meta.json   # per-variable isSensitive flags
 ┗ 📂 .fcode

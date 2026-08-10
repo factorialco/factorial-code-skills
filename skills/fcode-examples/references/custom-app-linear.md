@@ -17,6 +17,10 @@ SETUP (user-facing forms)
                             stores mapping, creates webhook + schedule,
                             records their ids in the datastore
 
+SETTINGS (linear-setup-mapping re-opened after install)
+  its pre-render reads variables + datastore so the form shows the current
+  configuration; a credential is reported as set, never echoed back
+
 RUNTIME
   linear-users-push     ◀── Factorial webhook (employee created)
   linear-projects-poll  ◀── hourly schedule (created at setup)
@@ -30,7 +34,7 @@ Workspace layout:
 ```
 processes/linear-setup/                    # step 1: validate + store API key
 processes/linear-setup-mapping/            # step 2: map teams, activate
-processes/linear-setup-mapping-prerender/  # renders step 2's dropdowns
+processes/linear-setup-mapping-prerender/  # renders step 2's dropdowns + current values
 processes/linear-users-push/               # webhook: Factorial employee → Linear user
 processes/linear-projects-poll/            # schedule: Linear projects → Factorial
 processes/linear-uninstall/                # teardown
@@ -203,13 +207,21 @@ async function main() {
   const factorialTeams = (await createFactorialClient().teams.teams.all())
     .map((t) => ({ id: t.id, name: t.name }));
 
+  // The same process backs appRole: SETTINGS, so the form is re-opened after
+  // install — scaffold the rows from the mapping already saved, not blank ones.
+  const saved = JSON.parse((await fcode.datastore.get("linear.teams.mappings")) || "{}");
+
   return {
     // Merged into the form schema's #/variables before rendering.
     variables: {
       linearTeamField: selectField("Linear team", "Linear team.", toOptions(linearTeams)),
       factorialTeamField: selectField("Factorial team", "Maps to.", toOptions(factorialTeams)),
-      // One pre-filled row per Linear team.
-      teamMappingsScaffold: linearTeams.map((t) => ({ linear_team_id: String(t.id) })),
+      // One row per Linear team, pre-filled with the current mapping where there
+      // is one. On first install `saved` is {} and the rows come out unmapped.
+      teamMappingsScaffold: linearTeams.map((t) => ({
+        linear_team_id: String(t.id),
+        ...(saved[String(t.id)] ? { factorial_team_id: saved[String(t.id)] } : {}),
+      })),
     },
   };
 }
@@ -270,6 +282,134 @@ async function main() {
   return { success: true };
 }
 ```
+
+## Re-opened as the settings screen — show what is configured now
+
+`linear-setup-mapping` carries `appRole: SETTINGS`, so the *same* form is opened
+again long after install, to re-map teams or rotate the key. **It must render the
+current state**, or the user is asked to re-enter configuration they cannot see —
+and an app has at most one `SETTINGS` process, so this is that form, not a second
+one.
+
+The pre-render above already does this for the mapping. Extending it to cover the
+credential and a poll interval is the whole pattern:
+
+```javascript
+// processes/linear-setup-mapping-prerender/index.js (continued)
+const MAPPINGS_KEY = "linear.teams.mappings";
+const SETTINGS_KEY = "linear.settings";
+
+// …linearTeams / factorialTeams loaded as above…
+
+// Never read a secret's value to echo it — only test whether one exists.
+// process.env sees inherited variables too, so the key may be configured in a
+// parent workspace (see fcode-core-concepts) and still count as configured.
+const apiKeyConfigured = Boolean(process.env.LINEAR_API_KEY);
+
+// Default missing state rather than throwing: a pre-render that throws makes the
+// settings form unopenable, which is exactly when it is needed most.
+const settings = JSON.parse((await fcode.datastore.get(SETTINGS_KEY)) || "{}");
+const mapping = JSON.parse((await fcode.datastore.get(MAPPINGS_KEY)) || "{}");
+
+return {
+  variables: {
+    linearTeamField: /* … as above … */,
+    factorialTeamField: /* … as above … */,
+    teamMappingsScaffold: /* … pre-filled from `mapping`, as above … */,
+
+    // Plain config round-trips straight into the field default.
+    pollIntervalDefault: settings.pollIntervalHours ?? 1,
+    // The credential is reported, not returned.
+    apiKeyLabel: apiKeyConfigured
+      ? "Linear API key (configured — leave blank to keep the current one)"
+      : "Linear API key",
+    statusHtml: {
+      before: apiKeyConfigured
+        ? `<p>Connected. ${Object.keys(mapping).length} team(s) mapped.</p>`
+        : "<p><b>Not connected yet.</b> Enter an API key to finish setup.</p>",
+    },
+  },
+};
+```
+
+The schema points its `default`s, its label and a status line at those nodes. Only
+the added nodes are shown below — `team_mappings` and its variables from the
+previous section stay as they are. The API-key field is **not** `required` —
+otherwise a user who only wants to re-map a team cannot submit:
+
+```json
+{
+  "preRenderProcess": "linear-setup-mapping-prerender",
+  "variables": {
+    "pollIntervalDefault": 1,
+    "apiKeyLabel": "Linear API key",
+    "statusHtml": {}
+  },
+  "properties": {
+    "linear_api_key": {
+      "type": "string",
+      "isSensitive": true,
+      "title": { "$ref": "#/variables/apiKeyLabel" },
+      "rawHtml": { "$ref": "#/variables/statusHtml" }
+    },
+    "poll_interval_hours": {
+      "type": "integer",
+      "title": "Poll every (hours)",
+      "default": { "$ref": "#/variables/pollIntervalDefault" }
+    }
+  }
+}
+```
+
+The activation process then treats a blank credential as "unchanged", which is
+what makes leaving it optional safe:
+
+```javascript
+const { linear_api_key, poll_interval_hours } = fcode.context.parameters;
+
+// Blank → keep the stored key. Never overwrite a working credential with "".
+if (linear_api_key) {
+  const { LinearApiClient } = fcode.import("linear-client");
+  await new LinearApiClient(linear_api_key).getTeams();        // validate before storing
+  await fcode.variables.set("LINEAR_API_KEY", linear_api_key); // rotate
+}
+
+await fcode.datastore.set(
+  SETTINGS_KEY,
+  JSON.stringify({ pollIntervalHours: poll_interval_hours })
+);
+```
+
+Two rules this encodes:
+
+- **Secrets are reported, never echoed.** The schema response travels over HTTP
+  and lands in the browser DOM; `authMode: FACTORIAL` limits *who* sees it, not
+  *where it goes*. Show "configured", never the value — not even masked, since a
+  masked value then has to be told apart from a real one on submit.
+- **A pre-render failure fails the form load.** Default missing state (`?? 1`,
+  `|| "{}"`) instead of throwing.
+
+That second rule changes the install-flow snippet above. Throwing on a missing
+`LINEAR_API_KEY` is fine while the form is only ever reached from step 1, which
+just stored it — but the moment the same form is also the `SETTINGS` screen, that
+throw makes it unopenable in precisely the state where the user needs it to enter
+a key. Degrade instead:
+
+```javascript
+// Replaces `if (!linearApiKey) throw ...` once the form doubles as SETTINGS.
+const linearTeams = apiKeyConfigured
+  ? (await new LinearApiClient(process.env.LINEAR_API_KEY).getTeams())
+      .map((t) => ({ id: t.id, name: t.name }))
+  : []; // no key yet → empty dropdowns, and statusHtml explains why
+
+// Also guard the vendor call itself: an expired key must render the form with a
+// "reconnect" status, not fail the load.
+```
+
+The rule of thumb: a pre-render backing an `INSTALL`-only form may throw, because
+a broken install is a dead end anyway. A pre-render backing a `SETTINGS` form
+should render *something* for every state, since fixing the broken state is what
+the user came to do.
 
 ## Runtime — scheduled poll with cursor + idempotency
 
@@ -383,7 +523,9 @@ async function main() {
    store-variable + `nextProcessId` chain.
 3. Pre-render: load whatever collections the mapping needs (teams, projects,
    ledgers, …) and return them as `#/variables` nodes with
-   `selectField`/`toOptions`.
+   `selectField`/`toOptions`, **plus the values already configured** so the form
+   shows current state when re-opened as the settings screen — reporting whether
+   a credential is set, never echoing it.
 4. Step 2: keep the discipline — persist config, create webhooks/schedules,
    **record every created id in the datastore**.
 5. Runtime processes: keep cursor + dedup for polling (vendor-native upsert

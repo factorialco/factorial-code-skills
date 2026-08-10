@@ -34,10 +34,12 @@ schema:
 }
 ```
 
-- **Themes** — one built-in theme, `light`
-  (`https://code.factorial.dev/sdk/styles-theme-light.css`). Custom theme:
-  extend that CSS file and set `embedFormOptions.themeStylesheet` (a URL or
-  inline CSS).
+- **`theme`** — `"light"` (default) or `"none"`. `light` injects the SDK's
+  standalone stylesheet
+  (`https://code.factorial.dev/sdk/styles-theme-light.css`); `"none"` injects
+  nothing, which is what you want when the host app brings its own styling (see
+  the f0 theme below). Custom theme: extend that CSS file and set
+  `embedFormOptions.themeStylesheet` (a URL or inline CSS).
 - **`loadingContent`** — the message shown while the form itself is loading (as
   opposed to `loadingOverlayContent`, shown while a submission runs). Worth
   setting when a `preRenderProcess` makes opening the form slow.
@@ -47,8 +49,63 @@ schema:
   `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!" } }`.
 
 Forms render with
-[react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/),
-so its full `uiSchema` is available (plus markdown in titles/descriptions/help).
+[react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
+(rjsf **6**, since `@factorialco/fcode-react-forms` 3.0.0), so its full `uiSchema`
+is available (plus markdown in titles/descriptions/help).
+
+## The f0 theme — for React apps inside Factorial
+
+There are two rendering themes, and which one to use depends on where the form
+is embedded:
+
+| Where the form renders | Theme |
+|---|---|
+| Inside Factorial (the Factorial Code dashboard, the monolith) — anything already running f0 | **`@factorialco/rjsf-f0`** — real f0 components |
+| An arbitrary third-party page, via the hosted `forms.js` embed | The SDK's built-in stylesheet theme (`light`) |
+
+**Inside Factorial, use the f0 theme.** The form then renders with actual f0
+controls rather than plain HTML styled to imitate them, so it matches the
+surrounding product:
+
+```jsx
+import FcodeForm from "@factorialco/fcode-react-forms";
+import { Theme } from "@factorialco/rjsf-f0";
+import "@factorialco/rjsf-f0/styles.css";
+
+<FcodeForm
+  team="<fcode-team-slug>"
+  processId="<fcode-process-slug>"
+  processVersion="stable"
+  rjsfTheme={Theme}
+  // theme: "none" stops the SDK injecting its standalone stylesheet, whose
+  // `all: revert` reset exists to survive third-party pages and would fight
+  // the host app's own styles.
+  options={{ theme: "none", locale: "en" }}
+/>;
+```
+
+- The host app must already render f0's `F0Provider` above the form and import
+  `@factorialco/f0-react/dist/styles.css`. The theme package ships only the layout
+  rules for the parts rjsf composes.
+- Peers: `react`, `react-dom`, `@rjsf/core` 6, `@rjsf/utils` 6,
+  `@factorialco/f0-react` 4.39+.
+- Also exported: `Theme`, `Templates`, `Widgets`, `generateTheme()`,
+  `generateForm()`, and a default `Form` (`withTheme(Theme)`) for use as a plain
+  rjsf theme without the fcode SDK — the same surface as the official `@rjsf/*`
+  theme packages.
+- `rjsfTheme` swaps the theme wholesale; explicit `templates`/`widgets`/`fields`
+  props still win. Merge order: default theme < `rjsfTheme` < individual props.
+
+**Never pull the f0 theme into a hosted-embed page.** f0 cannot be tree-shaken —
+importing a single field costs ~3.2 MB gzip, against 262 KB for the whole hosted
+bundle. The hosted `forms.js` bundle is size-checked in CI precisely to keep f0
+out of it. Only the React component path can opt in.
+
+Three gaps in the f0 mapping worth knowing, since they look inconsistent in a
+rendered form: **file fields** keep rjsf's native `<input type="file">`,
+**`range`** renders as a number input rather than a slider, and the SDK's
+`sourceCode` field keeps its (non-f0) Monaco editor. `radio` maps to f0's
+`cardSelect`, because f0 has no radio control.
 
 ## Variables replacement
 
@@ -78,6 +135,93 @@ that still needs a multi-step form.
 
 Because the form is only served once the pre-render finishes, opening it takes as
 long as the process runs — set `loadingContent` (above) to say what's loading.
+
+### Pre-filling current values (install & settings forms)
+
+A `SETTINGS` form re-opened after install, or an `INSTALL` form re-opened to fix a
+value, should **show what is configured now** — not an empty form the user has to
+fill from memory. Since the schema is static and the embed lives inside Factorial
+(so you can't set `defaultValues` on it), the pre-render process is the place to
+do this: read the current state from team variables and the datastore, and return
+it as `#/variables` nodes the schema's `default`s point at.
+
+Give any `INSTALL` or `SETTINGS` process a `preRenderProcess` when it has values
+worth showing back. A worked example is in `fcode-examples`
+(`references/custom-app-linear.md`).
+
+```json
+{
+  "type": "object",
+  "preRenderProcess": "acme-settings-prerender",
+  "variables": {
+    "syncIntervalDefault": 60,
+    "apiKeyLabel": "Acme API key",
+    "statusHtml": { "before": "" }
+  },
+  "properties": {
+    "sync_interval_minutes": {
+      "type": "integer",
+      "title": "Sync interval (minutes)",
+      "default": { "$ref": "#/variables/syncIntervalDefault" }
+    },
+    "acme_api_key": {
+      "type": "string",
+      "isSensitive": true,
+      "title": { "$ref": "#/variables/apiKeyLabel" },
+      "rawHtml": { "$ref": "#/variables/statusHtml" }
+    }
+  }
+}
+```
+
+```javascript
+// processes/acme-settings-prerender/index.js
+async function main() {
+  const configured = Boolean(process.env.ACME_API_KEY);
+  const stored = JSON.parse((await fcode.datastore.get("acme.settings")) || "{}");
+
+  return {
+    variables: {
+      // Plain config round-trips as the field's default.
+      syncIntervalDefault: stored.syncIntervalMinutes ?? 60,
+      // A secret is NEVER echoed — only whether one exists.
+      apiKeyLabel: configured
+        ? "Acme API key (configured — leave blank to keep the current one)"
+        : "Acme API key",
+      statusHtml: {
+        before: configured
+          ? "<p>Connected.</p>"
+          : "<p><b>Not connected yet.</b> Enter an API key to finish setup.</p>",
+      },
+    },
+  };
+}
+```
+
+**Never send a stored secret back to the form.** The schema response travels over
+HTTP and lands in the browser DOM. Report *whether* a credential is set — in the
+label, the description, or a `rawHtml` status line — and let a blank submit mean
+"keep the current value":
+
+```javascript
+// In the settings process that handles the submit:
+const { acme_api_key } = fcode.context.parameters;
+if (acme_api_key) {
+  await fcode.variables.set("ACME_API_KEY", acme_api_key); // rotate
+}
+// blank → keep whatever is stored; don't overwrite with ""
+```
+
+That also means such a field must **not** be `required` in the schema, or a user
+who only wants to change the sync interval can't submit. Two more things:
+
+- **Read variables through `fcode.env` / `process.env`, not by listing them.**
+  A pre-render sees inherited variables from parent workspaces too
+  (`fcode-core-concepts`), so a value can be configured without this workspace
+  owning it — which is exactly what should be shown as "configured".
+- **A pre-render failure fails the form load**, so a settings form whose
+  pre-render throws becomes unopenable. Default missing state instead of throwing
+  (`?? 60`, `|| "{}"`), and reserve throwing for genuinely unusable state.
 
 ## Internationalization
 

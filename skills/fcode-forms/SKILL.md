@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug and pinned to a process version (the stable alias, data-fcode-form-process-version / processVersion), restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling/themes, i18n, multi-step flows, and automatic file uploads to Storage. Use when embedding, configuring, styling, restricting access to, version-pinning, or wiring up submission callbacks for a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug and pinned to a process version (the stable alias, data-fcode-form-process-version / processVersion), restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling and the two themes (the SDK stylesheet theme vs the f0 theme for React apps inside Factorial), i18n, multi-step flows, pre-rendering current values into install/settings forms, and automatic file uploads to Storage. Use when embedding, configuring, styling, theming, restricting access to, version-pinning, pre-filling, or wiring up submission callbacks for a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -60,6 +60,12 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 For marketplace app processes, `form` also takes an optional
 `"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM` | `UNINSTALL`) marking
 the process's role in the app. Field reference in `fcode-cli`.
+
+An `INSTALL` or `SETTINGS` form is re-opened after the app is already configured,
+so it should show the **current** values rather than an empty form. Add a
+`preRenderProcess` that reads them from team variables and the datastore — and
+never echo a stored secret back, only whether one is set. Pattern and code in
+`references/advanced.md`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
@@ -299,7 +305,9 @@ process if only needed transiently.
 
 ## Advanced
 
-For styling/themes, initial/hidden values, async submission, custom headers,
-API-host override, variables replacement, internationalization, reacting to user
-input from your own page (the React `onChange` prop, the `fcode-forms-*` DOM
-events), and modal rendering, read `references/advanced.md`.
+For styling and the two themes (including the f0 theme to use when embedding in a
+React app inside Factorial), initial/hidden values, async submission, custom
+headers, API-host override, variables replacement, pre-rendering current values
+into install/settings forms, internationalization, reacting to user input from
+your own page (the React `onChange` prop, the `fcode-forms-*` DOM events), and
+modal rendering, read `references/advanced.md`.
