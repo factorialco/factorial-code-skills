@@ -154,9 +154,9 @@ your own team, no API token needed (like datastore/storage):
 # config values.
 fcode.variables.set("API_KEY", "secret")  # sensitive by default
 fcode.variables.set("BASE_URL", "https://api.acme.com", sensitive=False)  # required for non-secret config
-v = fcode.variables.get("API_KEY")  # TeamVariable or None
-all_vars = fcode.variables.list()
-fcode.variables.delete("API_KEY")
+v = fcode.variables.get("API_KEY")  # TeamVariable (has resolving_team_slug) or None
+all_vars = fcode.variables.list()   # includes variables inherited from parents
+fcode.variables.delete("API_KEY")   # no-op on an inherited variable
 
 # Schedules (cron or one-off date_time) for a process
 schedule = fcode.schedule.create(
@@ -174,6 +174,26 @@ fcode.schedule.delete_for_process(fcode.execution.process.id)
 
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
+
+### Inherited variables
+
+`list()`/`get()` return the variables the workspace **inherits from its parent
+workspaces** alongside its own (model in `fcode-core-concepts`). An inherited one
+carries `resolving_team_slug` naming the workspace it comes from; it is readable
+and usable exactly like an own variable, but it is owned elsewhere:
+
+- **`set()` on an inherited key creates an override in this workspace** rather
+  than updating the parent's variable. That is the only way to change the value
+  from here — updating by the parent's id would `404`.
+- **`delete()` on an inherited key does nothing** (silently). Only variables this
+  workspace owns can be deleted. An uninstall process cleaning up
+  `fcode.variables.delete("API_KEY")` therefore leaves a parent's credential
+  intact — which is what you want, but check `resolving_team_slug` if the process
+  must report what it actually removed.
+- `fcode.env.set_env_var` / `del_env_var` behave the same way.
+
+An older platform that doesn't report `resolvingTeamSlug` makes every variable
+look owned, so the pre-inheritance behaviour is preserved.
 
 ## Sending email
 

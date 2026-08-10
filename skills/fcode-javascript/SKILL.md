@@ -153,9 +153,9 @@ await fcode.variables.set("API_KEY", "secret"); // sensitive by default
 await fcode.variables.set("BASE_URL", "https://api.acme.com", {
   sensitive: false, // required for non-secret config
 });
-const v = await fcode.variables.get("API_KEY"); // { key, value, ... } or undefined
-const all = await fcode.variables.list();
-await fcode.variables.delete("API_KEY");
+const v = await fcode.variables.get("API_KEY"); // { key, value, resolvingTeamSlug, ... } or undefined
+const all = await fcode.variables.list();       // includes variables inherited from parents
+await fcode.variables.delete("API_KEY");        // no-op on an inherited variable
 
 // Schedules (cron or one-off dateTime) for a process
 const schedule = await fcode.schedule.create("my-process", {
@@ -174,6 +174,26 @@ await fcode.schedule.deleteForProcess(fcode.execution.process.id);
 
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).
+
+### Inherited variables
+
+`list()`/`get()` return the variables the workspace **inherits from its parent
+workspaces** alongside its own (model in `fcode-core-concepts`). An inherited one
+carries `resolvingTeamSlug` naming the workspace it comes from; it is readable and
+usable exactly like an own variable, but it is owned elsewhere:
+
+- **`set()` on an inherited key creates an override in this workspace** rather
+  than updating the parent's variable. That is the only way to change the value
+  from here — updating by the parent's id would `404`.
+- **`delete()` on an inherited key does nothing** (silently). Only variables this
+  workspace owns can be deleted. An uninstall process cleaning up
+  `fcode.variables.delete("API_KEY")` therefore leaves a parent's credential
+  intact — which is what you want, but check `resolvingTeamSlug` if the process
+  must report what it actually removed.
+- `fcode.env.setEnvVar` / `delEnvVar` behave the same way.
+
+An older platform that doesn't report `resolvingTeamSlug` makes every variable
+look owned, so the pre-inheritance behaviour is preserved.
 
 ## Sending email
 

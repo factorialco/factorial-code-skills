@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (team:versions, team:aliases, the stable alias, version_tag on webhook URLs), when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook authMode/auth and form authMode/appRole, team.json with the workspace webhookAuth and versions/aliases, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, managing workspace versions or aliases, or activating and protecting a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (team:versions, team:aliases, the stable alias, version_tag on webhook URLs), when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook authMode/auth and form authMode/appRole, team.json with the workspace webhookAuth and versions/aliases, the three variables files including inherited variables from parent workspaces, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, managing workspace versions or aliases, overriding an inherited team variable, or activating and protecting a process's webhook or form settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -40,6 +40,9 @@ web UI (see below).
 - **`--force` (on `push`/`pull`) overwrites the other side.** Both commands fail
   when local and cloud diverge; only use `--force` with explicit user
   confirmation.
+- **Never edit `variables.inherited.env`.** It holds the parent workspaces'
+  variables, is regenerated on pull, and `fcode push` skips it with a warning.
+  Overriding an inherited value means adding the key to `variables.env`.
 
 ## Commands
 
@@ -79,8 +82,9 @@ auth. Per-process webhook auth is separate, and enforced exactly as the cloud
 does it: the server reads `webhook.authMode` from the process's `metadata.json`,
 resolves `TEAM` against `webhookAuth` in `team.json`, and requires the named
 variable's value in the configured header — `Bearer <token>` in `Authorization`,
-the raw value in any other header. Values come from the workspace variables
-(`variables.env`, overridden by `variables.local.env`). Header lookup is
+the raw value in any other header. Values come from the workspace variables in
+the precedence every local run uses — `variables.inherited.env`, overridden by
+`variables.env`, overridden by `variables.local.env` (below). Header lookup is
 case-insensitive, but a repeated header is rejected rather than joined. A missing
 header, a malformed bearer value, an undefined variable, a mismatch, or a
 `TEAM` webhook whose workspace configuration is absent all get a `403`, with the
@@ -248,7 +252,7 @@ exists first).
 
 | Field | Type | Meaning |
 |---|---|---|
-| `parentTeamSlugs` | string[] | Teams this workspace inherits resources from |
+| `parentTeamSlugs` | string[] | Teams this workspace inherits processes, modules **and variables** from (direct parents only, max 5) |
 | `zoneId` | string, optional | Team timezone (e.g. for schedules) |
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
@@ -289,6 +293,49 @@ by several webhooks is named — and rotated — in one place. Two things about 
 - **Removing the object and pushing clears the cloud configuration**, which makes
   every webhook inheriting it reject all calls.
 
+## The three variables files
+
+Team variables live in three `.env` files at the workspace root:
+
+| File | Holds | Synced |
+|---|---|---|
+| `variables.env` | The variables this workspace **owns** | Committed; pushed and pulled |
+| `variables.inherited.env` | The variables inherited from **parent workspaces** (`parentTeamSlugs`) | Pull-only; **gitignored** (the CLI adds the entry) |
+| `variables.local.env` | Local-only overrides | Never pushed, never pulled |
+
+**Resolution order for a local run** (highest wins), matching what the cloud
+does: `variables.local.env` → `variables.env` → `variables.inherited.env`.
+
+Precedence is decided by which file **declares** a key, not by its value — so
+blanking a key in `variables.env` overrides the inherited variable with an empty
+string rather than falling through to the parent.
+
+### Overriding an inherited variable
+
+**Adding the key to `variables.env` *is* the override.** From that point the CLI
+treats it as this workspace's own variable: `fcode status` shows it as new,
+`fcode push` creates it here, and `fcode variables:add` offers it.
+
+- **Don't edit `variables.inherited.env`** — it is regenerated on every pull, and
+  `fcode push` skips inherited variables with a warning. Editing one only warns.
+- **Don't copy a parent's variables into a child workspace** to "make them
+  available" — they already resolve. Only add a key when this workspace genuinely
+  needs a different value. (Workspaces provisioned before inheritance existed may
+  still hold such copies, which now shadow the parent — including untouched
+  `********` placeholders shadowing a secret that would otherwise resolve. Flag
+  those to the user rather than deleting them.)
+- Deleting your override (removing the key from `variables.env` and pushing)
+  brings the parent's value back.
+
+`fcode variables:status` grows an **inherited** column showing the source
+workspace (`🔗 <slug>`) when any variable is inherited; the column is hidden
+otherwise. Model and web-UI behaviour in `fcode-core-concepts`; the runtime
+`fcode.variables` behaviour in `fcode-javascript` / `fcode-python`.
+
+The file names are settings (`variablesFileName`,
+`inheritedVariablesFileName`, `localVariablesFileName`) — assume the defaults
+above unless the workspace says otherwise.
+
 ## Variable sensitivity — `variables.meta.json`
 
 A workspace-root file mapping each variable to its sensitivity flag:
@@ -306,8 +353,11 @@ A workspace-root file mapping each variable to its sensitivity flag:
   default** — pass `sensitive: false` (JS) / `sensitive=False` (Python) for
   plain config. See `fcode-javascript` / `fcode-python`.
 - **Sensitive values never leave the cloud**: `pull` writes the placeholder
-  `********` into `variables.env`. Don't replace the placeholder there — put
-  the real value in `variables.local.env` for local runs.
+  `********` into `variables.env` — and into `variables.inherited.env` for an
+  inherited secret. Don't replace the placeholder in either file — put the real
+  value in `variables.local.env` for local runs. Remotely, an inherited secret's
+  real value *is* available to executions (see `fcode-core-concepts`); only the
+  local copy is masked.
 - **`isSensitive` is immutable** once pushed. Editing it in
   `variables.meta.json` is rejected on push (🚫 in `fcode status`) — revert to
   match remote.
