@@ -43,6 +43,9 @@ Each skill is a directory under `skills/` containing a `SKILL.md`
 npx skills-ref validate skills/fcode-javascript
 ```
 
+CI validates every skill on each pull request. Content-ownership rules for
+contributors are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [MIT](LICENSE)

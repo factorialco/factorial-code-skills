@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, FcodeForm React component) addressed by team + process slug and pinned to a process version (the stable alias, data-fcode-form-process-version / processVersion), restricting access with authMode, driving behavior from the process return value (message/formErrors/redirect/nextProcessId), styling and the two themes (the SDK stylesheet theme vs the f0 theme for React apps inside Factorial), i18n, multi-step flows, pre-rendering current values into install/settings forms, and automatic file uploads to Storage. Use when embedding, configuring, styling, theming, restricting access to, version-pinning, pre-filling, or wiring up submission callbacks for a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, the FcodeForm React component), version pinning to the stable alias, access restriction (authMode), driving behavior from the process return value, styling and themes (including the f0 theme inside Factorial), i18n, multi-step flows, pre-filling current values, and file uploads. Use when embedding, configuring, styling, restricting, version-pinning, pre-filling, or wiring up a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -24,10 +24,8 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   (`data-fcode-form-process-version="stable"` / `processVersion: "stable"`).
   An unpinned form runs the current version, so every `fcode push` changes it
   immediately. Details below.
-- **An unknown version or alias doesn't fail the form** — it silently loads and
-  submits on the current version, with only a server-side warning. A typo in the
-  version attribute is invisible in the page; check the execution's version when
-  a submission behaves unexpectedly.
+- **An unknown version or alias doesn't fail the form** — it silently runs the
+  current version (see "Pin the form to a version").
 - **The `Forms` flag must be enabled** — on the process Dashboard, or via
   `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
@@ -288,8 +286,7 @@ mainly for form-level options like `ui:submitButtonOptions`. For secret inputs
 prefer `"isSensitive": true` on the property — it renders a password widget
 automatically; see `fcode-json-schema`.)
 
-On
-submit the file is **uploaded to Storage before the process starts**, and the
+On submit the file is **uploaded to Storage before the process starts**, and the
 parameter arrives as an `fcode.storage://…` reference (an **array** if multiple
 files allowed). Strip the prefix to download:
 

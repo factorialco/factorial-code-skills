@@ -58,6 +58,9 @@ process_id = fcode.execution.process.id
 schedule_id = fcode.execution.schedule.id   # when run from a schedule
 timezone = fcode.execution.timezone
 
+# Workspace (team) metadata
+team_slug = fcode.team.slug
+
 # Environment variables (secrets/config)
 api_key = os.getenv("API_KEY")  # or fcode.env.API_KEY
 
@@ -127,6 +130,10 @@ content = fcode.storage.download("path/myfile.txt")
 with open(local_path, "wb") as f:
     f.write(content)
 
+# Signed download URL — { "url", "expiresAt" }. A real HTTPS link in the
+# cloud, a file:// URL locally (same shape, no special-casing).
+signed = fcode.storage.create_signed_url("path/myfile.txt")
+
 fcode.storage.delete("path/myfile.txt")
 ```
 
@@ -163,6 +170,7 @@ schedule = fcode.schedule.create(
     "my-process",
     cron="0 0 6 * * SUN",  # or: date_time="2026-04-24T12:30:00.000"
     parameters={"foo": "bar"},
+    allow_concurrent_executions=False,  # optional
 )
 schedules = fcode.schedule.list(process_id=fcode.execution.process.id)
 fcode.schedule.pause(schedule["id"])
