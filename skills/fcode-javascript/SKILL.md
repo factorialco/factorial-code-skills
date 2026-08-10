@@ -59,6 +59,9 @@ const { id: processId, name: processName } = fcode.execution.process;
 const { id: scheduleId } = fcode.execution.schedule; // when run from a schedule
 const timezone = fcode.execution.timezone;
 
+// Workspace (team) metadata
+const teamSlug = fcode.team.slug;
+
 // Environment variables (secrets/config)
 const apiKey = process.env.API_KEY; // or fcode.env.API_KEY
 
@@ -123,6 +126,9 @@ await fcode.storage.upload("path/myfile.txt", fs.createReadStream(localPath));
 const files = await fcode.storage.list();
 const stream = await fcode.storage.download("path/myfile.txt");
 stream.pipe(fs.createWriteStream(localPath));
+// Signed download URL — { url, expiresAt }. A real HTTPS link in the cloud,
+// a file:// URL locally (same shape, no special-casing).
+const signed = await fcode.storage.createSignedUrl("path/myfile.txt");
 await fcode.storage.delete("path/myfile.txt");
 ```
 
@@ -161,6 +167,7 @@ await fcode.variables.delete("API_KEY");        // no-op on an inherited variabl
 const schedule = await fcode.schedule.create("my-process", {
   cron: "0 0 6 * * SUN", // or: dateTime: "2026-04-24T12:30:00.000"
   input: { parameters: { foo: "bar" } },
+  allowConcurrentExecutions: false, // optional
 });
 const schedules = await fcode.schedule.list({
   processId: fcode.execution.process.id,

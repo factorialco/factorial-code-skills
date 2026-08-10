@@ -11,7 +11,7 @@
     "onePasswordField": {
       "title": "One password field",
       "type": "string",
-      "description": "Password shoul be: \n 1. At least 12 characters long \n 2. Include a combination of uppercase and lowercase letters \n 3. At least one special character such as @, #, $, %",
+      "description": "Password should be: \n 1. At least 12 characters long \n 2. Include a combination of uppercase and lowercase letters \n 3. At least one special character such as @, #, $, %",
       "isSensitive": true,
       "ui": {
         "ui:placeholder": "Use a secure password"

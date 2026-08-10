@@ -9,12 +9,14 @@ notifications with order details to customers"
 **Agent:** "I'll help you create this integration. First, for sending emails,
 would you prefer:
 
-1. **Email service** (SendGrid, AWS SES) — easier setup, better deliverability
-2. **Direct SMTP** — more control, no third-party needed
+1. **Built-in `fcode.sendMail`** — zero setup, but a fixed From address and a
+   cap of 3 emails per execution (see `fcode-javascript` / `fcode-python`)
+2. **Email service** (SendGrid, AWS SES) — custom From, better for volume
+3. **Direct SMTP** — more control, no third-party needed
 
 Which approach?"
 
-**User:** "SendGrid"
+**User:** "SendGrid — there can be many orders per run"
 
 **Agent:** "Perfect! Here's the plan:
 

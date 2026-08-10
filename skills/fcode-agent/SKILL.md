@@ -53,9 +53,8 @@ Work in small steps, confirming at each one.
   Share results.
   - When a secret value is needed for discovery/testing, ask the user for it —
     or, if they prefer not to share it, ask them to put it in
-    `variables.local.env` themselves (see `fcode-cli`). For `FACTORIAL_TOKEN`,
-    point them to the OAuth flow in the Factorial Code app details page and the
-    copy dropdown option in the OAuth Dev app.
+    `variables.local.env` themselves. For `FACTORIAL_TOKEN`, follow the OAuth
+    procedure in `fcode-cli`.
   - Remind the user that local secret values aren't pushed — they must create
     those variables manually in the remote demo environment (except
     `FACTORIAL_TOKEN`, which is auto-populated remotely).
@@ -73,10 +72,9 @@ Then offer next steps: scheduling, webhooks (public, inheriting the workspace
 `webhookAuth` configuration, or with their own header and team variable), a form
 (public, or restricted to Factorial users), or exposing the process as an MCP
 tool — and pushing to cloud when ready. Pushing only updates the current code:
-consumers pinned to the `stable` alias (as webhook URLs and form embeds should
-be) are unaffected until a release moves the alias, which is done from the web
-UI — don't create workspace versions or move `stable` unless explicitly asked
-(see `fcode-core-concepts` and `fcode-cli`).
+consumers pinned to the `stable` alias are unaffected until a release moves the
+alias — don't create workspace versions or move `stable` unless explicitly
+asked (model in `fcode-core-concepts`, commands in `fcode-cli`).
 
 ## Creating MCP tools
 

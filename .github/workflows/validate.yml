@@ -1,0 +1,39 @@
+name: Validate skills
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Validate every skill with skills-ref
+        run: |
+          for dir in skills/*/; do
+            npx -y skills-ref validate "$dir"
+          done
+
+      - name: Check fcode-javascript and fcode-python stay mirrored
+        run: |
+          extract_headings() {
+            awk '/^```/{in_code=!in_code; next} !in_code && /^##/' "$1"
+          }
+          if ! diff \
+            <(extract_headings skills/fcode-javascript/SKILL.md) \
+            <(extract_headings skills/fcode-python/SKILL.md); then
+            echo "::error::fcode-javascript and fcode-python section headings diverged — semantic changes must land in both skills."
+            exit 1
+          fi

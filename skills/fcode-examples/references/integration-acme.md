@@ -88,9 +88,8 @@ Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
 }
 ```
 
-Set `webhookAuth` in **every** app workspace: it is not inherited through
-`parentTeamSlugs`, because auth resolves against the workspace addressed in the
-webhook URL rather than the one owning the code. Field reference in `fcode-cli`.
+Set `webhookAuth` in **every** app workspace — it is not inherited through
+`parentTeamSlugs` (why, and field reference, in `fcode-cli`).
 
 The platform authenticates the caller before the process runs, so there is
 nothing to check in code and the body stays minimal:
@@ -264,10 +263,10 @@ Vendor variables follow the `VENDOR__KEY` convention (matches
 `variableName()`).
 
 `FACTORIAL_TOKEN` is auto-populated in the remote environment — don't create
-it there. For local runs, obtain it via the OAuth flow in the Factorial Code
-app details page (copy dropdown in the OAuth Dev app) and put it in
-`variables.local.env`. Other sensitive variables must be created manually in
-the remote demo environment — local values aren't pushed (see `fcode-cli`).
+it there. For local runs, obtain it via the OAuth flow and put it in
+`variables.local.env` (procedure in `fcode-cli`). Other sensitive variables
+must be created manually in the remote demo environment — local values aren't
+pushed (see `fcode-cli`).
 
 ## Adapting to a real vendor — checklist
 

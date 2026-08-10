@@ -124,9 +124,9 @@ module.exports = { LinearApiClient };
 
 ## Setup step 1 — validate credentials, chain to step 2
 
-A minimal form (one password field, `"isSensitive": true`,
-`"ui:widget": "password"`). The process validates the key with a real API
-call, persists it as a team variable, and chains by returning
+A minimal form (one credential field with `"isSensitive": true`, which renders
+a password input — see `fcode-json-schema`). The process validates the key
+with a real API call, persists it as a team variable, and chains by returning
 `nextProcessId`:
 
 ```javascript
@@ -380,16 +380,12 @@ await fcode.datastore.set(
 );
 ```
 
-Two rules this encodes:
+The rules this encodes — a secret is reported, never echoed; blank on submit
+means "keep the current value"; the credential field is not `required`; a
+pre-render defaults missing state instead of throwing — are the pre-fill
+contract in `fcode-forms` (`references/advanced.md`).
 
-- **Secrets are reported, never echoed.** The schema response travels over HTTP
-  and lands in the browser DOM; `authMode: FACTORIAL` limits *who* sees it, not
-  *where it goes*. Show "configured", never the value — not even masked, since a
-  masked value then has to be told apart from a real one on submit.
-- **A pre-render failure fails the form load.** Default missing state (`?? 1`,
-  `|| "{}"`) instead of throwing.
-
-That second rule changes the install-flow snippet above. Throwing on a missing
+The no-throw rule changes the install-flow snippet above. Throwing on a missing
 `LINEAR_API_KEY` is fine while the form is only ever reached from step 1, which
 just stored it — but the moment the same form is also the `SETTINGS` screen, that
 throw makes it unopenable in precisely the state where the user needs it to enter

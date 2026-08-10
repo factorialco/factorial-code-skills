@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → dependencies:install → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (team:versions, team:aliases, the stable alias, version_tag on webhook URLs), when to run each command, --force safety, worked examples, and the workspace config files (process metadata.json with webhook authMode/auth and form authMode/appRole, team.json with the workspace webhookAuth and versions/aliases, the three variables files including inherited variables from parent workspaces, variables.meta.json). Use when running fcode CLI commands, testing a Factorial Code process locally, deploying/syncing Factorial Code (fcode) resources to the cloud, managing workspace versions or aliases, overriding an inherited team variable, or activating and protecting a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (the stable alias, version_tag), and the workspace config files (process metadata.json, team.json, the three variables files, variables.meta.json). Use when running fcode CLI commands, testing a process locally, syncing to the cloud, managing versions or aliases, overriding an inherited team variable, or configuring a process's webhook or form settings.
 license: MIT
 metadata:
   category: factorial-code

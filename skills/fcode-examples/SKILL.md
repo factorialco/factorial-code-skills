@@ -65,6 +65,14 @@ reimplement them:
 Integration apps inherit base-integration-app (which inherits base-app);
 custom apps inherit base-app directly.
 
+Note: the `fcode-forms` **module** above (form-schema builders you
+`fcode.import`) is unrelated to the `fcode-forms` **skill**, which documents
+embedding forms on webpages.
+
+The references keep code compact and omit routine logging; real
+implementations should log verbosely through the shared `fcode-logs` module
+(see `fcode-javascript` / `fcode-python`).
+
 ## Language variants
 
 Every sample exists in JavaScript (Node.js v22) and Python (3.13) with
