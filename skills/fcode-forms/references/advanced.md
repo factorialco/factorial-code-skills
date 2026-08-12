@@ -230,11 +230,7 @@ who only wants to change the sync interval can't submit. Two more things:
 
 Visible text is translated by writing `fcode.i18n("key")` tokens in the schema,
 substituted server-side from the workspace's locales before the schema is
-served — full model and migration guide in `fcode-i18n`. The old client-side
-`i18nVariables` mechanism was **removed** in `@factorialco/fcode-react-forms`
-2.0.0 (`{{token}}` placeholders now render as empty strings). `fallbackLocale`
-survives with one narrow meaning: the language of rjsf's built-in validation
-messages when `locale` is not one it ships.
+served — full model and migration guide in `fcode-i18n`.
 
 ## Reacting to user input
 
