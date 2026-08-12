@@ -103,7 +103,7 @@ protected. Field reference in `fcode-cli`.
 Two mandatory inputs, both **slugs**, plus the version pin you should always
 add:
 
-- **`fcode-team-slug`** — from `https://code.factorial.dev/platform/<fcode-team-slug>`
+- **`fcode-team-slug`** — from `https://code.factorialhr.com/platform/<fcode-team-slug>`
 - **`fcode-process-slug`** — the **Slug** field on the process Dashboard (e.g.
   `send-welcome-email`)
 - **process version** — pin it to the `stable` alias (next section)
@@ -121,7 +121,7 @@ same exposure webhooks have). Settle the slug before handing out embed code.
 Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 
 ```html
-<script defer src="https://code.factorial.dev/sdk/forms.js"></script>
+<script defer src="https://code.factorialhr.com/sdk/forms.js"></script>
 ```
 
 **Method 1 — data attributes** (SDK replaces the element):

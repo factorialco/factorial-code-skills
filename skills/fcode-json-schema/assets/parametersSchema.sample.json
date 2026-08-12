@@ -1,11 +1,11 @@
 {
-  "title": "Full [fcode forms](https://code.factorial.dev) form sample",
-  "description": "This is a sample form specification showing all available attribute types for [fcode forms](https://code.factorial.dev)",
+  "title": "Full [fcode forms](https://code.factorialhr.com) form sample",
+  "description": "This is a sample form specification showing all available attribute types for [fcode forms](https://code.factorialhr.com)",
   "type": "object",
   "properties": {
     "oneStringField": {
-      "title": "![alt text](https://code.factorial.dev/logo.svg)  *[fcode](https://code.factorial.dev)* form title",
-      "description": "Visit [fcode](https://code.factorial.dev) form description",
+      "title": "![alt text](https://code.factorialhr.com/logo.svg)  *[fcode](https://code.factorialhr.com)* form title",
+      "description": "Visit [fcode](https://code.factorialhr.com) form description",
       "type": "string"
     },
     "onePasswordField": {
@@ -32,7 +32,7 @@
       "maximum": 500
     },
     "oneBooleanField": {
-      "title": "One boolean field with [link](https://code.factorial.dev)",
+      "title": "One boolean field with [link](https://code.factorialhr.com)",
       "type": "boolean"
     },
     "oneEmailField": {

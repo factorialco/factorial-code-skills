@@ -18,7 +18,7 @@ Configurable via data attributes, `Fcode.initForm` options, or React props:
 - **Submission headers** — `headers` (`data-fcode-form-headers`): extra request
   headers.
 - **API host override** — `hostUrl` (`data-fcode-form-host-url`): point the embed
-  at a different backend (default `https://code.factorial.dev/platform`).
+  at a different backend (default `https://code.factorialhr.com/platform`).
 
 ## Styling & appearance
 
@@ -36,7 +36,7 @@ schema:
 
 - **`theme`** — `"light"` (default) or `"none"`. `light` injects the SDK's
   standalone stylesheet
-  (`https://code.factorial.dev/sdk/styles-theme-light.css`); `"none"` injects
+  (`https://code.factorialhr.com/sdk/styles-theme-light.css`); `"none"` injects
   nothing, which is what you want when the host app brings its own styling (see
   the f0 theme below). Custom theme: extend that CSS file and set
   `embedFormOptions.themeStylesheet` (a URL or inline CSS).
