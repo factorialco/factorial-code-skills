@@ -67,9 +67,14 @@ Executes a process locally for development/testing. Uses `variables.env` /
 fcode run my-process --parameters '{"key": "value"}'
 fcode run my-process --parameters ./params.json
 fcode run my-process                                  # default parameters.json
+fcode run my-process --locale pt-BR                   # resolve fcode.i18n in that locale
 ```
 
 Prerequisite: run `fcode add` first if the resource was just created.
+
+`--locale` resolves `fcode.i18n` against the local `i18n/` files exactly as the
+cloud does — see `fcode-i18n` (including why a typo in the flag silently
+resolves every key to itself).
 
 ### `fcode http`
 
@@ -150,6 +155,15 @@ fcode team:aliases:delete stable
   one on every owned entity that has the target tag published (entities without
   it are skipped and reported). Re-pointing `stable` at an older tag **is** the
   rollback: every consumer pinned to `stable` switches in one operation.
+
+### `fcode i18n:*`
+
+`i18n:pull` / `i18n:push` / `i18n:status` / `i18n:add <locale>` /
+`i18n:remove <locale>` / `i18n:reset` sync the workspace's translation files —
+`i18n/<locale>.yaml`, plus the read-only, gitignored
+`i18n/<locale>.inherited.yaml` that `pull` writes. Aggregate `fcode pull` /
+`push` / `status` include locales already. File format, inheritance model, and
+the internationalization workflow in `fcode-i18n`.
 
 ## Process metadata — `metadata.json`
 
@@ -236,8 +250,9 @@ curl -X POST "https://code.factorialhr.com/platform/api/<team-slug>/webhooks/<pr
 - `version_tag` takes a version tag (`v1.0.0`) or an alias. Use `stable`: it
   always exists, and releases/rollbacks then happen by moving the alias — the
   external system is never touched. It is equivalent to the `Fcode-Version-Tag`
-  header and takes precedence over it. `version_tag` and `async` are reserved
-  names, stripped before the parameters reach the process.
+  header and takes precedence over it. `version_tag`, `async` and `locale` are
+  reserved names, stripped before the parameters reach the process (`locale`
+  selects the execution's language — see `fcode-i18n`).
 - **An unknown or malformed version does not fail the call.** The process runs
   its current version and the platform only logs a server-side warning — a typo
   runs the current version silently. When a run behaves unexpectedly, check the
@@ -256,6 +271,7 @@ exists first).
 | `zoneId` | string, optional | Team timezone (e.g. for schedules) |
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
+| `primaryLocale` | string, optional | The workspace's main language: the locale used when a caller names none, and the key-level fallback for untranslated keys (see `fcode-i18n`) |
 | `versions` | array, **pull-only** | Workspace versions: `{ tag, comment, createdAt }` |
 | `aliases` | array, **pull-only** | Workspace aliases: `{ name, tag }` |
 

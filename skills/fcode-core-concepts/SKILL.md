@@ -47,6 +47,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Variables** | Configuration & secrets | Env vars; inherited from parent workspaces; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only** |
 | **Storage** | File storage | Binary files, documents, large payloads |
+| **Locales** | Per-language translation files (`i18n/<locale>.yaml`) | Resolved by `fcode.i18n`; inherited key by key from parents — see `fcode-i18n` |
 | **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
 
 ### Processes
@@ -161,6 +162,9 @@ When a workspace version is published, bare `fcode.import("mod")` /
 `fcode.import_module("mod")` calls of workspace-owned modules are pinned to the
 tag **inside the published snapshots only** — the working copy is never
 modified, and imports that already carry a tag or alias are left untouched.
+A workspace version also publishes every owned **locale** and pins bare
+`fcode.i18n` calls the same way, in code and in form schemas, so a release
+ships with its translations frozen — see `fcode-i18n`.
 
 A **version alias** is a movable pointer to a version. The `stable` alias
 always exists and points at the workspace's stable version. Webhooks, forms,
@@ -222,6 +226,9 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ```
 📦 <workspace-name>
 ┣ 📂 dependencies          # shared deps: package.json (JS) / requirements.txt (Py)
+┣ 📂 i18n
+┃ ┣ 📜 <locale>.yaml       #   translations this workspace owns (see fcode-i18n)
+┃ ┗ 📜 <locale>.inherited.yaml  # inherited translations (read-only, gitignored)
 ┣ 📂 modules
 ┃ ┗ 📂 <module-slug>       # one folder per module
 ┃   ┗ 📜 <module-slug>.js  #   entry file named after the slug (NOT index.js)

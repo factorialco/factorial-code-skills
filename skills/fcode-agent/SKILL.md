@@ -90,6 +90,9 @@ any MCP client connected to the Factorial Code MCP Server — tag and go.
   process files.
 - **`yc_api_<method>`** — manage Factorial Code resources (e.g.
   `yc_api_create_process`, `yc_api_update_process`, `yc_api_delete_process`).
+- **`get_locales` / `get_locale` / `save_locale` / `delete_locale`** — manage
+  workspace translation files. `save_locale` replaces the whole file, so
+  read-modify-write when adding keys; model in `fcode-i18n`.
 - Use other Factorial Code MCP tools when needed.
 
 ## Code quality & security

@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, the FcodeForm React component), version pinning to the stable alias, access restriction (authMode), driving behavior from the process return value, styling and themes (including the f0 theme inside Factorial), i18n, multi-step flows, pre-filling current values, and file uploads. Use when embedding, configuring, styling, restricting, version-pinning, pre-filling, or wiring up a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, the FcodeForm React component), version pinning to the stable alias, access restriction (authMode), driving behavior from the process return value, styling and themes (including the f0 theme inside Factorial), multi-step flows, pre-filling current values, and file uploads. Use when embedding, configuring, styling, restricting, version-pinning, pre-filling, or wiring up a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -36,6 +36,10 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   and field `transformFn` were removed, a returned `jsCallback` is ignored, and
   authored HTML is sanitized. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
+- **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
+  substituted server-side before the schema is served. The old client-side
+  `i18nVariables` was removed in 2.0.0 — `{{token}}` now renders as an empty
+  string. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
   synchronous process fast, or run long work asynchronously (see below).
 - Prefer driving UX from the **process return value** (below); reserve
@@ -305,6 +309,6 @@ process if only needed transiently.
 For styling and the two themes (including the f0 theme to use when embedding in a
 React app inside Factorial), initial/hidden values, async submission, custom
 headers, API-host override, variables replacement, pre-rendering current values
-into install/settings forms, internationalization, reacting to user input from
-your own page (the React `onChange` prop, the `fcode-forms-*` DOM events), and
-modal rendering, read `references/advanced.md`.
+into install/settings forms, reacting to user input from your own page (the
+React `onChange` prop, the `fcode-forms-*` DOM events), and modal rendering,
+read `references/advanced.md`.

@@ -28,6 +28,9 @@ Guidelines for writing Python that runs on Factorial Code. Runtime is
 - **`fcode.import_module()` names must be hardcoded string literals**, never
   variables: `fcode.import_module("shopify-client")` ✅,
   `fcode.import_module(name)` ❌.
+- **Never alias `fcode.i18n`** — call it literally (`fcode.i18n("key")` ✅,
+  `t = fcode.i18n` ❌): an aliased call throws "i18n is disabled" at
+  runtime. Missing keys resolve to the key itself. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `json.dumps` objects before
   `set`, `json.loads` after `get`.
 - **Use snake_case**, not camelCase; follow PEP 8; add type hints where helpful.
@@ -70,6 +73,10 @@ client_v1 = fcode.import_module("module-name", "v1.0.0")  # pinned version tag o
 
 # Run another process
 fcode.processes.run("process-identifier", options)
+
+# Translations (workspace locales — see fcode-i18n)
+greeting = fcode.i18n("greetings.hello", {"name": "Ada"})  # %{name} filled in
+locale = fcode.i18n.locale  # the execution's locale
 ```
 
 ## Logging

@@ -29,6 +29,9 @@ Guidelines for writing JavaScript that runs on Factorial Code. Runtime is
 - **Never call `main()` yourself** — Factorial Code invokes it.
 - **`fcode.import()` names must be hardcoded string literals**, never variables:
   `fcode.import("shopify-client")` ✅, `fcode.import(name)` ❌.
+- **Never alias `fcode.i18n`** — call it literally (`fcode.i18n("key")` ✅,
+  `const t = fcode.i18n` ❌): an aliased call throws "i18n is disabled" at
+  runtime. Missing keys resolve to the key itself. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `JSON.stringify` objects before
   `set`, parse after `get`.
 - Use `async/await` for all async work; wrap the main flow in `try/catch`, log
@@ -71,6 +74,10 @@ const { myFunc: v1 } = fcode.import("module-name", "v1.0.0"); // pinned version 
 
 // Run another process
 await fcode.processes.run("process-identifier", options);
+
+// Translations (workspace locales — see fcode-i18n)
+const greeting = fcode.i18n("greetings.hello", { name: "Ada" }); // %{name} filled in
+const locale = fcode.i18n.locale; // the execution's locale
 ```
 
 ## Logging
