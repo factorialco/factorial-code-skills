@@ -59,3 +59,6 @@ so its `ui:` options apply.
   were removed, and `rawHtml` content is sanitized (no `<script>`, no inline
   `on*` handlers, no `javascript:` URLs). Client-side behaviour belongs in the
   embedding page — see `fcode-forms`.
+- **Visible text can be translated**: schema strings (titles, descriptions,
+  `ui:placeholder`) accept `fcode.i18n("key")` tokens, substituted server-side
+  before the form is served — see `fcode-i18n`.

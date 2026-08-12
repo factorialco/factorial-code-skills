@@ -1,8 +1,8 @@
 # Factorial Code Forms — advanced
 
-Read this when styling/theming a form, doing internationalization, reacting to
-user input client-side, or rendering the form in a modal. Core embedding,
-result handling, multi-step, and file uploads are in `SKILL.md`.
+Read this when styling/theming a form, reacting to user input client-side, or
+rendering the form in a modal. Core embedding, result handling, multi-step,
+and file uploads are in `SKILL.md`; translating form text is in `fcode-i18n`.
 
 ## Initial values, async, headers, API host
 
@@ -17,6 +17,9 @@ Configurable via data attributes, `Fcode.initForm` options, or React props:
   execution ID immediately instead of waiting (use for long-running processes).
 - **Submission headers** — `headers` (`data-fcode-form-headers`): extra request
   headers.
+- **Locale** — `locale` (`data-fcode-form-locale`): the language the form loads
+  and submits in, sent as the `Fcode-Locale` header; changing it refetches the
+  schema. Model in `fcode-i18n`.
 - **API host override** — `hostUrl` (`data-fcode-form-host-url`): point the embed
   at a different backend (default `https://code.factorial.dev/platform`).
 
@@ -225,21 +228,9 @@ who only wants to change the sync interval can't submit. Two more things:
 
 ## Internationalization
 
-Use mustache tokens for visible text and supply `i18nVariables` per locale inside
-`embedFormOptions`, then set `locale` (and optional `fallbackLocale`) in the
-embed `options`:
-
-```json
-"embedFormOptions": {
-  "i18nVariables": {
-    "en": { "title": "Signup form" },
-    "es": { "title": "Formulario de registro" }
-  }
-}
-```
-
-The selected locale is sent on submit — available in process code as
-`fcode.context.parameters.metadata.locale`.
+Visible text is translated by writing `fcode.i18n("key")` tokens in the schema,
+substituted server-side from the workspace's locales before the schema is
+served — full model and migration guide in `fcode-i18n`.
 
 ## Reacting to user input
 

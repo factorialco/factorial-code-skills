@@ -14,7 +14,8 @@ repeat the explanation across skills.
 | CLI commands and flow, `metadata.json` / `team.json` field reference, webhook auth mechanics, the three variables files, `variables.meta.json`, the `FACTORIAL_TOKEN` OAuth procedure, `version_tag` on URLs | `fcode-cli` |
 | Language usage: runtime helpers, code snippets, logging, dependencies, return values | `fcode-javascript` / `fcode-python` |
 | `parametersSchema.json` field types, widgets, validation | `fcode-json-schema` |
-| Form embedding, themes, access restriction, pre-render / pre-fill contract, i18n, multi-step | `fcode-forms` |
+| Form embedding, themes, access restriction, pre-render / pre-fill contract, multi-step | `fcode-forms` |
+| Locales & translations: locale files and inheritance, the `fcode.i18n` helper, form-schema i18n tokens, execution-locale selection, locale versioning, `i18n:*` commands | `fcode-i18n` |
 | Agent working method, MCP tools | `fcode-agent` |
 | Worked, adaptable examples (code, not rules — rules live with their owner) | `fcode-examples` |
 
