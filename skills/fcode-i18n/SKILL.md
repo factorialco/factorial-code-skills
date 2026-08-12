@@ -36,10 +36,6 @@ embedding in `fcode-forms`.
   regenerated on pull. To override an inherited key, write it into your own
   `i18n/<locale>.yaml`: overrides layer **key by key**, never file by file, so
   keys you don't mention keep resolving to the parent's text.
-- **Breaking (forms):** the client-side `i18nVariables` mechanism was removed
-  in `@factorialco/fcode-react-forms` 2.0.0 — schemas still using it render
-  their `{{token}}` placeholders as **empty strings**. Migrate to
-  `fcode.i18n(...)` tokens (below).
 - **`locale` is a reserved name** on form and webhook endpoints, like
   `version_tag` and `async`: it selects the language and is stripped before
   the parameters are built. A form field or webhook body field named `locale`
@@ -146,13 +142,9 @@ The reader's locale comes from the embed: `locale` in the embed options or the
 `data-fcode-form-locale` attribute, sent to the platform as the `Fcode-Locale`
 header. Changing it refetches the schema, and the submit carries the same
 header, so the execution runs in the language the form was rendered in.
-Embedding mechanics in `fcode-forms`.
-
-Migrating from the removed `i18nVariables`: move each language's strings into
-a locale file, replace every `{{token}}` with an `fcode.i18n("key")` token,
-and drop the `i18nVariables` block. `fallbackLocale` survives with one narrow
-meaning — the language of rjsf's built-in validation messages when `locale`
-isn't one it ships.
+Embedding mechanics in `fcode-forms`. (`fallbackLocale` in the embed options
+plays no part here — it only selects the language of rjsf's built-in
+validation messages when `locale` isn't one it ships.)
 
 ## How the execution locale is chosen
 

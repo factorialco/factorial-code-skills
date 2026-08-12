@@ -37,9 +37,7 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   authored HTML is sanitized. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
-  substituted server-side before the schema is served. The old client-side
-  `i18nVariables` was removed in 2.0.0 — `{{token}}` now renders as an empty
-  string. See `fcode-i18n`.
+  substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
   synchronous process fast, or run long work asynchronously (see below).
 - Prefer driving UX from the **process return value** (below); reserve
