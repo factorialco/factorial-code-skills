@@ -32,13 +32,22 @@ signing in. The creation flow asks for:
    They bound the app's permissions, so request only what the app needs.
    Scopes can be extended later from the app's OAuth section, which re-opens
    the corresponding setup step.
-3. **Integrations framework** — whether the app uses it (docs:
-   `/docs/building-apps/integrations-framework/`). Framework apps target
-   outbound sync (pushing compensation, expenses, or employee updates to an
-   external system) and inherit templates that speed that up: the
-   `base-integration-app` workspace provides the generic `OutboundSync`
-   orchestrator, so the developer implements only the mapping. A standard app
-   is free-form: forms, scheduled jobs, webhooks, reports, inbound syncs.
+3. **Integrations framework** — whether the app uses it. **Steer users away
+   from checking this unless they already know what the framework provides**:
+   plenty of apps sync data with external systems without it, and opting in
+   changes what they build. It applies when the app pushes one of the
+   supported capabilities — the Factorial data types it can sync are
+   **employee compensation, expenses, and employee updates (for example,
+   leaves)** — from Factorial to an external system. Its key benefit is the
+   feedback end users get on every sync — success, errors, or a missing
+   configuration that needs attention — surfaced right in Factorial instead
+   of failing silently. Framework apps inherit the `base-integration-app`
+   templates (the generic `OutboundSync` orchestrator), so the developer
+   implements only the mapping. Platform docs:
+   `/docs/building-apps/integrations-framework/`; full specification:
+   `https://apidoc.factorialhr.com/docs/integrations-framework`. A standard
+   app is free-form: forms, scheduled jobs, webhooks, reports, syncs of any
+   other shape.
 
 App lifecycle: `active → published → suspended → archived` (`published` is a
 side effect of the first deployed release, never set by hand; suspended and
@@ -68,8 +77,10 @@ token obtained in the development flow lands in the dev workspace; the
 production one is what customers use to authorize their Factorial account.
 Docs: `/docs/building-apps/oauth/`.
 
-- **Internal**: configure it yourself from the app's Development and
-  Production tabs (the checklist links straight to it).
+- **Internal**: create the OAuth application yourself in the **Factorial
+  Backoffice** (registering the redirect URIs the app's OAuth dialog shows),
+  then enter the client credentials on the app's Development / Production
+  tab — the checklist links straight to it.
 - **Partner / IC**: an administrator preconfigures the OAuth application; it
   appears on the environment tabs once done. (Automatic creation is planned.)
 
@@ -103,8 +114,8 @@ and continue integration testing there. CLI reference: `fcode-cli` skill and
 Demo companies simulate Factorial customers for the testing phase. They are
 managed on the **Demo Companies** page and belong to the development team.
 
-- **Internal**: create demo companies directly, including through the
-  **Demo generator**, and save them in Factorial Code.
+- **Internal**: create demo companies directly using the **Demo generator**,
+  and save them in Factorial Code.
 - **Partner / IC**: use **Request a demo company**; an administrator
   provisions it and you are notified by email when it's ready.
 

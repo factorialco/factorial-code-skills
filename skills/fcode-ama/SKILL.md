@@ -25,7 +25,7 @@ early — several flows diverge by role:
 
 | Role | Who | Key differences |
 |---|---|---|
-| **Factorial internal** | Developers at Factorial | Self-serve OAuth app configuration; create demo companies directly (incl. the Demo generator); Slack `#factorial-code-users` available |
+| **Factorial internal** | Developers at Factorial | Create their own OAuth apps in the **Factorial Backoffice**; create demo companies directly (using the Demo generator); Slack `#factorial-code-users` available |
 | **Partner** | External companies building apps/integrations with Factorial | OAuth app preconfigured by an administrator; demo companies by request |
 | **Individual Contributor** | Someone building their own app or automation (may be a customer, but not always — never call this role "end customer") | Same as Partner |
 
@@ -85,11 +85,11 @@ App console areas:
 | # | Stage | Where | What happens |
 |---|---|---|---|
 | 1 | Request access | Landing page → request-access form | An administrator reviews it; you're notified of the outcome and can then sign in. Joins an existing development team when one matches |
-| 2 | Create an App | Apps → create | Name and purpose; language (**JavaScript** or **Python**); **OAuth scopes** (they bound what the app may do on the Factorial API); whether it uses the **integrations framework** |
+| 2 | Create an App | Apps → create | Name and purpose; language (**JavaScript** or **Python**); **OAuth scopes** (they bound what the app may do on the Factorial API); whether it uses the **integrations framework** — opt in only when you know what it provides (see `references/journey.md`) |
 | 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure dev/prod OAuth (only when scopes were requested), publish a release, add marketplace metadata |
-| 4 | Configure OAuth | Development / Production tabs | Client credentials for the OAuth flow against the Factorial API. Internal teams configure their own; for Partners and Individual Contributors an administrator preconfigures it (automation planned) |
+| 4 | Configure OAuth | Development / Production tabs | Client credentials for the OAuth flow against the Factorial API. Internal teams create the OAuth app themselves in the Factorial Backoffice; for Partners and Individual Contributors an administrator preconfigures it (automation planned) |
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` to the cloud dev workspace |
-| 6 | Demo company | Demo Companies page | Internal: create directly (or use the Demo generator). Partner/IC: request one; it's provisioned and you're notified by email |
+| 6 | Demo company | Demo Companies page | Internal: create directly (using the Demo generator). Partner/IC: request one; it's provisioned and you're notified by email |
 | 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials and install the app; exercise its `appRole` forms |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); the platform validates it; when deployed, the snapshot lands in the read-only prod workspace and the app becomes **published** |
 | 9 | Publish listing | App detail → Publication tab | Metadata for the marketplace listing: link a DatoCMS record and/or fill the fallback (tagline, description, categories, screenshots); mark private if needed |

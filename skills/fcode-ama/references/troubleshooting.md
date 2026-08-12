@@ -15,6 +15,14 @@ instead — see the routing table in `SKILL.md`.
 
 ## App creation & setup
 
+- **"Should I enable the integrations framework?"** Only when the app pushes
+  one of its supported capabilities — employee compensation, expenses, or
+  employee updates (e.g. leaves) — to an external system, and you want each
+  sync's outcome (success, errors, missing configuration) surfaced to end
+  users in Factorial. "It syncs with an external system" alone is not a
+  reason: apps do that without the framework. When the user is unsure, probe
+  the use case before they check it — see stage 2 in `journey.md` and
+  `https://apidoc.factorialhr.com/docs/integrations-framework`.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the app's OAuth section and the setup steps reappear.
