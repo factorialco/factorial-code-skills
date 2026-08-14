@@ -109,7 +109,7 @@ sorted by slug, capped at 5 — so it is **not transitive** (a grandparent's
 variables don't reach a grandchild).
 
 - **Don't re-create a parent's variables in a child.** They already resolve
-  there. This is why a `deploy-{deployId}` workspace carries only the values
+  there. This is why a `deploy-{installationId}` workspace carries only the values
   specific to that customer, while shared defaults and credentials stay in
   `prod-{appId}` / `base-app`.
 - **Defining the same key in the child overrides the inherited one** for that

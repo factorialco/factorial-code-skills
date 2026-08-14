@@ -1,7 +1,7 @@
 # Factorial Code skills
 
 Official [Agent Skills](https://agentskills.io/) for building on the
-[Factorial Code](https://code.factorial.dev) platform. These skills are the
+[Factorial Code](https://code.factorialhr.com) platform. These skills are the
 canonical home of the Factorial Code AI rules — install them into any
 skills-compatible coding agent (Claude Code, Codex, Cursor, …) so it knows how
 to write processes and modules, use the CLI, author input-parameter schemas,
@@ -23,6 +23,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 
 | Skill | What it covers |
 |-------|----------------|
+| [`fcode-ama`](skills/fcode-ama) | The platform user journey and support: access requests, teams, app creation, OAuth setup, demo companies, the Dev Marketplace, releases, publication, escalation paths. |
 | [`fcode-core-concepts`](skills/fcode-core-concepts) | Platform architecture: processes, modules, execution context, variables, datastore, storage, workspace layout. Start here. |
 | [`fcode-javascript`](skills/fcode-javascript) | Writing JavaScript (Node.js v22) processes and modules. |
 | [`fcode-python`](skills/fcode-python) | Writing Python 3.13 processes and modules. |

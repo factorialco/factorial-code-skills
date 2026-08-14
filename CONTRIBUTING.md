@@ -11,6 +11,7 @@ repeat the explanation across skills.
 | Concept | Owner |
 |---|---|
 | Platform model: processes, modules, execution context, variables & inheritance model, datastore vs storage, versioning & alias model | `fcode-core-concepts` |
+| Platform journey & support: access requests, development teams, app creation, OAuth app setup, demo companies, Dev/production marketplace experience, installations, release & promotion flow, publication (DatoCMS, private apps), escalation channels, support-agent behavior | `fcode-ama` |
 | CLI commands and flow, `metadata.json` / `team.json` field reference, webhook auth mechanics, the three variables files, `variables.meta.json`, the `FACTORIAL_TOKEN` OAuth procedure, `version_tag` on URLs | `fcode-cli` |
 | Language usage: runtime helpers, code snippets, logging, dependencies, return values | `fcode-javascript` / `fcode-python` |
 | `parametersSchema.json` field types, widgets, validation | `fcode-json-schema` |
