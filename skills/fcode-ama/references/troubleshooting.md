@@ -86,6 +86,11 @@ instead — see the routing table in `SKILL.md`.
 - **"Where do I see an installation's logs / variables / schedules?"** In its
   `deploy-` workspace — the Dev Marketplace app page links to it beside the
   company selector for every company with an installation.
+- **"How do I get a `FACTORIAL_TOKEN` for an installed company?"** Use
+  **Copy FACTORIAL_TOKEN** in the installation's "…" menu — on the
+  Installations page or the Dev Marketplace app page. It's a live API
+  credential for that company: put it in `variables.local.env`, never commit
+  or log it (procedure in `fcode-cli`).
 - **"Where did the installations table on the app page go?"** The Development
   and Production tabs now show a count that links to the Installations page,
   pre-filtered for that app and environment.

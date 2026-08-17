@@ -400,7 +400,11 @@ without the value ever appearing in the conversation.
   populates it automatically, so don't create it there. To obtain it, the user
   completes the OAuth flow in the Factorial Code app details page, then copies
   the generated token with the copy dropdown option in the OAuth Dev app, and
-  puts it in `variables.local.env` (or shares it, per their preference).
+  puts it in `variables.local.env` (or shares it, per their preference). To run
+  in a specific installed company's context instead, copy that `deploy-`
+  workspace's token with **Copy FACTORIAL_TOKEN** in the installation's "…"
+  menu (Installations page or Dev Marketplace app page) — same file, same
+  handling.
 - Once obtained, never echo secret values back in output or logs.
 
 ## Examples

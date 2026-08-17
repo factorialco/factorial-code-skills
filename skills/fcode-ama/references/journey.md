@@ -151,6 +151,12 @@ and webhooks live. The app's Development and Production tabs show an
 installations count linking to the Installations page filtered for that app
 and environment.
 
+An installation's "…" menu offers **Copy FACTORIAL_TOKEN** — that `deploy-`
+workspace's Factorial API token, for running processes locally in that
+company's context (goes in `variables.local.env`; handle as a secret — see
+`fcode-cli`). The menu is available on the Dev Marketplace app page (with
+Re-install / Uninstall) and on the Installations page (with Suspend).
+
 ### appRole forms
 
 The marketplace views render the app's forms according to the `appRole` set
