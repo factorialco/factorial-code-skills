@@ -16,9 +16,9 @@ Factorial Code Cloud. For the platform model see `fcode-core-concepts`.
 First time on a machine: install with `pnpm install -g @factorialco/fcode-cli`,
 then **`fcode clone <workspace-slug>`** to bring a cloud workspace down into a
 `<workspace-slug>/` folder (it also installs these agent skills; skip that with
-`--skipSkillsSetup`). The App detail page's build guide shows the exact clone
-command for an App's dev workspace — copy it from there, the slug is an encoded
-token, not the App's UUID.
+`--skipSkillsSetup`). The "How to build locally" guide on an App's Development
+tab shows the exact clone command for its dev workspace — copy it from there,
+the slug is an encoded token, not the App's UUID.
 
 When making and testing changes in an already-cloned workspace:
 

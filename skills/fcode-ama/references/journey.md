@@ -30,8 +30,8 @@ signing in. The creation flow asks for:
    workspaces the app inherits).
 2. **OAuth scopes** — the scopes the app will request on the Factorial API.
    They bound the app's permissions, so request only what the app needs.
-   Scopes can be extended later from the app's OAuth section, which re-opens
-   the corresponding setup step.
+   Scopes can be extended later from the app settings' OAuth tab, which
+   re-opens the corresponding setup step.
 3. **Integrations framework** — whether the app uses it. **Steer users away
    from checking this unless they already know what the framework provides**:
    plenty of apps sync data with external systems without it, and opting in
@@ -77,12 +77,16 @@ token obtained in the development flow lands in the dev workspace; the
 production one is what customers use to authorize their Factorial account.
 Docs: `/docs/building-apps/oauth/`.
 
+OAuth lives on the **App settings → OAuth tab**: the requested scopes,
+followed by the development and production credentials. The Getting started
+checklist and the Dev Marketplace's "Configure dev OAuth" both link there.
+
 - **Internal**: create the OAuth application yourself in the **Factorial
-  Backoffice** (registering the redirect URIs the app's OAuth dialog shows),
-  then enter the client credentials on the app's Development / Production
-  tab — the checklist links straight to it.
+  Backoffice** (registering the redirect URIs the credential dialog shows),
+  then enter the client credentials in that environment's dialog on the
+  OAuth tab.
 - **Partner / IC**: an administrator preconfigures the OAuth application; it
-  appears on the environment tabs once done. (Automatic creation is planned.)
+  appears on the OAuth tab once done. (Automatic creation is planned.)
 
 Once running, tokens are handled by the platform — installed apps get their
 OAuth tokens automatically; there is no credential handling in app code.
@@ -97,10 +101,11 @@ pnpm install -g @factorialco/fcode-cli
 fcode clone <dev-workspace-slug>
 ```
 
-Copy both commands from the App detail page's build guide — it fills in the
-real workspace slug. The slug's `dev-…` token is an **encoded value, not the
-app's UUID**: typing `fcode clone dev-<uuid from the browser URL>` will not
-work.
+Copy both commands from the **"How to build locally"** guide on the app's
+Development tab (which also shows the dev workspace slug with a copy icon) —
+it fills in the real workspace slug. The slug's `dev-…` token is an **encoded
+value, not the app's UUID**: typing `fcode clone dev-<uuid from the browser
+URL>` will not work.
 
 The clone brings the whole skeleton: the workspace layout, and the shared
 base code every app inherits — Factorial API clients, helpers for webhooks,
@@ -138,6 +143,13 @@ available in every installation.
 
 Installation lifecycle: `configuration_pending → active → suspended →
 deprovisioned` (`active` once the customer completes setup).
+
+For each company that has an installation, the Dev Marketplace app page
+links to its `deploy-` workspace (beside the company selector) — that
+workspace is where the installation's execution logs, variables, schedules,
+and webhooks live. The app's Development and Production tabs show an
+installations count linking to the Installations page filtered for that app
+and environment.
 
 ### appRole forms
 
@@ -197,7 +209,8 @@ The App detail page's **Publication** tab manages what the listing shows:
   single language suffices.
 
 **Private apps**: a private app is discoverable and installable only by an
-allow-list of Factorial companies (it must still be published). To make a
+allow-list of Factorial companies (it must still be published). The
+visibility settings live in **App settings → Configuration**. To make a
 private app available to a company, a **production installation** is created
 from the App detail page — by an administrator or by a developer who provides
 the Factorial company ID (Factorial's Forward Deployed Engineers do this for
