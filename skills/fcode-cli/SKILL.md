@@ -16,9 +16,9 @@ Factorial Code Cloud. For the platform model see `fcode-core-concepts`.
 First time on a machine: install with `pnpm install -g @factorialco/fcode-cli`,
 then **`fcode clone <workspace-slug>`** to bring a cloud workspace down into a
 `<workspace-slug>/` folder (it also installs these agent skills; skip that with
-`--skipSkillsSetup`). The App detail page's build guide shows the exact clone
-command for an App's dev workspace — copy it from there, the slug is an encoded
-token, not the App's UUID.
+`--skipSkillsSetup`). The "How to build locally" guide on an App's Development
+tab shows the exact clone command for its dev workspace — copy it from there,
+the slug is an encoded token, not the App's UUID.
 
 When making and testing changes in an already-cloned workspace:
 
@@ -400,7 +400,11 @@ without the value ever appearing in the conversation.
   populates it automatically, so don't create it there. To obtain it, the user
   completes the OAuth flow in the Factorial Code app details page, then copies
   the generated token with the copy dropdown option in the OAuth Dev app, and
-  puts it in `variables.local.env` (or shares it, per their preference).
+  puts it in `variables.local.env` (or shares it, per their preference). To run
+  in a specific installed company's context instead, copy that `deploy-`
+  workspace's token with **Copy FACTORIAL_TOKEN** in the installation's "…"
+  menu (Installations page or Dev Marketplace app page) — same file, same
+  handling.
 - Once obtained, never echo secret values back in output or logs.
 
 ## Examples

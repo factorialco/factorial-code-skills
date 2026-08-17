@@ -25,10 +25,14 @@ instead — see the routing table in `SKILL.md`.
   `https://apidoc.factorialhr.com/docs/integrations-framework`.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
-  scopes from the app's OAuth section and the setup steps reappear.
+  scopes from the App settings' OAuth tab and the setup steps reappear.
 - **"I'm a Partner/IC and have no OAuth application."** It's preconfigured by
-  an administrator and appears on the app's environment tabs once done — if
+  an administrator and appears on the App settings' OAuth tab once done — if
   it's blocking you, escalate.
+- **"Where did the OAuth section on the Development/Production tab go?"** It
+  moved to **App settings → OAuth** (requested scopes plus the development
+  and production credentials); the setup checklist and the Dev Marketplace's
+  "Configure dev OAuth" link there.
 - **"My integrations-framework app doesn't show up / installs oddly."**
   Framework apps must be linked to their Factorial integration (checklist
   step "Link the Factorial integration", on the app's Settings page) —
@@ -39,13 +43,15 @@ instead — see the routing table in `SKILL.md`.
 
 ## Local development
 
-- **"Where do I start coding?"** The App detail page's build guide gives the
-  two commands (install the CLI, `fcode clone <dev-workspace-slug>`); the
-  clone includes the base app code (API clients, webhook/schedule/email/form
-  helpers). Everything CLI: `fcode-cli` skill, `/docs/cli/`.
+- **"Where do I start coding?"** The Development tab's **"How to build
+  locally"** guide gives the two commands (install the CLI, `fcode clone
+  <dev-workspace-slug>`); the clone includes the base app code (API clients,
+  webhook/schedule/email/form helpers). Everything CLI: `fcode-cli` skill,
+  `/docs/cli/`.
 - **"`fcode clone dev-<id>` can't find the workspace."** The slug's token is
   an encoded value, not the app's UUID — don't build the slug from the
-  browser URL; copy the exact command from the build guide.
+  browser URL; copy the exact command from the Development tab's "How to
+  build locally" guide.
 - **"I pushed but the released form/webhook didn't change."** Expected:
   consumers pin to the `stable` alias, and `fcode push` only updates the
   working copy. The released version changes when a new release moves the
@@ -66,6 +72,12 @@ instead — see the routing table in `SKILL.md`.
   linked to a demo environment authorizes against **that demo environment's
   API host** — check the OAuth app is linked to the demo company you're
   actually testing with.
+- **"OAuth works for one company but fails for others."** Check how the
+  Factorial OAuth application was created: a **company-scoped** app (created
+  from `/oauth/applications` on the Factorial API host) only ever authorizes
+  its own company, while a **global** app (created from the Factorial
+  Backoffice) works across companies. An app installed by many companies
+  needs a global OAuth app — see stage 4 in `journey.md`.
 - **Two `INSTALL`/`SETTINGS`/`UNINSTALL` forms fight each other.** The
   platform doesn't enforce one process per `appRole`; on a clash the
   first process slug (alphabetically) wins and a duplicate-role warning is
@@ -77,6 +89,19 @@ instead — see the routing table in `SKILL.md`.
   workspace holds only that company's variables and executions. Shared
   values belong in the parent (dev/prod) workspace; per-company overrides in
   the installation. See `fcode-core-concepts` for inheritance rules.
+- **"Where do I see an installation's logs / variables / schedules?"** In its
+  `deploy-` workspace — the Dev Marketplace app page links to it beside the
+  company selector for every company with an installation.
+- **"How do I get a `FACTORIAL_TOKEN` for an installed company?"** Use
+  **Copy FACTORIAL_TOKEN** in the installation's "…" menu — on the
+  Installations page or the Dev Marketplace app page. It's a live API
+  credential for that company: put it in `variables.local.env`, never commit
+  or log it (procedure in `fcode-cli`).
+- **"Where did the installations table on the app page go?"** The Development
+  and Production tabs now show a count that links to the Installations page,
+  pre-filtered for that app and environment.
+- **"Where did 'End user actions' on the installation page go?"** Removed —
+  run user-facing forms from the (Dev) Marketplace app page instead.
 
 ## Releases
 
