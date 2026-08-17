@@ -81,10 +81,24 @@ OAuth lives on the **App settings → OAuth tab**: the requested scopes,
 followed by the development and production credentials. The Getting started
 checklist and the Dev Marketplace's "Configure dev OAuth" both link there.
 
-- **Internal**: create the OAuth application yourself in the **Factorial
-  Backoffice** (registering the redirect URIs the credential dialog shows),
-  then enter the client credentials in that environment's dialog on the
-  OAuth tab.
+On the Factorial side there are **two kinds of OAuth application**, and the
+difference matters when authorization fails:
+
+- **Global OAuth apps** — usable by several companies; created from the
+  Factorial **Backoffice** (`/backoffice` on the Factorial API host, e.g.
+  `https://api.eu2.demo.factorial.dev/backoffice`).
+- **Company-scoped OAuth apps** — tied to a single company; created from
+  `/oauth/applications` on the Factorial API host (e.g.
+  `https://api.eu2.demo.factorial.dev/oauth/applications`).
+
+An app meant to be installed by many companies needs a **global** OAuth app —
+a company-scoped one will only ever authorize its own company.
+
+- **Internal**: create the OAuth application yourself — in the **Factorial
+  Backoffice** for a global app, or from `/oauth/applications` for a
+  company-scoped one — registering the redirect URIs the credential dialog
+  shows, then enter the client credentials in that environment's dialog on
+  the OAuth tab.
 - **Partner / IC**: an administrator preconfigures the OAuth application; it
   appears on the OAuth tab once done. (Automatic creation is planned.)
 

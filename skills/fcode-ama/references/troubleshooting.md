@@ -72,6 +72,12 @@ instead — see the routing table in `SKILL.md`.
   linked to a demo environment authorizes against **that demo environment's
   API host** — check the OAuth app is linked to the demo company you're
   actually testing with.
+- **"OAuth works for one company but fails for others."** Check how the
+  Factorial OAuth application was created: a **company-scoped** app (created
+  from `/oauth/applications` on the Factorial API host) only ever authorizes
+  its own company, while a **global** app (created from the Factorial
+  Backoffice) works across companies. An app installed by many companies
+  needs a global OAuth app — see stage 4 in `journey.md`.
 - **Two `INSTALL`/`SETTINGS`/`UNINSTALL` forms fight each other.** The
   platform doesn't enforce one process per `appRole`; on a clash the
   first process slug (alphabetically) wins and a duplicate-role warning is
