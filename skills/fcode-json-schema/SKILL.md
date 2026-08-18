@@ -44,6 +44,10 @@ so its `ui:` options apply.
   `"ui": { "ui:field": "json" }`.
 - **Conditional fields** — use top-level `dependencies` to show/hide fields based
   on another field's value (see `anotherBooleanField` in the sample).
+- **Content around a field** — a per-field `markdown` object with `before` /
+  `after` strings renders block markdown (full GFM, incl. tables) above/below
+  the field. Detail and a worked example in `fcode-forms`
+  (`references/advanced.md`).
 
 ## Gotchas
 
@@ -56,9 +60,9 @@ so its `ui:` options apply.
   the schema, not the form embed code.
 - **The schema is data, not code.** It cannot carry executable JavaScript:
   `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
-  were removed, and `rawHtml` content is sanitized (no `<script>`, no inline
-  `on*` handlers, no `javascript:` URLs). Client-side behaviour belongs in the
-  embedding page — see `fcode-forms`.
+  were removed, and `markdown.before`/`markdown.after` blocks — like all form
+  text — are markdown: raw HTML is never rendered. Client-side behaviour
+  belongs in the embedding page — see `fcode-forms`.
 - **Visible text can be translated**: schema strings (titles, descriptions,
   `ui:placeholder`) accept `fcode.i18n("key")` tokens, substituted server-side
   before the form is served — see `fcode-i18n`.

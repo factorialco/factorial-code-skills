@@ -323,10 +323,10 @@ return {
     apiKeyLabel: apiKeyConfigured
       ? "Linear API key (configured — leave blank to keep the current one)"
       : "Linear API key",
-    statusHtml: {
+    statusMarkdown: {
       before: apiKeyConfigured
-        ? `<p>Connected. ${Object.keys(mapping).length} team(s) mapped.</p>`
-        : "<p><b>Not connected yet.</b> Enter an API key to finish setup.</p>",
+        ? `Connected. ${Object.keys(mapping).length} team(s) mapped.`
+        : "**Not connected yet.** Enter an API key to finish setup.",
     },
   },
 };
@@ -343,14 +343,14 @@ otherwise a user who only wants to re-map a team cannot submit:
   "variables": {
     "pollIntervalDefault": 1,
     "apiKeyLabel": "Linear API key",
-    "statusHtml": {}
+    "statusMarkdown": {}
   },
   "properties": {
     "linear_api_key": {
       "type": "string",
       "isSensitive": true,
       "title": { "$ref": "#/variables/apiKeyLabel" },
-      "rawHtml": { "$ref": "#/variables/statusHtml" }
+      "markdown": { "$ref": "#/variables/statusMarkdown" }
     },
     "poll_interval_hours": {
       "type": "integer",
@@ -396,7 +396,7 @@ a key. Degrade instead:
 const linearTeams = apiKeyConfigured
   ? (await new LinearApiClient(process.env.LINEAR_API_KEY).getTeams())
       .map((t) => ({ id: t.id, name: t.name }))
-  : []; // no key yet → empty dropdowns, and statusHtml explains why
+  : []; // no key yet → empty dropdowns, and statusMarkdown explains why
 
 // Also guard the vendor call itself: an expired key must render the form with a
 // "reconnect" status, not fail the load.
