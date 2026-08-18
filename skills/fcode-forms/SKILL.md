@@ -33,8 +33,8 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   An embed on a public page needs `authMode: NONE`, or every request gets a
   `401` (below).
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
-  and field `transformFn` were removed, a returned `jsCallback` is ignored, and
-  authored HTML is sanitized. Client-side behaviour lives in the embedding page.
+  and field `transformFn` were removed, and messages are markdown — raw HTML is
+  never rendered. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
   substituted server-side before the schema is served. See `fcode-i18n`.
@@ -220,16 +220,21 @@ With data attributes, point to global functions via
 **Drive behavior from the process return value** (no client code needed):
 
 ```js
-return { message: "Thanks, <b>we received your request</b>." };            // success message (HTML allowed)
+return { message: "Thanks, **we received your request**." };                // success message (markdown)
+return { message: "| Item | Status |\n|---|---|\n| Sync | Done |" };        // GFM tables work too
 return { status: 400, body: { formErrors: {                                 // inline validation errors
   fields: { email: "Invalid email." }, global: ["A global error."] } } };
+return { status: 400, body: { errorMessage: "**Sync failed** — retry." } }; // error message (markdown)
 return { redirect: { url: "https://example.com", timeout: 2000 } };         // redirect after submit
 ```
 
-**Authored HTML is sanitized.** Markup in `message` (and in a schema's `rawHtml`
-blocks) renders, but `<script>` tags, inline `on*` handlers and `javascript:`
-URLs are stripped and never execute. A returned `jsCallback` is **ignored** — put
-behaviour in the success / next-step / error callbacks instead.
+**Messages are markdown, not HTML.** `message`, `errorMessage` and a schema's
+`markdown.before`/`markdown.after` blocks render as GitHub Flavored Markdown —
+tables, headings, links, images, code blocks, task lists. Raw HTML is
+**dropped, never rendered** (so nothing authored can execute); put behaviour in
+the success / next-step / error callbacks instead. Since
+`@factorialco/fcode-react-forms` 3.0.0 a process still returning HTML shows it
+as plain text at best — rewrite those messages as markdown.
 
 ## Keep it fast, or go async
 
@@ -305,7 +310,8 @@ process if only needed transiently.
 ## Advanced
 
 For styling and the two themes (including the f0 theme to use when embedding in a
-React app inside Factorial), initial/hidden values, async submission, custom
+React app inside Factorial), markdown message rendering with f0 components
+(`markdownComponents`), initial/hidden values, async submission, custom
 headers, API-host override, variables replacement, pre-rendering current values
 into install/settings forms, reacting to user input from your own page (the
 React `onChange` prop, the `fcode-forms-*` DOM events), and modal rendering,

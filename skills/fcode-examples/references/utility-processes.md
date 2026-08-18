@@ -145,7 +145,9 @@ async function main() {
 SDK error payloads nest unpredictably (e.g.
 `{ errors: { errors: ["Employee not found"] } }`) — extract messages by
 drilling through `errors`/`message`/`error` keys recursively and flattening
-arrays before showing them to the user.
+arrays before showing them to the user. A form renders `message` as markdown,
+so markdown metacharacters in interpolated vendor text (`*`, `_`, `[`, `|`)
+may reformat — plain sentences are safe as-is.
 
 **Patterns:** form file field → `fcode.storage://` reference →
 `storage.download` stream · `@add-package` for npm dependencies ·

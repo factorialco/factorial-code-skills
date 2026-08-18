@@ -212,9 +212,11 @@ transformation you perform, with the CLI as the sync vehicle:
    unset, write `primaryLocale` in `team.json` and `fcode team:push`.
 2. **Inventory the user-facing strings.** Translate: form-schema titles,
    descriptions, placeholders and `loadingOverlayContent`; result `message`
-   strings a form displays; email subjects and bodies; webhook response bodies
-   end users see. Do **not** translate: log messages, developer-facing errors,
-   datastore keys, variable names, slugs and identifiers.
+   strings a form displays (these are markdown — keep any formatting like
+   `**bold**`, links or table syntax intact in every locale); email subjects
+   and bodies; webhook response bodies end users see. Do **not** translate:
+   log messages, developer-facing errors, datastore keys, variable names,
+   slugs and identifiers.
 3. **Name the keys** in dotted namespaces: `<process-slug>.<area>.<name>`
    (`order-sync.form.title`, `order-sync.email.subject`), with strings shared
    across processes under `common.*`. Extract dynamic parts as

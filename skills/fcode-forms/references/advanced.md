@@ -47,14 +47,19 @@ schema:
   opposed to `loadingOverlayContent`, shown while a submission runs). Worth
   setting when a `preRenderProcess` makes opening the form slow.
 - **CSS hooks** — `.fcode-form-container`, `.fcode-form-wrapper`,
-  `form.fcode-form`; set `embedFormOptions.className` for a custom wrapper class.
+  `form.fcode-form`; the result views that replace the form after submit are
+  `.fcode-form-success-message` / `.fcode-form-error-message`; set
+  `embedFormOptions.className` for a custom wrapper class.
 - **Submit button text** — in the schema:
   `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!" } }`.
 
 Forms render with
 [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
-(rjsf **6**, since `@factorialco/fcode-react-forms` 3.0.0), so its full `uiSchema`
-is available (plus markdown in titles/descriptions/help).
+(rjsf **6**), so its full `uiSchema` is available. Titles, descriptions and help
+texts support inline markdown (links, emphasis, images); block content — a
+field's `markdown.before`/`markdown.after` and the result `message` /
+`errorMessage` — additionally supports full GitHub Flavored Markdown, including
+tables and code blocks (see `SKILL.md`).
 
 ## The f0 theme — for React apps inside Factorial
 
@@ -72,7 +77,7 @@ surrounding product:
 
 ```jsx
 import FcodeForm from "@factorialco/fcode-react-forms";
-import { Theme } from "@factorialco/rjsf-f0";
+import { Theme, markdownComponents } from "@factorialco/rjsf-f0";
 import "@factorialco/rjsf-f0/styles.css";
 
 <FcodeForm
@@ -80,12 +85,20 @@ import "@factorialco/rjsf-f0/styles.css";
   processId="<fcode-process-slug>"
   processVersion="stable"
   rjsfTheme={Theme}
+  markdownComponents={markdownComponents}
   // theme: "none" stops the SDK injecting its standalone stylesheet, whose
   // `all: revert` reset exists to survive third-party pages and would fight
   // the host app's own styles.
   options={{ theme: "none", locale: "en" }}
 />;
 ```
+
+`markdownComponents` (exported since `@factorialco/rjsf-f0` 2.0.0) makes result
+messages and a schema's `markdown` blocks render with f0 components too — a GFM
+table in a `message` becomes the f0 table card, complete with its Excel/CSV
+export (the export lazy-loads `xlsx` through f0 at click time). Omit the prop
+and the same markdown renders as plain elements styled by whatever theme
+applies.
 
 - The host app must already render f0's `F0Provider` above the form and import
   `@factorialco/f0-react/dist/styles.css`. The theme package ships only the layout
@@ -159,7 +172,7 @@ worth showing back. A worked example is in `fcode-examples`
   "variables": {
     "syncIntervalDefault": 60,
     "apiKeyLabel": "Acme API key",
-    "statusHtml": { "before": "" }
+    "statusMarkdown": { "before": "" }
   },
   "properties": {
     "sync_interval_minutes": {
@@ -171,7 +184,7 @@ worth showing back. A worked example is in `fcode-examples`
       "type": "string",
       "isSensitive": true,
       "title": { "$ref": "#/variables/apiKeyLabel" },
-      "rawHtml": { "$ref": "#/variables/statusHtml" }
+      "markdown": { "$ref": "#/variables/statusMarkdown" }
     }
   }
 }
@@ -191,10 +204,10 @@ async function main() {
       apiKeyLabel: configured
         ? "Acme API key (configured — leave blank to keep the current one)"
         : "Acme API key",
-      statusHtml: {
+      statusMarkdown: {
         before: configured
-          ? "<p>Connected.</p>"
-          : "<p><b>Not connected yet.</b> Enter an API key to finish setup.</p>",
+          ? "Connected."
+          : "**Not connected yet.** Enter an API key to finish setup.",
       },
     },
   };
@@ -203,7 +216,7 @@ async function main() {
 
 **Never send a stored secret back to the form.** The schema response travels over
 HTTP and lands in the browser DOM. Report *whether* a credential is set — in the
-label, the description, or a `rawHtml` status line — and let a blank submit mean
+label, the description, or a `markdown` status line — and let a blank submit mean
 "keep the current value":
 
 ```javascript
@@ -236,9 +249,8 @@ served — full model and migration guide in `fcode-i18n`.
 
 **A schema cannot carry executable code.** It is served to every visitor of the
 form, so `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
-were removed in `@factorialco/fcode-react-forms` 2.0.0, and a `jsCallback`
-returned by a process execution is ignored. Reformatting a value or deriving one
-field from another belongs in the embedding page:
+were removed in `@factorialco/fcode-react-forms` 2.0.0. Reformatting a value or
+deriving one field from another belongs in the embedding page:
 
 - **React embed** — the `onChange` prop on `FcodeForm`.
 - **Hosted script** — the events the SDK dispatches on `document`:
@@ -258,14 +270,13 @@ field from another belongs in the embedding page:
 For submission results specifically, the `onSuccess` / `onNextStep` / `onError`
 callbacks (see `SKILL.md`) carry the same information.
 
-## Authored HTML is sanitized
+## Messages are markdown, not HTML
 
-`rawHtml.before`/`rawHtml.after` in a schema, the result `message`, and error
-messages all pass through DOMPurify before rendering. Markup renders, but
-`<script>` tags, inline `on*` handlers and `javascript:` URLs do not execute.
-`iframe`, `object`, `embed`, `base` and `form` elements are forbidden, as are the
-`srcdoc` and `formaction` attributes, and `target="_blank"` links are forced to
-`rel="noreferrer"`. Dropped content is reported as a console warning.
+`markdown.before`/`markdown.after` in a schema, the result `message`, and error
+messages (`errorMessage`) render as GitHub Flavored Markdown — tables, headings,
+links, images, code blocks, task lists. Raw HTML tags are dropped, never
+rendered, so `<script>` tags and inline `on*` handlers can never execute, and
+`javascript:` URLs are neutralized.
 
 CSS injection via `stylesheet` / `themeStylesheet` is unaffected.
 
