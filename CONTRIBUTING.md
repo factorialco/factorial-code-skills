@@ -18,6 +18,8 @@ repeat the explanation across skills.
 | Form embedding, themes, access restriction, pre-render / pre-fill contract, multi-step | `fcode-forms` |
 | Locales & translations: locale files and inheritance, the `fcode.i18n` helper, form-schema i18n tokens, execution-locale selection, locale versioning, `i18n:*` commands | `fcode-i18n` |
 | Agent working method, MCP tools | `fcode-agent` |
+| Pre-production app validation: the check catalog and its severities (Blocker/Warning/Suggestion), the `APP_VALIDATION_REPORT.md` format, the read-only review procedure and verdict rules — each checked *rule* stays with its owning skill | `fcode-code-validation` |
+| Dev→prod code promotion: the `fcode remote:add` release flow, its validation gate, divergence and confirmation rules | `fcode-release` |
 | Worked, adaptable examples (code, not rules — rules live with their owner) | `fcode-examples` |
 
 ## The JavaScript / Python twins
