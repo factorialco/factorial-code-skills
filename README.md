@@ -33,6 +33,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | [`fcode-forms`](skills/fcode-forms) | Embedding a process's input-parameter form on a webpage. |
 | [`fcode-i18n`](skills/fcode-i18n) | Workspace locales and translations: locale files, the `fcode.i18n` helper, translated form schemas, and the `i18n:*` CLI commands. |
 | [`fcode-code-validation`](skills/fcode-code-validation) | Pre-production review of an app: clone the workspace read-only, run the static check catalog, and write `APP_VALIDATION_REPORT.md` with a ✅/❌ promotion verdict. |
+| [`fcode-release`](skills/fcode-release) | Promote an app's code from its `dev-` workspace to its `prod-` workspace via `fcode remote:add`, gated by validation and explicit confirmation. |
 | [`fcode-examples`](skills/fcode-examples) | Reference implementations: a marketplace payroll integration, a custom app with install/uninstall lifecycle, and utility processes. |
 
 ## Format
