@@ -48,7 +48,8 @@ schema:
   setting when a `preRenderProcess` makes opening the form slow.
 - **CSS hooks** — `.fcode-form-container`, `.fcode-form-wrapper`,
   `form.fcode-form`; the result views that replace the form after submit are
-  `.fcode-form-success-message` / `.fcode-form-error-message`; set
+  `.fcode-form-success-message` / `.fcode-form-error-message`; a `ui:steps`
+  form's navigation uses `.fcode-steps-*` classes; set
   `embedFormOptions.className` for a custom wrapper class.
 - **Submit button text** — in the schema:
   `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!" } }`.
@@ -111,6 +112,9 @@ applies.
   theme packages.
 - `rjsfTheme` swaps the theme wholesale; explicit `templates`/`widgets`/`fields`
   props still win. Merge order: default theme < `rjsfTheme` < individual props.
+- Since 2.1.0 the theme also carries the `ui:steps` navigation (see `SKILL.md`):
+  the sidebar layout renders as f0's table of contents, tabs as an f0 button
+  strip — nothing extra to wire, `rjsfTheme={Theme}` brings it along.
 
 **Never pull the f0 theme into a hosted-embed page.** f0 cannot be tree-shaken —
 importing a single field costs ~3.2 MB gzip, against 262 KB for the whole hosted
