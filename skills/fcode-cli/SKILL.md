@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (the stable alias, version_tag), and the workspace config files (process metadata.json, team.json, the three variables files, variables.meta.json). Use when running fcode CLI commands, testing a process locally, syncing to the cloud, managing versions or aliases, overriding an inherited team variable, or configuring a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (declared in team.json and synced by push/pull, the stable alias, version_tag), and the workspace config files (process metadata.json, team.json, the three variables files, variables.meta.json). Use when running fcode CLI commands, testing a process locally, syncing to the cloud, managing versions or aliases, overriding an inherited team variable, or configuring a process's webhook or form settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -45,8 +45,12 @@ web UI (see below).
 - **`fcode add` is only for NEW resources.** For edits to existing process/module
   code or variables, go straight to `fcode push`.
 - **`--force` (on `push`/`pull`) overwrites the other side.** Both commands fail
-  when local and cloud diverge; only use `--force` with explicit user
-  confirmation.
+  when local and cloud diverge — `team:pull` included, which refuses to wipe an
+  unpushed `team.json`. Only use `--force` with explicit user confirmation.
+- **Editing `versions` / `aliases` in `team.json` releases on push**: adding a tag
+  publishes that workspace version, removing one deletes it from the cloud
+  (cascading), re-pointing an alias is a release or rollback. Same rule as
+  `team:versions:*` / `team:aliases:*` — **don't touch unless explicitly asked.**
 - **Never edit `variables.inherited.env`.** It holds the parent workspaces'
   variables, is regenerated on pull, and `fcode push` skips it with a warning.
   Overriding an inherited value means adding the key to `variables.env`.
@@ -131,13 +135,22 @@ reports whether they changed locally, in the cloud, or both. Plain `fcode pull` 
 `fcode push` include them too, running them **last** so a referenced error-handler
 process slug resolves against processes that already exist.
 
+The `versions` / `aliases` fields sync like the rest of the file: `team:push`
+diffs them against the cloud and applies the difference — publishing versions
+listed locally but not yet in the cloud (carrying their `comment`), asking per
+version before deleting one removed from the file (the deletion **cascades**;
+`--force` skips the prompt), and creating, re-pointing or deleting aliases to
+match. `team:status` compares them too, and `team:pull` refuses to overwrite a
+`team.json` with unpushed local edits.
+
 ### `fcode team:versions:*` / `fcode team:aliases:*`
 
 Workspace versioning publishes a version of the **whole workspace**: every
 process and module the team owns gets a version with the same tag, and bare
 module imports are pinned to it inside the published snapshots (model in
 `fcode-core-concepts`). Releases normally happen from the web UI (team
-settings → **Versions** tab) — these commands are the scriptable equivalent.
+settings → **Versions** tab) — these commands are the imperative equivalent, and
+editing `team.json`'s `versions` / `aliases` then pushing is the declarative one.
 **Don't create versions or move `stable` unless explicitly asked.**
 
 ```sh
@@ -279,8 +292,8 @@ exists first).
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
 | `primaryLocale` | string, optional | The workspace's main language: the locale used when a caller names none, and the key-level fallback for untranslated keys (see `fcode-i18n`) |
-| `versions` | array, **pull-only** | Workspace versions: `{ tag, comment, createdAt }` |
-| `aliases` | array, **pull-only** | Workspace aliases: `{ name, tag }` |
+| `versions` | array, optional | Workspace versions: `{ tag, comment?, createdAt? }` — declaring a new `tag` and pushing publishes it; omit `createdAt`, the cloud fills it in |
+| `aliases` | array, optional | Workspace aliases: `{ name, tag }` |
 
 ```json
 {
@@ -301,10 +314,11 @@ exists first).
 The error handler is referenced by **slug** (not id) so `team.json` is
 portable across teams; the CLI resolves it to the cloud id on push.
 
-`versions` and `aliases` are **pull-only**: `team:pull` writes them for
-visibility and git history, they are excluded from the content hash, and
-`team:push` strips them — editing them locally does nothing. All writes go
-through the `team:versions:*` / `team:aliases:*` commands or the web UI.
+`versions` and `aliases` are **synced state**, not a read-only mirror: they count
+towards the content hash (edits show as modified in `fcode status`) and
+`team:push` applies them, with the diff semantics above. Only the set of tags and
+the `name` → `tag` pairings are compared — a published version's `comment` can
+no longer be changed, and `createdAt` is server-assigned.
 
 `webhookAuth` is one shared configuration for the whole workspace, so a token used
 by several webhooks is named — and rotated — in one place. Two things about it:
