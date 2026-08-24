@@ -111,6 +111,9 @@ package name differs from the import name, declare it with `@add-package`:
 import requests
 ```
 
+Packages a parent workspace provides are already installed here — don't
+redeclare them (see `fcode-core-concepts`).
+
 ## Datastore & storage
 
 ```python

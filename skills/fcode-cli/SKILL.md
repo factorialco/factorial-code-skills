@@ -68,7 +68,8 @@ Not needed after only editing existing resources.
 ### `fcode dependencies:install`
 
 Installs dependencies into the local workspace. Run after changing
-`dependencies/package.json` or `dependencies/requirements.txt`.
+`dependencies/package.json` or `dependencies/requirements.txt`. Installs the
+inherited packages too, so a local run resolves what the cloud does.
 
 ### `fcode run <process-slug> --parameters <filepath | json>`
 
@@ -350,7 +351,8 @@ by several webhooks is named — and rotated — in one place. Two things about 
 
 `fcode pull` writes everything inherited from `parentTeamSlugs` alongside the
 workspace's own resources: `variables.inherited.env`,
-`i18n/<locale>.inherited.yaml`, and the inherited process/module folders inside
+`i18n/<locale>.inherited.yaml`, `dependencies/package.inherited.json` /
+`requirements.inherited.txt`, and the inherited process/module folders inside
 `processes/` and `modules/`. The CLI keeps them parent-owned:
 
 - **Read-only** — process/module files are written mode `444`; needing a

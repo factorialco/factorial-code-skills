@@ -1,6 +1,6 @@
 ---
 name: fcode-core-concepts
-description: Factorial Code platform architecture and core concepts — processes, modules, execution context, inheritance of processes, modules, variables and locales from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
+description: Factorial Code platform architecture and core concepts — processes, modules, execution context, variables, inheritance from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
 license: MIT
 metadata:
   category: factorial-code
@@ -104,21 +104,28 @@ programmatically from a process, use the `fcode.variables` helper
 
 ### Inheritance from parent workspaces
 
-A workspace uses the **processes, modules, variables, and i18n locales** of its
-`parentTeamSlugs` parents as if they were its own. Resolution is the same for
-all of them: the workspace first, then its **direct** parents sorted by slug,
-capped at 5 — so it is **not transitive** (a grandparent's resources don't
-reach a grandchild).
+A workspace uses the **processes, modules, variables, i18n locales, and
+dependencies** of its `parentTeamSlugs` parents as if they were its own.
+Resolution is the same for all of them: the workspace first, then its
+**direct** parents in the order they are configured, capped at 5 — so it is
+**not transitive** (a grandparent's resources don't reach a grandchild).
 
 - **Read, call, and import inherited resources freely** — an inherited module
   imports exactly like an owned one, and a child's code can depend on a parent's
   process — but they are **read-only where they're inherited**: never modify,
   delete, or reschedule them, not by editing files, not through the MCP tools.
   Edit them in the workspace that owns them.
-- **Variables and locales are overridden by redefining locally**: a key in the
-  child's `variables.env` or `i18n/<locale>.yaml` wins over the parent's, key by
-  key; deleting the override brings the parent's value back. Processes and
+- **Variables, locales, and dependencies are overridden by redefining locally**:
+  a key in the child's `variables.env`, `i18n/<locale>.yaml`, or
+  `dependencies/package.json` / `requirements.txt` wins over the parent's — key
+  by key, and package by package for dependencies, where the child's specifier
+  *replaces* the parent's because two versions of one package can't be installed
+  side by side. Deleting the override brings the parent's back. Processes and
   modules have no override — change them in the owner.
+- **Only a parent's *installed* dependencies inherit.** A manifest change the
+  parent saved but hasn't installed doesn't reach its children; once installed,
+  the child picks it up on its next execution, with nothing to install there.
+  A package a parent already provides doesn't need declaring in the child.
 - **Don't re-create a parent's variables in a child.** They already resolve
   there. This is why a `deploy-{installationId}` workspace carries only the
   values specific to that customer, while shared defaults and credentials stay
@@ -234,6 +241,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ```
 📦 <workspace-name>
 ┣ 📂 dependencies          # shared deps: package.json (JS) / requirements.txt (Py)
+┃ ┗ 📜 package.inherited.json    # inherited deps (read-only, gitignored); .txt for Py
 ┣ 📂 i18n
 ┃ ┣ 📜 <locale>.yaml       #   translations this workspace owns (see fcode-i18n)
 ┃ ┗ 📜 <locale>.inherited.yaml  # inherited translations (read-only, gitignored)

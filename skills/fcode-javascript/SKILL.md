@@ -112,6 +112,9 @@ import name differs from the package name, declare it with `@add-package`:
 const axios = require("axios");
 ```
 
+Packages a parent workspace provides are already installed here — don't
+redeclare them (see `fcode-core-concepts`).
+
 ## Datastore & storage
 
 ```javascript
