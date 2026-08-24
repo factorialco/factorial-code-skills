@@ -271,6 +271,12 @@ Two mechanisms, and picking the right one matters:
 
 They compose: a chained process's form can itself declare `ui:steps`.
 
+**When a form grows long — roughly ten fields or more — split it with
+`ui:steps`** rather than shipping one overwhelming page or faking steps with a
+`nextProcessId` chain of do-nothing processes (empty intermediate processes,
+all persistence crammed into the last one). Group related fields per step and
+put the required ones early, so users fail fast.
+
 ### Steps within a single form (`ui:steps`)
 
 Declare steps in the schema's root `ui` node, assigning each property to a step.
