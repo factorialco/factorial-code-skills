@@ -1,6 +1,6 @@
 ---
 name: fcode-core-concepts
-description: Factorial Code platform architecture and core concepts — processes, modules, execution context, team variables and their inheritance from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
+description: Factorial Code platform architecture and core concepts — processes, modules, execution context, inheritance of processes, modules and team variables from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
 license: MIT
 metadata:
   category: factorial-code
@@ -63,6 +63,25 @@ Return structured JSON; for webhook-style responses return
 Reusable libraries shared across processes — use them to avoid duplication,
 encapsulate API clients/integrations, keep process code small, and support
 versioning. See the module-naming gotcha above.
+
+### Inherited processes and modules
+
+A workspace resolves the processes and modules of its `parentTeamSlugs` parents
+into the same `processes/` and `modules/` folders as its own, and they are
+**read-only mirrors owned by the parent**. Resolution follows the same rule as
+variables: the workspace first, then its **direct** parents sorted by slug,
+capped at 5 — so it is **not transitive**.
+
+- **Read and call them freely.** An inherited module imports exactly like an
+  owned one; a child workspace's code can depend on a parent's process.
+- **Never modify, delete, or reschedule them** — not by editing files, not
+  through the MCP tools. Change them in the workspace that owns them, where they
+  are editable.
+- **A workspace version never publishes them** — only owned resources get the
+  tag (see Versioning & aliases).
+
+The CLI marks inherited resources on disk, keeps them out of git, and refuses to
+push them; the mechanics are in `fcode-cli`.
 
 ### Execution context
 
