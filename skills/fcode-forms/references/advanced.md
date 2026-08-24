@@ -8,9 +8,8 @@ and file uploads are in `SKILL.md`; translating form text is in `fcode-i18n`.
 
 Configurable via data attributes, `Fcode.initForm` options, or React props:
 
-- **Process version** — `processVersion` (`data-fcode-form-process-version`): a
-  version tag or alias the form loads and submits against — always pin `stable`
-  (see `SKILL.md`).
+- **Process version** — `processVersion` (`data-fcode-form-process-version`):
+  always pin `stable` (see `SKILL.md`).
 - **Initial / hidden values** — `defaultValues` (`data-fcode-form-default-values`):
   JSON of pre-filled field values.
 - **Async execution** — `async: true` (`data-fcode-form-async`): returns `201` +
@@ -18,8 +17,7 @@ Configurable via data attributes, `Fcode.initForm` options, or React props:
 - **Submission headers** — `headers` (`data-fcode-form-headers`): extra request
   headers.
 - **Locale** — `locale` (`data-fcode-form-locale`): the language the form loads
-  and submits in, sent as the `Fcode-Locale` header; changing it refetches the
-  schema. Model in `fcode-i18n`.
+  and submits in. Model in `fcode-i18n`.
 - **API host override** — `hostUrl` (`data-fcode-form-host-url`): point the embed
   at a different backend (default `https://code.factorialhr.com/platform`).
 
@@ -56,11 +54,9 @@ schema:
 
 Forms render with
 [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
-(rjsf **6**), so its full `uiSchema` is available. Titles, descriptions and help
-texts support inline markdown (links, emphasis, images); block content — a
-field's `markdown.before`/`markdown.after` and the result `message` /
-`errorMessage` — additionally supports full GitHub Flavored Markdown, including
-tables and code blocks (see `SKILL.md`).
+(rjsf **6**), so its full `uiSchema` is available. Markdown rendering rules are
+in `SKILL.md` (raw HTML is dropped; CSS injection via `stylesheet` /
+`themeStylesheet` is unaffected by that stripping).
 
 ## The f0 theme — for React apps inside Factorial
 
@@ -72,8 +68,7 @@ is embedded:
 | Inside Factorial (the Factorial Code dashboard, the monolith) — anything already running f0 | **`@factorialco/rjsf-f0`** — real f0 components |
 | An arbitrary third-party page, via the hosted `forms.js` embed | The SDK's built-in stylesheet theme (`light`) |
 
-**Inside Factorial, use the f0 theme.** The form then renders with actual f0
-controls rather than plain HTML styled to imitate them, so it matches the
+**Inside Factorial, use the f0 theme** — real f0 controls that match the
 surrounding product:
 
 ```jsx
@@ -94,32 +89,24 @@ import "@factorialco/rjsf-f0/styles.css";
 />;
 ```
 
-`markdownComponents` (exported since `@factorialco/rjsf-f0` 2.0.0) makes result
-messages and a schema's `markdown` blocks render with f0 components too — a GFM
-table in a `message` becomes the f0 table card, complete with its Excel/CSV
-export (the export lazy-loads `xlsx` through f0 at click time). Omit the prop
-and the same markdown renders as plain elements styled by whatever theme
-applies.
+`markdownComponents` (since `@factorialco/rjsf-f0` 2.0.0) makes result messages
+and a schema's `markdown` blocks render with f0 components too — a GFM table in
+a `message` becomes the f0 table card, export included. Omit the prop and the
+same markdown renders as plain elements.
 
 - The host app must already render f0's `F0Provider` above the form and import
-  `@factorialco/f0-react/dist/styles.css`. The theme package ships only the layout
-  rules for the parts rjsf composes.
-- Peers: `react`, `react-dom`, `@rjsf/core` 6, `@rjsf/utils` 6,
-  `@factorialco/f0-react` 4.39+.
-- Also exported: `Theme`, `Templates`, `Widgets`, `generateTheme()`,
-  `generateForm()`, and a default `Form` (`withTheme(Theme)`) for use as a plain
-  rjsf theme without the fcode SDK — the same surface as the official `@rjsf/*`
-  theme packages.
+  `@factorialco/f0-react/dist/styles.css`. Peers: `react`, `react-dom`,
+  `@rjsf/core` 6, `@rjsf/utils` 6, `@factorialco/f0-react` 4.39+.
 - `rjsfTheme` swaps the theme wholesale; explicit `templates`/`widgets`/`fields`
   props still win. Merge order: default theme < `rjsfTheme` < individual props.
-- Since 2.1.0 the theme also carries the `ui:steps` navigation (see `SKILL.md`):
-  the sidebar layout renders as f0's table of contents, tabs as an f0 button
-  strip — nothing extra to wire, `rjsfTheme={Theme}` brings it along.
+- `ui:steps` (see `SKILL.md`) needs the hosted SDK or
+  `@factorialco/fcode-react-forms` ≥ 3.2.0; since `@factorialco/rjsf-f0` 2.1.0
+  the theme renders its navigation with f0 components (sidebar → table of
+  contents, tabs → button strip) — `rjsfTheme={Theme}` brings it along.
 
-**Never pull the f0 theme into a hosted-embed page.** f0 cannot be tree-shaken —
-importing a single field costs ~3.2 MB gzip, against 262 KB for the whole hosted
-bundle. The hosted `forms.js` bundle is size-checked in CI precisely to keep f0
-out of it. Only the React component path can opt in.
+**Never pull the f0 theme into a hosted-embed page** — f0 cannot be tree-shaken
+(~3.2 MB gzip against the 262 KB hosted bundle); only the React component path
+can opt in.
 
 Three gaps in the f0 mapping worth knowing, since they look inconsistent in a
 rendered form: **file fields** keep rjsf's native `<input type="file">`,
@@ -149,25 +136,19 @@ root set to a process slug/id. When the form is served the API runs that process
 **synchronously** and merges the `variables` it returns into the schema, so the
 `$ref`s resolve — without a throwaway first step. The process must return
 `{ variables: { ... } }`. Form query-string params arrive as
-`fcode.context.parameters`. Failure/timeout fails the form load. Since it runs
-before any user input, it can't use data derived from user-submitted secrets —
-that still needs a multi-step form.
-
-Because the form is only served once the pre-render finishes, opening it takes as
-long as the process runs — set `loadingContent` (above) to say what's loading.
+`fcode.context.parameters`. Since it runs before any user input, it can't use
+data derived from user-submitted secrets — that still needs a multi-step form.
+The form is only served once the pre-render finishes, so set `loadingContent`
+(above).
 
 ### Pre-filling current values (install & settings forms)
 
-A `SETTINGS` form re-opened after install, or an `INSTALL` form re-opened to fix a
-value, should **show what is configured now** — not an empty form the user has to
-fill from memory. Since the schema is static and the embed lives inside Factorial
-(so you can't set `defaultValues` on it), the pre-render process is the place to
-do this: read the current state from team variables and the datastore, and return
-it as `#/variables` nodes the schema's `default`s point at.
-
-Give any `INSTALL` or `SETTINGS` process a `preRenderProcess` when it has values
-worth showing back. A worked example is in `fcode-examples`
-(`references/custom-app-linear.md`).
+An `INSTALL` or `SETTINGS` form re-opened later should **show what is configured
+now**, not an empty form. Since the schema is static and the embed lives inside
+Factorial (so you can't set `defaultValues` on it), the pre-render process is
+the place: read the current state from team variables and the datastore, and
+return it as `#/variables` nodes the schema's `default`s point at. A worked
+example is in `fcode-examples` (`references/custom-app-linear.md`).
 
 ```json
 {
@@ -218,22 +199,12 @@ async function main() {
 }
 ```
 
-**Never send a stored secret back to the form.** The schema response travels over
-HTTP and lands in the browser DOM. Report *whether* a credential is set — in the
-label, the description, or a `markdown` status line — and let a blank submit mean
-"keep the current value":
-
-```javascript
-// In the settings process that handles the submit:
-const { acme_api_key } = fcode.context.parameters;
-if (acme_api_key) {
-  await fcode.variables.set("ACME_API_KEY", acme_api_key); // rotate
-}
-// blank → keep whatever is stored; don't overwrite with ""
-```
-
-That also means such a field must **not** be `required` in the schema, or a user
-who only wants to change the sync interval can't submit. Two more things:
+**Never send a stored secret back to the form** — the schema response lands in
+the browser DOM. Report *whether* a credential is set (label, description, or a
+`markdown` status line, as above) and let a blank submit mean "keep the current
+value": the submit handler writes the variable only when the field is
+non-empty, and the field must **not** be `required`, or a user changing another
+setting can't submit. Two more things:
 
 - **Read variables through `fcode.env` / `process.env`, not by listing them.**
   A pre-render sees inherited variables from parent workspaces too
@@ -243,18 +214,11 @@ who only wants to change the sync interval can't submit. Two more things:
   pre-render throws becomes unopenable. Default missing state instead of throwing
   (`?? 60`, `|| "{}"`), and reserve throwing for genuinely unusable state.
 
-## Internationalization
-
-Visible text is translated by writing `fcode.i18n("key")` tokens in the schema,
-substituted server-side from the workspace's locales before the schema is
-served — full model and migration guide in `fcode-i18n`.
-
 ## Reacting to user input
 
-**A schema cannot carry executable code.** It is served to every visitor of the
-form, so `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
-were removed in `@factorialco/fcode-react-forms` 2.0.0. Reformatting a value or
-deriving one field from another belongs in the embedding page:
+**A schema cannot carry executable code** (see the gotcha in `SKILL.md`) —
+reformatting a value or deriving one field from another belongs in the
+embedding page:
 
 - **React embed** — the `onChange` prop on `FcodeForm`.
 - **Hosted script** — the events the SDK dispatches on `document`:
@@ -273,16 +237,6 @@ deriving one field from another belongs in the embedding page:
 
 For submission results specifically, the `onSuccess` / `onNextStep` / `onError`
 callbacks (see `SKILL.md`) carry the same information.
-
-## Messages are markdown, not HTML
-
-`markdown.before`/`markdown.after` in a schema, the result `message`, and error
-messages (`errorMessage`) render as GitHub Flavored Markdown — tables, headings,
-links, images, code blocks, task lists. Raw HTML tags are dropped, never
-rendered, so `<script>` tags and inline `on*` handlers can never execute, and
-`javascript:` URLs are neutralized.
-
-CSS injection via `stylesheet` / `themeStylesheet` is unaffected.
 
 ## Modal window
 

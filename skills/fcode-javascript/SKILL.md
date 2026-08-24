@@ -31,7 +31,7 @@ Guidelines for writing JavaScript that runs on Factorial Code. Runtime is
   `fcode.import("shopify-client")` ✅, `fcode.import(name)` ❌.
 - **Never alias `fcode.i18n`** — call it literally (`fcode.i18n("key")` ✅,
   `const t = fcode.i18n` ❌): an aliased call throws "i18n is disabled" at
-  runtime. Missing keys resolve to the key itself. See `fcode-i18n`.
+  runtime. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `JSON.stringify` objects before
   `set`, parse after `get`.
 - Use `async/await` for all async work; wrap the main flow in `try/catch`, log
@@ -96,14 +96,11 @@ log.warn("token missing — skipping");       // console.warn  when LOG_LEVEL �
 log.error("sync failed", err.message);       // console.error — always emitted
 ```
 
-**Be verbose.** Log the start/end of the main flow, every external call, and each
-major decision at `info`; dump payloads and intermediate state at `debug` (free
-in production — gated off unless `LOG_LEVEL=debug`). **Always log inside `catch`:**
-record the error with context — what operation, which inputs — at `error` before
-re-throwing, or at `warn` for a recovered/skipped path. `error` is always emitted.
-
-Set `LOG_LEVEL=debug` in a local or dev workspace to trace a full run; production
-stays at `info`. Never log secrets.
+**Be verbose** — the logging policy (start/end, external calls and decisions at
+`info`; payloads at `debug`; always log inside `catch` with context before
+re-throwing) is in `fcode-core-concepts` §General rules. Set `LOG_LEVEL=debug`
+in a local or dev workspace to trace a full run; production stays at `info`.
+Never log secrets.
 
 ## Dependencies
 
@@ -133,6 +130,8 @@ await fcode.storage.upload("path/myfile.txt", fs.createReadStream(localPath));
 const files = await fcode.storage.list();
 const stream = await fcode.storage.download("path/myfile.txt");
 stream.pipe(fs.createWriteStream(localPath));
+// Form file params arrive as "fcode.storage://…" references — strip the
+// prefix before download; see fcode-forms.
 // Signed download URL — { url, expiresAt }. A real HTTPS link in the cloud,
 // a file:// URL locally (same shape, no special-casing).
 const signed = await fcode.storage.createSignedUrl("path/myfile.txt");
@@ -140,17 +139,6 @@ await fcode.storage.delete("path/myfile.txt");
 ```
 
 **Local disk:** write temp files under `process.env.TMP_DATA_DIR`.
-
-**Form file uploads:** a form file field (`"ui:widget": "file"`) is uploaded to
-Storage before execution and arrives as an `fcode.storage://…` reference (an
-array if multiple files). Strip the prefix to download:
-
-```javascript
-const { context: { parameters } } = fcode;
-const stream = await fcode.storage.download(
-  parameters.inputFile.replace("fcode.storage://", "")
-);
-```
 
 ## Variables & schedules
 
@@ -179,6 +167,8 @@ const schedule = await fcode.schedule.create("my-process", {
 const schedules = await fcode.schedule.list({
   processId: fcode.execution.process.id,
 });
+const current = await fcode.schedule.get(schedule.id);
+await fcode.schedule.update(schedule.id, { cron: "0 0 7 * * SUN" });
 await fcode.schedule.pause(schedule.id);
 await fcode.schedule.resume(schedule.id);
 await fcode.schedule.delete(schedule.id);
@@ -191,28 +181,18 @@ await fcode.schedule.deleteForProcess(fcode.execution.process.id);
 
 ### Inherited variables
 
-`list()`/`get()` return the variables the workspace **inherits from its parent
-workspaces** alongside its own (model in `fcode-core-concepts`). An inherited one
-carries `resolvingTeamSlug` naming the workspace it comes from; it is readable and
-usable exactly like an own variable, but it is owned elsewhere:
-
-- **`set()` on an inherited key creates an override in this workspace** rather
-  than updating the parent's variable. That is the only way to change the value
-  from here — updating by the parent's id would `404`.
-- **`delete()` on an inherited key does nothing** (silently). Only variables this
-  workspace owns can be deleted. An uninstall process cleaning up
-  `fcode.variables.delete("API_KEY")` therefore leaves a parent's credential
-  intact — which is what you want, but check `resolvingTeamSlug` if the process
-  must report what it actually removed.
-- `fcode.env.setEnvVar` / `delEnvVar` behave the same way.
-
-An older platform that doesn't report `resolvingTeamSlug` makes every variable
-look owned, so the pre-inheritance behaviour is preserved.
+`list()`/`get()` include variables inherited from parent workspaces (model in
+`fcode-core-concepts`); an inherited one carries `resolvingTeamSlug` naming its
+owner. `set()` on an inherited key creates an **override** in this workspace —
+the only way to change the value from here — and `delete()` on one is a
+**silent no-op**, so an uninstall process never removes a parent's credential
+(check `resolvingTeamSlug` if it must report what it actually removed).
+`fcode.env.setEnvVar` / `delEnvVar` behave the same way.
 
 ## Sending email
 
-Send email with the built-in `fcode.sendMail` — no SMTP setup required. The mail
-server and credentials live in the executor manager, never in your process.
+Send email with the built-in `fcode.sendMail` — no SMTP setup required (model
+in `fcode-core-concepts`):
 
 ```javascript
 const info = await fcode.sendMail({

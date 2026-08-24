@@ -61,11 +61,9 @@ For marketplace app processes, `form` also takes an optional
 `"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM` | `UNINSTALL`) marking
 the process's role in the app. Field reference in `fcode-cli`.
 
-An `INSTALL` or `SETTINGS` form is re-opened after the app is already configured,
-so it should show the **current** values rather than an empty form. Add a
-`preRenderProcess` that reads them from team variables and the datastore — and
-never echo a stored secret back, only whether one is set. Pattern and code in
-`references/advanced.md`.
+An `INSTALL` or `SETTINGS` form is re-opened after the app is configured, so it
+should show the **current** values rather than an empty form — the
+`preRenderProcess` pattern for that is in `references/advanced.md`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
@@ -80,8 +78,6 @@ The `Authentication` field next to the `Forms` flag (`form.authMode` in
 | `FACTORIAL` | Only Factorial users of the company that installed the app. Every request must carry a Factorial-issued user token in the `Fcode-Factorial-Token` header, and that token's company must own the workspace. Anything else gets a `401` |
 | `NONE` | Anyone who knows the form URL can open and submit it |
 
-- **New forms are created requiring a Factorial user.** Forms enabled before this
-  field existed keep behaving as public forms until you change them.
 - Forms embedded **inside Factorial** (the marketplace `INSTALL` / `SETTINGS` /
   `USER_FACING_FORM` / `UNINSTALL` screens) send the token for you — this is what
   `FACTORIAL` is for.
@@ -89,16 +85,8 @@ The `Authentication` field next to the `Forms` flag (`form.authMode` in
   Dashboard: the playground sends the developer's own Factorial Code token as
   `Fcode-Platform-Token` and access is granted through workspace membership.
 
-```json
-{
-  "name": "Connect your account",
-  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
-}
-```
-
-Public forms carry no `authMode` entry. To lift protection, set
-`"authMode": "NONE"` **explicitly** — omitting the field leaves the form
-protected. Field reference in `fcode-cli`.
+Field encoding rules (`authMode` omitted when `NONE`, lifting protection needs
+an explicit `"authMode": "NONE"`) and the full reference in `fcode-cli`.
 
 ## Embed a form
 
@@ -110,15 +98,12 @@ add:
   `send-welcome-email`)
 - **process version** — pin it to the `stable` alias (next section)
 
-**Use the slug, not the process ID.** A process ID is a UUID that differs per
-workspace, so an id-based embed breaks when the snippet moves between workspaces
-(staging → production, or a customer's deploy workspace); with slugs, only the
-team slug changes. Existing id-based embeds keep working — the API resolves
-either — and the React prop is still named `processId`, but feed it a slug.
-
-The Slug field is editable and there is no redirect for the old value, so
-**renaming a process's slug breaks every embed already pasted into a page** (the
-same exposure webhooks have). Settle the slug before handing out embed code.
+**Use the slug, not the process ID.** IDs are per-workspace UUIDs, so an
+id-based embed breaks when the snippet moves between workspaces; slugs survive
+(existing id-based embeds keep working, and the React prop is still named
+`processId` — feed it a slug). Slugs are editable with no redirect for the old
+value, so settle them before handing out embed code — renaming one breaks every
+embed already pasted into a page.
 
 Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
 
@@ -168,34 +153,19 @@ In SSR frameworks (e.g. Next.js), import it dynamically with `ssr: false`.
 
 ## Pin the form to a version
 
-The version pin (`data-fcode-form-process-version` /
-`processVersion`) takes a published process version tag (`v1.0.0`) or a version
-alias. **Always pin to the `stable` alias** — it always exists, points at the
-workspace's stable version, and:
+The version pin (`data-fcode-form-process-version` / `processVersion`) takes a
+published version tag (`v1.0.0`) or an alias — use `stable`, so releases and
+rollbacks happen by moving the alias, never by editing the embedded page
+(alias model in `fcode-core-concepts`; release commands in `fcode-cli`). The
+pin applies to **both** requests the form makes — loading the definition and
+submitting it — and the process Dashboard writes it for you: pick a version or
+alias in the selector next to the embed code and copy the generated snippet.
 
-- **Pushes never change live forms.** An unpinned embed runs the current
-  version, so every `fcode push` hits it immediately. Pinned to `stable`, the
-  form only changes when a release moves the alias (from the web UI's team
-  settings → Versions tab; CLI equivalents in `fcode-cli`) — and rolling back
-  is re-pointing the alias, without editing the embedded page.
-- Pinning to `stable` rather than a hardcoded tag follows the same portability
-  logic as using slugs instead of IDs: the embed survives releases without
-  edits.
-
-The version applies to **both** requests the form makes — loading the form
-definition and submitting it. The process Dashboard writes the pin for you:
-pick a version or alias in the selector next to the embed code and copy the
-generated snippet.
-
-**An unknown version or alias falls back to the current one.** The form still
-loads and still submits — it runs the process's current version, and the
-platform records only a server-side warning. That keeps a page you no longer
-control working after a version is deleted, but a typo in the attribute is
-silent: check the execution's version if a submission behaves unexpectedly.
-
-Calling the form endpoints directly (not through the SDK)? They also accept a
-`version_tag` query parameter, which takes precedence over the underlying
-`Fcode-Version-Tag` header — same as webhooks (see `fcode-cli`).
+**An unknown version or alias silently runs the current version** — the
+platform only logs a server-side warning, same as webhooks (see `fcode-cli`).
+A typo in the attribute is invisible: check the execution's version when a
+submission behaves unexpectedly. Direct calls to the form endpoints also accept
+the `version_tag` query parameter documented in `fcode-cli`.
 
 ## Handle submission results
 
@@ -232,9 +202,7 @@ return { redirect: { url: "https://example.com", timeout: 2000 } };         // r
 `markdown.before`/`markdown.after` blocks render as GitHub Flavored Markdown —
 tables, headings, links, images, code blocks, task lists. Raw HTML is
 **dropped, never rendered** (so nothing authored can execute); put behaviour in
-the success / next-step / error callbacks instead. Since
-`@factorialco/fcode-react-forms` 3.0.0 a process still returning HTML shows it
-as plain text at best — rewrite those messages as markdown.
+the success / next-step / error callbacks instead.
 
 ## Keep it fast, or go async
 
@@ -272,10 +240,7 @@ Two mechanisms, and picking the right one matters:
 They compose: a chained process's form can itself declare `ui:steps`.
 
 **When a form grows long — roughly ten fields or more — split it with
-`ui:steps`** rather than shipping one overwhelming page or faking steps with a
-`nextProcessId` chain of do-nothing processes (empty intermediate processes,
-all persistence crammed into the last one). Group related fields per step and
-put the required ones early, so users fail fast.
+`ui:steps`**, grouping related fields per step with the required ones early.
 
 ### Steps within a single form (`ui:steps`)
 
@@ -302,16 +267,11 @@ parameter exactly as a one-page form would — process code needs no changes.
 - "Next" validates only the fields on screen (including that step's share of
   `required`); a Back button and the step navigation revisit completed steps
   without losing input, and unreached steps stay disabled.
-- **Fail-safe authoring**: properties not listed in any step are appended to the
-  last step; an unusable `ui:steps` (fewer than two usable steps, `steps` not an
-  array) logs a console warning and renders the ordinary one-page form.
-- Step titles/descriptions/labels are schema text — `fcode.i18n(...)` and
-  mustache variables work as anywhere else in the schema.
+- Properties not listed in any step are appended to the last one; an unusable
+  `ui:steps` falls back to the ordinary one-page form with a console warning.
 - Supports root-level `properties` + `required` + `dependencies`; root-level
-  `oneOf`/`allOf` compositions are not split into steps.
-- Needs the hosted SDK, or `@factorialco/fcode-react-forms` **≥ 3.2.0**
-  (inside Factorial, `@factorialco/rjsf-f0` **≥ 2.1.0** renders the step
-  navigation with f0 components — see `references/advanced.md`).
+  `oneOf`/`allOf` compositions are not split into steps. SDK version
+  requirements in `references/advanced.md`.
 
 ### Chaining processes (`nextProcessId`)
 
