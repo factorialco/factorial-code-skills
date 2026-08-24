@@ -1,6 +1,6 @@
 ---
 name: fcode-code-validation
-description: Deep pre-production review of a Factorial Code app — clone the workspace read-only, run the static check catalog (platform rules, language rules, forms and appRole lifecycle, i18n, security and secrets, base-module reuse, logging, install/uninstall hygiene, release readiness), classify findings as Blocker/Warning/Suggestion, and write APP_VALIDATION_REPORT.md with a ✅/❌ promotion verdict. Use when validating, reviewing, or auditing a Factorial Code (fcode) app or workspace before requesting a release or promotion to production, or when asked whether an app is ready to ship.
+description: Pre-production review of a Factorial Code app — clone the workspace read-only, run the static check catalog, classify findings as Blocker/Warning/Suggestion, and write APP_VALIDATION_REPORT.md with a ✅/❌ promotion verdict. Use when validating, reviewing, or auditing a Factorial Code (fcode) app or workspace before a release, or when asked whether an app is ready to ship.
 license: MIT
 metadata:
   category: factorial-code

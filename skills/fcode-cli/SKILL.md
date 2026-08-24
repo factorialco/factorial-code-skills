@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (declared in team.json and synced by push/pull, the stable alias, version_tag), and the workspace config files (process metadata.json, team.json, the three variables files, variables.meta.json). Use when running fcode CLI commands, testing a process locally, syncing to the cloud, managing versions or aliases, overriding an inherited team variable, or configuring a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, team.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, or configuring a process's webhook, form, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -128,6 +128,20 @@ user confirmation.
 Uploads local changes to the cloud. Run after local changes (run `fcode add`
 first only if you created new resources); recommended to `fcode run` first.
 `--force` only with user confirmation.
+
+### `fcode status`
+
+Reports what differs between local and cloud without changing either —
+processes, modules, variables, dependencies, locales, and `team.json`.
+Per-resource variants exist too: `processes:status`, `modules:status`,
+`variables:status`, `i18n:status`, `team:status`.
+
+### `fcode remote:add <workspace-slug>`
+
+Points an already-cloned workspace folder at a different cloud workspace, so
+subsequent `fcode pull` / `push` sync with that one instead — how code is
+promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
+promotion procedure is in `fcode-release`.
 
 ### `fcode team:pull` / `team:push` / `team:status`
 

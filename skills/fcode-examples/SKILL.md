@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration (outbound sync with file-export and API-push delivery flavors), a multi-process custom app lifecycle (multi-step setup form, webhook + schedule install, polling, uninstall), and utility processes (CSV export with signed URL + email, XML enrichment from an uploaded file). Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code

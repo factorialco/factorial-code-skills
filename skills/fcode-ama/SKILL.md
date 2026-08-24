@@ -1,6 +1,6 @@
 ---
 name: fcode-ama
-description: Factorial Code platform user journey and support — requesting access, development teams, creating an App (name, language, OAuth scopes, integrations framework), the Getting started checklist, OAuth app setup, local development, demo companies, the Dev Marketplace, installing apps, appRole forms, releases and promotion to production, marketplace publication (DatoCMS, private apps), and escalation paths. Use when answering "how do I…" questions about using the Factorial Code platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
+description: Factorial Code platform user journey and support — from requesting access through app creation, OAuth setup, demo companies and the Dev Marketplace to releases and marketplace publication. Use when answering "how do I…" questions about using the platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
 license: MIT
 metadata:
   category: factorial-code
