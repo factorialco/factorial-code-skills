@@ -71,10 +71,9 @@ confirmation, run it with test parameters, review results together, and iterate.
 Then offer next steps: scheduling, webhooks (public, inheriting the workspace
 `webhookAuth` configuration, or with their own header and team variable), a form
 (public, or restricted to Factorial users), or exposing the process as an MCP
-tool — and pushing to cloud when ready. Pushing only updates the current code:
-consumers pinned to the `stable` alias are unaffected until a release moves the
-alias — don't create workspace versions or move `stable` unless explicitly
-asked (model in `fcode-core-concepts`, commands in `fcode-cli`).
+tool — and pushing to cloud when ready. Pushing never affects consumers pinned
+to the `stable` alias (model in `fcode-core-concepts`); don't create workspace
+versions or move `stable` unless explicitly asked.
 
 ## Creating MCP tools
 
@@ -97,34 +96,18 @@ any MCP client connected to the Factorial Code MCP Server — tag and go.
 
 ## Code quality & security
 
-- Try/catch (try/except) with meaningful messages; validate inputs at the start;
-  log key steps; extract reusable logic into modules; clean up resources.
-- **Never** hardcode or log secrets — always use variables/env vars; validate
-  external inputs.
+- Try/catch (try/except) with meaningful messages; validate all inputs
+  (external ones included) at the start; log key steps; extract reusable logic
+  into modules; clean up resources.
 - See the module-naming and `variables.env` gotchas in `fcode-core-concepts`.
 
 ## Error handling
 
 Explain what went wrong, propose a fix, and get confirmation — don't silently
-retry. If tests fail repeatedly or the root cause is unclear, stop and ask the
-user rather than trial-and-error.
-
-## Anti-patterns
-
-- Don't assume API structure without testing → use discovery scripts first.
-- Don't create variables without checking what exists → review first.
-- Don't overwrite the whole `variables.env` → read, then append/patch only.
-- Don't write a whole complex process without testing parts → validate with
-  `run_code` first.
-- Don't guess between alternatives → present options and let the user choose.
-
-## When to ask for help
-
-Ask instead of guessing on: ambiguous requirements, missing info (credentials,
-endpoints, package names), repeated failures, architecture/trade-off decisions,
-security concerns, or uncertain root cause. For missing credentials, offer both
-options: the user shares the value, or places it in `variables.local.env`
-themselves (see `fcode-cli`).
+retry or trial-and-error. Ask the user instead of guessing on: ambiguous
+requirements, missing info (credentials, endpoints, package names), repeated
+failures, architecture or trade-off decisions, security concerns, or an
+unclear root cause.
 
 ## Example
 

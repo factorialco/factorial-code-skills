@@ -8,13 +8,10 @@ metadata:
 
 # Factorial Code — App validation
 
-A pre-flight for the platform's own release validation: when a release is
-requested, the platform checks best practices, correct use of the Factorial
-Code templates (not reinventing what the base workspaces provide), and
-secret/credential handling — `fcode-ama` references/journey.md §8. This
-skill runs that review locally, before the release is requested, and adds
-the review dimensions a human gatekeeper would: forms and lifecycle, i18n,
-logging hygiene, security.
+A pre-flight for the platform's own release validation (its criteria are in
+`fcode-ama` references/journey.md §8), run locally before the release is
+requested, adding the review dimensions a human gatekeeper would: forms and
+lifecycle, i18n, logging hygiene, security.
 
 It serves two audiences with the same procedure: an app developer
 self-checking before requesting a release, and a platform reviewer gating
@@ -46,6 +43,10 @@ cited on the catalog row — read the owner when a finding needs context.
 - **`********` placeholders in pulled variables are normal** — a masked
   secret is never a finding, and the review never needs real secret values.
   Never ask for them.
+- **A failing `fcode clone`** usually means UUID confusion or missing
+  access — point at the access flow in `fcode-ama`; don't retry blindly.
+- **A mixed JS/Python workspace is fine** — review each process with its
+  own language's rules and note the mix in the report header.
 - **Review only what the workspace owns.** Inherited resources — modules,
   processes, and variables from `parentTeamSlugs` parents,
   `variables.inherited.env`, `i18n/<locale>.inherited.yaml` — were already
@@ -91,30 +92,6 @@ cited on the catalog row — read the owner when a finding needs context.
 
 ## Check categories
 
-The full catalog, with per-check severities and owner citations, is in
-`references/checks.md`.
-
-| Category | Scope | Owners | Example Blockers |
-|---|---|---|---|
-| STRUCT | Workspace layout, datastore typing, variables files | `fcode-core-concepts`, `fcode-cli` | Module file named `index.js` |
-| LANG | Entry-point contract, imports, return shapes | `fcode-javascript`/`fcode-python` | Aliased `fcode.i18n` |
-| FORM | appRole lifecycle, authMode, pre-fill contract | `fcode-forms`, `fcode-json-schema` | Two `INSTALL` processes; secret echoed to a form |
-| I18N | Locale coverage, reserved names, key hygiene | `fcode-i18n` | Business field named `locale` |
-| SEC | Secrets, webhook auth, sensitivity flags | `fcode-core-concepts`, `fcode-cli` | Hardcoded API key |
-| REUSE | Base-workspace modules and helpers | `fcode-examples` | Hand-rolled Factorial API client |
-| LOG | `fcode-logs` usage, coverage, flooding | `fcode-javascript`/`fcode-python` | — (Warnings at most) |
-| LIFE | Install records, uninstall teardown | `fcode-examples` | Uninstall can't find what install created |
-| REL | Sync state, `stable` pinning, error handler | `fcode-ama`, `fcode-cli` | Empty workspace |
-
-## Edge cases
-
-| Situation | Handling |
-|---|---|
-| Slug looks like a UUID | Refuse to clone; explain the encoded token comes from the app's "How to build locally" guide (`fcode-cli`) |
-| `fcode clone` fails | Usually UUID confusion or missing access — point at the access flow in `fcode-ama`; don't retry blindly |
-| Directory already cloned | `fcode pull`; on divergence ask, review local as-is, record in the report header (feeds REL-02) |
-| Several candidate workspaces / a human team named | List candidates and ask; note a `deploy-`/`prod-` review in the header |
-| Mixed JS/Python workspace | Review each process with its own language's rules; note the mix in the header |
-| Utility app — no `appRole`s, no config-like variables | FORM-07 and the LIFE category don't apply; mark "N/A" with the reason in the summary |
-| Previous report present | Overwrite it — the one permitted write besides the clone |
-| Empty workspace | REL-01 Blocker; report it and stop |
+`STRUCT` · `LANG` · `FORM` · `I18N` · `SEC` · `REUSE` · `LOG` · `LIFE` ·
+`REL` — the full catalog, with per-check severities and owner citations, is
+in `references/checks.md`.

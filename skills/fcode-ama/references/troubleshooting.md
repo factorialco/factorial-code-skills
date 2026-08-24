@@ -16,23 +16,15 @@ instead — see the routing table in `SKILL.md`.
 ## App creation & setup
 
 - **"Should I enable the integrations framework?"** Only when the app pushes
-  one of its supported capabilities — employee compensation, expenses, or
-  employee updates (e.g. leaves) — to an external system, and you want each
-  sync's outcome (success, errors, missing configuration) surfaced to end
-  users in Factorial. "It syncs with an external system" alone is not a
-  reason: apps do that without the framework. When the user is unsure, probe
-  the use case before they check it — see stage 2 in `journey.md` and
-  `https://apidoc.factorialhr.com/docs/integrations-framework`.
+  a supported capability to an external system and needs each sync's outcome
+  surfaced in Factorial — the decision rule is stage 2 in `journey.md`; probe
+  the use case before the user checks it.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the App settings' OAuth tab and the setup steps reappear.
 - **"I'm a Partner/IC and have no OAuth application."** It's preconfigured by
   an administrator and appears on the App settings' OAuth tab once done — if
   it's blocking you, escalate.
-- **"Where did the OAuth section on the Development/Production tab go?"** It
-  moved to **App settings → OAuth** (requested scopes plus the development
-  and production credentials); the setup checklist and the Dev Marketplace's
-  "Configure dev OAuth" link there.
 - **"My integrations-framework app doesn't show up / installs oddly."**
   Framework apps must be linked to their Factorial integration (checklist
   step "Link the Factorial integration", on the app's Settings page) —
@@ -48,10 +40,9 @@ instead — see the routing table in `SKILL.md`.
   <dev-workspace-slug>`); the clone includes the base app code (API clients,
   webhook/schedule/email/form helpers). Everything CLI: `fcode-cli` skill,
   `/docs/cli/`.
-- **"`fcode clone dev-<id>` can't find the workspace."** The slug's token is
-  an encoded value, not the app's UUID — don't build the slug from the
-  browser URL; copy the exact command from the Development tab's "How to
-  build locally" guide.
+- **"`fcode clone dev-<id>` can't find the workspace."** The slug is an
+  encoded token, not the app's UUID — copy the exact command from the
+  Development tab's "How to build locally" guide (`fcode-cli`).
 - **"I pushed but the released form/webhook didn't change."** Expected:
   consumers pin to the `stable` alias, and `fcode push` only updates the
   working copy. The released version changes when a new release moves the
@@ -97,12 +88,6 @@ instead — see the routing table in `SKILL.md`.
   Installations page or the Dev Marketplace app page. It's a live API
   credential for that company: put it in `variables.local.env`, never commit
   or log it (procedure in `fcode-cli`).
-- **"Where did the installations table on the app page go?"** The Development
-  and Production tabs now show a count that links to the Installations page,
-  pre-filtered for that app and environment.
-- **"Where did 'End user actions' on the installation page go?"** Removed —
-  run user-facing forms from the (Dev) Marketplace app page instead.
-
 ## Releases
 
 - **"Version must be greater than the latest deployed release."** Releases
@@ -110,10 +95,8 @@ instead — see the routing table in `SKILL.md`.
   version reserved** — resubmit with a higher version, not the same one.
 - **"I can't request a release."** The app must be `active` or `published`;
   suspended/archived apps can't release.
-- **"My release failed validation."** The platform checks best practices,
-  proper use of the platform templates (don't reimplement what the base
-  workspaces provide), and secret/credential handling. Fix what the
-  notification lists and request a new, higher version.
+- **"My release failed validation."** Fix what the notification lists and
+  request a new, higher version; the gate's criteria are in `journey.md` §8.
 
 ## Publication & marketplace
 

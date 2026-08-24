@@ -116,10 +116,8 @@ fcode clone <dev-workspace-slug>
 ```
 
 Copy both commands from the **"How to build locally"** guide on the app's
-Development tab (which also shows the dev workspace slug with a copy icon) —
-it fills in the real workspace slug. The slug's `dev-…` token is an **encoded
-value, not the app's UUID**: typing `fcode clone dev-<uuid from the browser
-URL>` will not work.
+Development tab — it fills in the real workspace slug, whose `dev-…` token is
+an encoded value, not the app's UUID (see `fcode-cli`).
 
 The clone brings the whole skeleton: the workspace layout, and the shared
 base code every app inherits — Factorial API clients, helpers for webhooks,
@@ -206,13 +204,12 @@ release:
   version** in the dev environment;
 - copies it to the **prod workspace** (`prod-{appId}` — read-only code;
   shared variables and credentials are still managed there);
-- points the **`stable` alias** at it — external consumers (forms, webhooks)
-  pin to `stable`, so later iterations roll out (or back) by moving the alias
-  (mechanics in `fcode-core-concepts`);
+- points the **`stable` alias** at it, so external consumers roll out (or
+  back) by alias moves (mechanics in `fcode-core-concepts`);
 - on the first success, flips the app to **published**.
 
-The release flow wraps workspace version publishing — for a marketplace app,
-don't publish versions or move `stable` by hand (see `fcode-core-concepts`).
+The release flow wraps workspace version publishing — don't publish versions
+or move `stable` by hand.
 
 ## 9. Publication — the marketplace listing
 

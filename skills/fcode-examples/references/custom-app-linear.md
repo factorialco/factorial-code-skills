@@ -58,14 +58,11 @@ app's `INSTALL` role; the runtime push process is webhook-only:
 ```
 
 Both setup forms are opened from inside Factorial, so they carry
-`authMode: FACTORIAL` — only Factorial users of the company that installed the
-app can read the schema or submit it. A public app form would let anyone who
-knows the workspace and process slugs run app code against customer data.
+`authMode: FACTORIAL` — never leave an app form public (see `fcode-forms`).
 
 `processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
 via `nextProcessId`. It also doubles as the app's post-install settings
-screen (re-map teams later), which is what `appRole: SETTINGS` marks — an
-app has at most one `INSTALL` and one `SETTINGS` process:
+screen (re-map teams later), which is what `appRole: SETTINGS` marks:
 
 ```json
 {
@@ -86,12 +83,11 @@ app has at most one `INSTALL` and one `SETTINGS` process:
 }
 ```
 
-`authMode: TEAM` inherits the workspace `webhookAuth` from `team.json`, which for a
-Factorial-sent webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
-`x-factorial-wh-challenge` header — the same token `setupWebhook` embeds in the
-subscription at install (see below). The platform checks it before the process
-runs, so webhook processes carry no auth code. Set `webhookAuth` per workspace; it
-is not inherited from `parentTeamSlugs`. See `fcode-cli`.
+`authMode: TEAM` inherits the workspace `webhookAuth` from `team.json` — the
+same challenge token `setupWebhook` embeds in the subscription at install (see
+below), checked by the platform before the process runs, so webhook processes
+carry no auth code. Setup in `references/integration-acme.md`; field reference
+in `fcode-cli`.
 
 `linear-projects-poll` needs neither webhook nor form — it's invoked by the
 schedule created at install time. Edit these files and `fcode push`; no
@@ -256,9 +252,8 @@ async function main() {
   const factorialClient = createFactorialClient();
   const companyId = await getCompanyId(factorialClient);
 
-  // setupWebhook embeds FACTORIAL_CHALLENGE_TOKEN as the subscription's challenge — the
-  // value Factorial then sends in x-factorial-wh-challenge and the workspace webhookAuth
-  // checks. It throws when the variable is unset, so the endpoint is never left open.
+  // setupWebhook embeds FACTORIAL_CHALLENGE_TOKEN as the subscription's
+  // challenge, and throws when the variable is unset.
   const subscription = await setupWebhook({
     factorialClient,
     subscriptionType: "employees/employee/create_with_contract",
@@ -287,9 +282,8 @@ async function main() {
 
 `linear-setup-mapping` carries `appRole: SETTINGS`, so the *same* form is opened
 again long after install, to re-map teams or rotate the key. **It must render the
-current state**, or the user is asked to re-enter configuration they cannot see —
-and an app has at most one `SETTINGS` process, so this is that form, not a second
-one.
+current state**, or the user is asked to re-enter configuration they cannot
+see.
 
 The pre-render above already does this for the mapping. Extending it to cover the
 credential and a poll interval is the whole pattern:
@@ -457,9 +451,8 @@ user in Linear (update if the email exists, invite otherwise):
 
 ```javascript
 async function main() {
-  // The caller is already authenticated: the webhook's authMode: TEAM resolves to the
-  // workspace webhookAuth, which checks FACTORIAL_CHALLENGE_TOKEN in
-  // x-factorial-wh-challenge. Validate the payload, not the credential.
+  // The platform already authenticated the caller (workspace webhookAuth) —
+  // validate the payload, not the credential.
   const { id, login_email, full_name, preferred_name } = fcode.context.parameters;
   if (!login_email) {
     // Bad payload → webhook-style HTTP response, not a crash.

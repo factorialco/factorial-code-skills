@@ -1,8 +1,7 @@
 # App validation — report template
 
 Write the report to `APP_VALIDATION_REPORT.md` at the root of the cloned
-workspace, overwriting any previous run. It is a review artifact for the
-developer (and their coding agent) — never `fcode add` or `fcode push` it.
+workspace, overwriting any previous run.
 
 ## Authoring rules
 
@@ -11,16 +10,11 @@ developer (and their coding agent) — never `fcode add` or `fcode push` it.
   execute without reading this skill or the catalog: name the file, the
   change, and the commands involved. Don't say "see FORM-05" — say what to
   do.
-- **One finding per check**, with every affected location listed under
-  **Where** — never one finding per site.
 - **Cite the rule's owner** so a human reviewer can verify the rationale:
   one sentence of rule plus the owning skill (and reference file when the
   rule lives there).
-- **The verdict line is duplicated verbatim in chat**, together with the
-  per-severity counts and the Blocker titles.
-- Categories with layout checks skipped on a fresh clone, or lifecycle
-  checks skipped for a utility app, appear in the summary as "N/A" with the
-  reason — never silently omitted.
+- N/A categories appear in the summary with the reason — never silently
+  omitted.
 
 ## Template
 
@@ -86,7 +80,6 @@ developer (and their coding agent) — never `fcode add` or `fcode push` it.
 ## Re-running validation
 
 After applying fixes, run the `fcode-code-validation` skill again with
-workspace `<workspace-slug>` — it pulls the workspace and regenerates this
-report. The verdict flips to ✅ only when zero Blockers remain. This file is
-a review artifact: do not `fcode add` or `fcode push` it.
+workspace `<workspace-slug>`; the verdict flips to ✅ only when zero Blockers
+remain.
 ```

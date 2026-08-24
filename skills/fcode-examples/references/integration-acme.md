@@ -262,11 +262,8 @@ class AcmeApiSync extends OutboundSync {
 Vendor variables follow the `VENDOR__KEY` convention (matches
 `variableName()`).
 
-`FACTORIAL_TOKEN` is auto-populated in the remote environment — don't create
-it there. For local runs, obtain it via the OAuth flow and put it in
-`variables.local.env` (procedure in `fcode-cli`). Other sensitive variables
-must be created manually in the remote demo environment — local values aren't
-pushed (see `fcode-cli`).
+`FACTORIAL_TOKEN` is auto-populated remotely and needed locally only; how to
+obtain it and handle other local secret values is in `fcode-cli`.
 
 ## Adapting to a real vendor — checklist
 
