@@ -1,6 +1,6 @@
 ---
 name: fcode-i18n
-description: Workspace locales and translations for Factorial Code — i18n/<locale>.yaml locale files, the fcode.i18n(key, args) runtime helper in JavaScript and Python, fcode.i18n("key") tokens in form schemas, execution-locale selection (Fcode-Locale header, ?locale=, schedules), inheritance and primary-locale fallback, locale versioning, and the fcode i18n:* CLI commands. Use when adding a locale, translating or internationalizing existing process code or form text, calling fcode.i18n, testing with fcode run --locale, or syncing translations with i18n:push.
+description: Workspace locales and translations for Factorial Code — i18n/<locale>.yaml files, the fcode.i18n helper in code and in form schemas, execution-locale selection, primary-locale fallback, locale versioning, and the i18n:* CLI commands. Use when adding a locale, internationalizing process code or form text, or testing and syncing translations.
 license: MIT
 metadata:
   category: factorial-code
@@ -105,10 +105,8 @@ locale = fcode.i18n.locale
   versioning below.
 - Interpolation is a **single pass over own properties**: a substituted value
   containing `%{...}` is never rescanned (one argument can't reach another),
-  and `%{constructor}` resolves nothing.
-- Missing key → the key itself; missing argument → placeholder left as
-  written. Nothing here ever throws while translations were shipped — the one
-  exception is calling through an alias (see Gotchas).
+  and `%{constructor}` resolves nothing. Missing keys and arguments never
+  throw (see Gotchas).
 
 ## Translating form schemas
 
@@ -135,8 +133,7 @@ so text a pre-render injects is translated too.
 
 Arguments follow relaxed JavaScript syntax (single quotes, unquoted field
 names, trailing commas all accepted) but must stay a **flat object of
-scalars** — a nested value leaves the whole token unsubstituted. A missing key
-resolves to the key itself, visible but never form-breaking.
+scalars** — a nested value leaves the whole token unsubstituted (see Gotchas).
 
 The reader's locale comes from the embed: `locale` in the embed options or the
 `data-fcode-form-locale` attribute, sent to the platform as the `Fcode-Locale`

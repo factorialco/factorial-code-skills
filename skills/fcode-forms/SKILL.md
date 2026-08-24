@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — the three embed methods (data attributes, Fcode.initForm, the FcodeForm React component), version pinning to the stable alias, access restriction (authMode), driving behavior from the process return value, styling and themes (including the f0 theme inside Factorial), multi-step flows, pre-filling current values, and file uploads. Use when embedding, configuring, styling, restricting, version-pinning, pre-filling, or wiring up a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — embed methods, version pinning to the stable alias, access restriction, driving behavior from the process return value, styling and themes, multi-step flows, and file uploads. Use when embedding, configuring, styling, or wiring up a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
