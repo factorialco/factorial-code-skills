@@ -9,12 +9,11 @@ metadata:
 # Factorial Code — Release
 
 Promotes an app's code from its `dev-…` workspace to its `prod-…` workspace
-using CLI remotes. Input: the two workspace slugs. This updates the prod
-workspace's **current** (unversioned) code — it is the precursor to the
-versioned platform release: publishing a workspace version and moving the
-`stable` alias happen separately (model in `fcode-core-concepts`, journey in
-`fcode-ama`), so consumers pinned to `stable` are untouched by this push
-until the alias moves.
+using CLI remotes. Input: the two workspace slugs. This updates prod's
+**current** (unversioned) code only — publishing a workspace version and moving
+the `stable` alias is the separate platform release (model in
+`fcode-core-concepts`, journey in `fcode-ama`): don't run `team:versions:*` or
+move `stable` in this flow unless explicitly asked.
 
 Gate every release with `fcode-code-validation` — see the procedure.
 
@@ -36,9 +35,11 @@ Gate every release with `fcode-code-validation` — see the procedure.
 - **Both slugs are encoded tokens** (`dev-…` / `prod-…`), not the app's
   UUID (see `fcode-cli`). Verify the prefixes: cloning target and push
   target must not be swapped.
-- **This is not the versioned release.** Don't run `team:versions:create`
-  or move `stable` as part of this flow unless the user explicitly asks —
-  that step belongs to the platform release (`fcode-ama`).
+- **A failing `fcode clone`** usually means a mistyped token or missing
+  access (see `fcode-ama`) — don't retry blindly.
+- **If `dev-xxx/` already exists locally, don't reuse it silently** — ask
+  whether to release from a fresh clone (recommended) or the existing copy,
+  and `fcode pull` it first.
 
 ## Procedure
 
@@ -70,17 +71,5 @@ Gate every release with `fcode-code-validation` — see the procedure.
    ```
 
    On a divergence: stop and ask — never `--force` on your own.
-6. **Report the outcome.** Remind the user that consumers pinned to
-   `stable` still run the released version; publishing a workspace version
-   and moving the alias is the separate platform-release step (`fcode-ama`).
-
-## Edge cases
-
-| Situation | Handling |
-|---|---|
-| A slug looks like a UUID or has the wrong prefix | Stop; the encoded slugs come from the app's Development/Production tabs (`fcode-cli`) |
-| `fcode clone` fails | Usually a mistyped token or missing access — see `fcode-ama`; don't retry blindly |
-| `dev-xxx/` directory already exists locally | Don't reuse it silently — ask whether to release from a fresh clone (recommended) or the existing copy, then `fcode pull` it first |
-| Validation report missing or older than the latest dev changes | Run `fcode-code-validation` before continuing |
-| Divergence on `pull` or `push` | Stop, show the difference, ask; `--force` only with the user's explicit confirmation |
-| User asks to also publish a version / move `stable` | That's the platform release — hand over to the flow in `fcode-ama` and only act on explicit instruction |
+6. **Report the outcome**, reminding the user that the platform release
+   (publish a version, move `stable`) is a separate step (`fcode-ama`).

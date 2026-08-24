@@ -95,17 +95,15 @@ not a coverage issue.
 | SEC-05 | Webhook auth is correct: `authMode: TEAM` has a `webhookAuth` in `team.json` (per-workspace, not inherited — missing = every call rejected, **B**); an enabled webhook with `authMode: NONE` doing sensitive work is **B**; a bespoke `headerName` without a sender constraint is **S** (loses `Authorization` redaction) | B/S | `fcode-cli` §Process metadata, §Team settings |
 | SEC-06 | Sensitive data returned to callers uses `{transient: true, data}` so it is not persisted in execution results | W | `fcode-javascript`/`fcode-python` §Return values |
 | SEC-07 | Runtime `fcode.variables.set` flags are right: secrets stay default-sensitive, plain config passes `sensitive: false` — a secret created non-sensitive is **W**, config created sensitive is **S** | W/S | `fcode-javascript`/`fcode-python` §Variables & schedules |
-| SEC-08 | No eval-like execution of user-controlled input (`eval`, `Function`, `exec`, dynamic `require` of user data) — child workspaces run this code with the parents' credentials | W | `fcode-core-concepts` §Variables are inherited |
+| SEC-08 | No eval-like execution of user-controlled input (`eval`, `Function`, `exec`, dynamic `require` of user data) — child workspaces run this code with the parents' credentials | W | `fcode-core-concepts` §Inheritance from parent workspaces |
 | SEC-09 | OAuth scopes match the API calls actually made — request only what the app needs (static approximation; note uncertainty) | S | `fcode-ama` references/journey.md §4 |
 | SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Team settings, `fcode-examples` §The base workspaces |
 
 ## REUSE — base-app reuse
 
-The platform release gate explicitly checks "correct use of the Factorial
-Code templates (not reinventing what the base workspaces provide)" —
-`fcode-ama` references/journey.md §8 — which is why reimplementations of the
-core base modules block. The base-module table is in `fcode-examples` §The
-base workspaces.
+Reimplementations of the core base modules block because the platform
+release gate checks template reuse (`fcode-ama` references/journey.md §8).
+The base-module table is in `fcode-examples` §The base workspaces.
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|

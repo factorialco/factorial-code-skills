@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration (outbound sync with file-export and API-push delivery flavors), a multi-process custom app lifecycle (multi-step setup form, webhook + schedule install, polling, uninstall), and utility processes (CSV export with signed URL + email, XML enrichment from an uploaded file). Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code
@@ -77,13 +77,6 @@ implementations should log verbosely through the shared `fcode-logs` module
 
 Every sample exists in JavaScript (Node.js v22) and Python (3.13) with
 identical structure and behavior. References show JavaScript; the Python
-variant differs only in idiom:
-
-| JavaScript | Python |
-|---|---|
-| `processes/<slug>/index.js` | `processes/<slug>/main.py` |
-| `fcode.import("slug")` | `fcode.import_module("slug")` |
-| `fcode.sendMail(...)` | `fcode.send_mail(...)` |
-| `module.exports = { main }` | top-level `def main():` |
-| camelCase helpers | snake_case helpers |
+variant differs only in idiom (`main.py`, `fcode.import_module`,
+`fcode.send_mail`, snake_case) — see `fcode-python`.
 

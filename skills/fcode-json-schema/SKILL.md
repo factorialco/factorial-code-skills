@@ -48,6 +48,8 @@ so its `ui:` options apply.
   `after` strings renders block markdown (full GFM, incl. tables) above/below
   the field. Detail and a worked example in `fcode-forms`
   (`references/advanced.md`).
+- **Long forms** — split roughly ten or more fields into steps with a root-level
+  `ui:steps` node; see `fcode-forms` §Multi-step forms.
 
 ## Gotchas
 
@@ -58,11 +60,9 @@ so its `ui:` options apply.
   from a secret variable, never hardcode it.
 - The schema is the single source of the form's fields — to change fields, edit
   the schema, not the form embed code.
-- **The schema is data, not code.** It cannot carry executable JavaScript:
-  `embedFormOptions.onChange` and `embedFormOptions.fields.<field>.transformFn`
-  were removed, and `markdown.before`/`markdown.after` blocks — like all form
-  text — are markdown: raw HTML is never rendered. Client-side behaviour
-  belongs in the embedding page — see `fcode-forms`.
+- **The schema is data, not code** — no executable JavaScript, and all form
+  text is markdown (raw HTML is never rendered). Client-side behaviour belongs
+  in the embedding page — see `fcode-forms`.
 - **Visible text can be translated**: schema strings (titles, descriptions,
   `ui:placeholder`) accept `fcode.i18n("key")` tokens, substituted server-side
   before the form is served — see `fcode-i18n`.

@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server (fcode http), workspace versions and aliases (declared in team.json and synced by push/pull, the stable alias, version_tag), and the workspace config files (process metadata.json, team.json, the three variables files, variables.meta.json). Use when running fcode CLI commands, testing a process locally, syncing to the cloud, managing versions or aliases, overriding an inherited team variable, or configuring a process's webhook or form settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, team.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, or configuring a process's webhook, form, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -51,9 +51,11 @@ web UI (see below).
   publishes that workspace version, removing one deletes it from the cloud
   (cascading), re-pointing an alias is a release or rollback. Same rule as
   `team:versions:*` / `team:aliases:*` — **don't touch unless explicitly asked.**
-- **Never edit `variables.inherited.env`.** It holds the parent workspaces'
-  variables, is regenerated on pull, and `fcode push` skips it with a warning.
-  Overriding an inherited value means adding the key to `variables.env`.
+- **Never edit inherited resources.** `variables.inherited.env`,
+  `i18n/<locale>.inherited.yaml`, and inherited processes/modules are owned by
+  parent workspaces, regenerated on pull, and never pushed (see below).
+  Override a variable by adding the key to `variables.env` (a locale key to
+  `i18n/<locale>.yaml`); edit processes and modules in the owning workspace.
 
 ## Commands
 
@@ -126,6 +128,20 @@ user confirmation.
 Uploads local changes to the cloud. Run after local changes (run `fcode add`
 first only if you created new resources); recommended to `fcode run` first.
 `--force` only with user confirmation.
+
+### `fcode status`
+
+Reports what differs between local and cloud without changing either —
+processes, modules, variables, dependencies, locales, and `team.json`.
+Per-resource variants exist too: `processes:status`, `modules:status`,
+`variables:status`, `i18n:status`, `team:status`.
+
+### `fcode remote:add <workspace-slug>`
+
+Points an already-cloned workspace folder at a different cloud workspace, so
+subsequent `fcode pull` / `push` sync with that one instead — how code is
+promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
+promotion procedure is in `fcode-release`.
 
 ### `fcode team:pull` / `team:push` / `team:status`
 
@@ -330,6 +346,25 @@ by several webhooks is named — and rotated — in one place. Two things about 
 - **Removing the object and pushing clears the cloud configuration**, which makes
   every webhook inheriting it reject all calls.
 
+## Inherited resources on disk
+
+`fcode pull` writes everything inherited from `parentTeamSlugs` alongside the
+workspace's own resources: `variables.inherited.env`,
+`i18n/<locale>.inherited.yaml`, and the inherited process/module folders inside
+`processes/` and `modules/`. The CLI keeps them parent-owned:
+
+- **Read-only** — process/module files are written mode `444`; needing a
+  `chmod` to edit is the signal to stop and change them in the owning workspace.
+- **Gitignored** via a CLI-managed block in `.gitignore`, regenerated on every
+  pull — don't hand-edit the block.
+- **`fcode push` never uploads them.** One that was modified locally logs a
+  warning naming the owning team — restore it with `fcode processes:pull` /
+  `modules:pull` (or the aggregate `fcode pull`).
+- The `*:status` commands show an **inherited** column with the owning
+  workspace (`🔗 <slug>`), hidden when nothing is inherited.
+
+Inheritance model (resolution order, overrides) in `fcode-core-concepts`.
+
 ## The three variables files
 
 Team variables live in three `.env` files at the workspace root:
@@ -353,8 +388,6 @@ string rather than falling through to the parent.
 treats it as this workspace's own variable: `fcode status` shows it as new,
 `fcode push` creates it here, and `fcode variables:add` offers it.
 
-- **Don't edit `variables.inherited.env`** — it is regenerated on every pull, and
-  `fcode push` skips inherited variables with a warning. Editing one only warns.
 - **Don't copy a parent's variables into a child workspace** to "make them
   available" — they already resolve. Only add a key when this workspace genuinely
   needs a different value. (Workspaces provisioned before inheritance existed may
@@ -364,9 +397,7 @@ treats it as this workspace's own variable: `fcode status` shows it as new,
 - Deleting your override (removing the key from `variables.env` and pushing)
   brings the parent's value back.
 
-`fcode variables:status` grows an **inherited** column showing the source
-workspace (`🔗 <slug>`) when any variable is inherited; the column is hidden
-otherwise. Model and web-UI behaviour in `fcode-core-concepts`; the runtime
+Model and web-UI behaviour in `fcode-core-concepts`; the runtime
 `fcode.variables` behaviour in `fcode-javascript` / `fcode-python`.
 
 The file names are settings (`variablesFileName`,

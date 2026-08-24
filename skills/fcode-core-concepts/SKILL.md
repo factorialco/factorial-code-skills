@@ -1,6 +1,6 @@
 ---
 name: fcode-core-concepts
-description: Factorial Code platform architecture and core concepts — processes, modules, execution context, team variables and their inheritance from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
+description: Factorial Code platform architecture and core concepts — processes, modules, execution context, inheritance of processes, modules, variables and locales from parent workspaces, datastore, file storage, workspace structure, and naming conventions. Use when building, editing, or reasoning about any Factorial Code (fcode) process, module, or workspace; start here before writing process or module code.
 license: MIT
 metadata:
   category: factorial-code
@@ -29,9 +29,11 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Never overwrite the whole `variables.env`.** Read it first and append/patch
   only the specific variable(s); rewriting the file drops every variable not in
   the new content and can break other processes.
-- **Never edit `variables.inherited.env`.** It is regenerated on every pull and
-  owned by the parent workspace. To change an inherited value for this
-  workspace, add the key to `variables.env` — that overrides it.
+- **Never edit inherited resources** (`variables.inherited.env`,
+  `i18n/<locale>.inherited.yaml`, inherited processes/modules) — they are owned
+  by parent workspaces and regenerated on every pull. Override a variable or
+  locale key by defining it in this workspace's own file; edit processes and
+  modules in the workspace that owns them.
 - **Never hardcode or log secrets.** Use variables/env vars; mask or omit
   secrets from logs.
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
@@ -100,33 +102,39 @@ programmatically from a process, use the `fcode.variables` helper
 (`set`/`get`/`list`/`delete`) — scoped to your team, no API token needed. See
 `fcode-javascript` / `fcode-python`.
 
-#### Variables are inherited from parent workspaces
+### Inheritance from parent workspaces
 
-A workspace uses the variables defined in any of its `parentTeamSlugs` parents
-without redefining them, alongside processes and modules. Inheritance follows the
-same rule those already use: the workspace first, then its **direct** parents
-sorted by slug, capped at 5 — so it is **not transitive** (a grandparent's
-variables don't reach a grandchild).
+A workspace uses the **processes, modules, variables, and i18n locales** of its
+`parentTeamSlugs` parents as if they were its own. Resolution is the same for
+all of them: the workspace first, then its **direct** parents sorted by slug,
+capped at 5 — so it is **not transitive** (a grandparent's resources don't
+reach a grandchild).
 
+- **Read, call, and import inherited resources freely** — an inherited module
+  imports exactly like an owned one, and a child's code can depend on a parent's
+  process — but they are **read-only where they're inherited**: never modify,
+  delete, or reschedule them, not by editing files, not through the MCP tools.
+  Edit them in the workspace that owns them.
+- **Variables and locales are overridden by redefining locally**: a key in the
+  child's `variables.env` or `i18n/<locale>.yaml` wins over the parent's, key by
+  key; deleting the override brings the parent's value back. Processes and
+  modules have no override — change them in the owner.
 - **Don't re-create a parent's variables in a child.** They already resolve
-  there. This is why a `deploy-{installationId}` workspace carries only the values
-  specific to that customer, while shared defaults and credentials stay in
-  `prod-{appId}` / `base-app`.
-- **Defining the same key in the child overrides the inherited one** for that
-  workspace — the child's value is what its executions see, and the parent's
-  entry disappears from the child's list entirely (one entry per key, never two).
-  Deleting the override brings the parent's value back.
-- **Inherited variables are read-only where they're inherited.** Edit or delete
-  them in the workspace that owns them, or override them locally. In the web UI
-  they carry an inherited badge and offer **Override here**; the CLI and SDK
-  behaviours are in `fcode-cli` and `fcode-javascript` / `fcode-python`.
+  there. This is why a `deploy-{installationId}` workspace carries only the
+  values specific to that customer, while shared defaults and credentials stay
+  in `prod-{appId}` / `base-app`. In the web UI inherited variables carry an
+  inherited badge and offer **Override here**.
 - **Secrets inherit too, and their real values reach the sandbox.** A process in
   a child workspace reads a parent's secret at execution time. They stay masked
   everywhere else (`null` over GraphQL, `******` over REST, `********` in the
-  CLI's inherited file), so process code is the only place a value is readable.
-  Treat code in a child workspace as trusted with its parents' credentials.
-- **Local runs get the placeholder, not the secret** — put real values in
-  `variables.local.env` (see `fcode-cli`).
+  CLI's inherited file), so process code is the only place a value is readable —
+  treat code in a child workspace as trusted with its parents' credentials.
+  Local runs get the placeholder — put real values in `variables.local.env`.
+- **A workspace version never publishes inherited resources** — only owned ones
+  get the tag (see Versioning & aliases).
+
+On-disk layout, gitignoring, and push/pull behaviour of inherited resources are
+in `fcode-cli`.
 
 ### Schedules
 

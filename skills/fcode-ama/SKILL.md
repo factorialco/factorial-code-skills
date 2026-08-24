@@ -1,6 +1,6 @@
 ---
 name: fcode-ama
-description: Factorial Code platform user journey and support — requesting access, development teams, creating an App (name, language, OAuth scopes, integrations framework), the Getting started checklist, OAuth app setup, local development, demo companies, the Dev Marketplace, installing apps, appRole forms, releases and promotion to production, marketplace publication (DatoCMS, private apps), and escalation paths. Use when answering "how do I…" questions about using the Factorial Code platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
+description: Factorial Code platform user journey and support — from requesting access through app creation, OAuth setup, demo companies and the Dev Marketplace to releases and marketplace publication. Use when answering "how do I…" questions about using the platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
 license: MIT
 metadata:
   category: factorial-code
@@ -73,28 +73,27 @@ App console areas:
 | Area | What it's for |
 |---|---|
 | **Apps** | The team's apps; where a new app is created |
-| **App detail page** | Per-app home: the Getting started checklist and the **Development / Production / Publication** tabs. Development shows the dev workspace and an installations summary; Production adds releases |
-| **App settings** | **Configuration** (including marketplace visibility and lifecycle) and **OAuth** (requested scopes plus the development and production credentials) |
+| **App detail page** | Per-app home: the Getting started checklist and the **Development / Production / Publication** tabs |
+| **App settings** | **Configuration** (marketplace visibility, lifecycle) and **OAuth** (requested scopes plus the development and production credentials) |
 | **Demo Companies** | Demo Factorial companies for testing installs |
 | **Dev Marketplace** | Simulation of the production marketplace, run against demo companies |
-| **Marketplace** | The production marketplace companies see |
-| **Team** | Development team members and settings |
-| **Installations** | The app installations across companies |
+
+Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 
 ## The journey at a glance
 
 | # | Stage | Where | What happens |
 |---|---|---|---|
-| 1 | Request access | Landing page → request-access form | An administrator reviews it; you're notified of the outcome and can then sign in. Joins an existing development team when one matches |
-| 2 | Create an App | Apps → create | Name and purpose; language (**JavaScript** or **Python**); **OAuth scopes** (they bound what the app may do on the Factorial API); whether it uses the **integrations framework** — opt in only when you know what it provides (see `references/journey.md`) |
-| 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure dev/prod OAuth (only when scopes were requested), publish a release, add marketplace metadata |
-| 4 | Configure OAuth | App settings → OAuth tab | Client credentials for the OAuth flow against the Factorial API, per environment. Internal teams create the OAuth app themselves in the Factorial Backoffice; for Partners and Individual Contributors an administrator preconfigures it (automation planned) |
-| 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` to the cloud dev workspace |
-| 6 | Demo company | Demo Companies page | Internal: create directly (using the Demo generator). Partner/IC: request one; it's provisioned and you're notified by email |
-| 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials and install the app; exercise its `appRole` forms |
-| 8 | Release | App detail → Production tab | Request a release (semver + notes); the platform validates it; when deployed, the snapshot lands in the read-only prod workspace and the app becomes **published** |
-| 9 | Publish listing | App detail → Publication tab | Metadata for the marketplace listing: link a DatoCMS record and/or fill the fallback (tagline, description, categories, screenshots). Private visibility is set in App settings → Configuration |
-| 10 | Production | Marketplace | The app is visible and installable by companies; each install gets its own isolated workspace |
+| 1 | Request access | Landing page → request-access form | An administrator reviews it and you're notified; joins an existing development team when one matches |
+| 2 | Create an App | Apps → create | Name and purpose; language (**JavaScript** or **Python**); **OAuth scopes**; the **integrations framework** opt-in (decision rule in `references/journey.md`) |
+| 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure OAuth (when scopes were requested), publish a release, add marketplace metadata |
+| 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
+| 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
+| 6 | Demo company | Demo Companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
+| 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
+| 8 | Release | App detail → Production tab | Request a release (semver + notes); the platform validates it and deploys the snapshot to the read-only prod workspace |
+| 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
+| 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
 
 Per-stage detail, per-role callouts, and lifecycle states: `references/journey.md`.
 
@@ -118,12 +117,10 @@ Each app maps to workspaces (slugs carry an encoded token, not the raw id):
   — shared bases every app inherits: API clients, webhook/schedule/email/form
   helpers, and (for framework apps) the integration templates.
 
-Released versions are pinned tags; the **`stable` alias** points at the
-current one, so forms, webhooks, and other external consumers pin to `stable`
-and a rollout or rollback is a single alias move. For a marketplace app, ship
-through the release flow (stage 8) — it wraps workspace version publishing;
-don't publish versions or move `stable` by hand (those primitives, for
-standalone workspaces, are in `fcode-core-concepts` / `fcode-cli`).
+Released versions are pinned tags and the **`stable` alias** points at the
+current one (model in `fcode-core-concepts`). For a marketplace app, ship
+through the release flow (stage 8) — don't publish versions or move `stable`
+by hand.
 
 ## Routing — where deep questions live
 

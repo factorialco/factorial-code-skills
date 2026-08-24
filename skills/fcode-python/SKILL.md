@@ -30,7 +30,7 @@ Guidelines for writing Python that runs on Factorial Code. Runtime is
   `fcode.import_module(name)` ❌.
 - **Never alias `fcode.i18n`** — call it literally (`fcode.i18n("key")` ✅,
   `t = fcode.i18n` ❌): an aliased call throws "i18n is disabled" at
-  runtime. Missing keys resolve to the key itself. See `fcode-i18n`.
+  runtime. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `json.dumps` objects before
   `set`, `json.loads` after `get`.
 - **Use snake_case**, not camelCase; follow PEP 8; add type hints where helpful.
@@ -95,14 +95,11 @@ log.warn("token missing — skipping")      # stderr when LOG_LEVEL ≤ warn
 log.error("sync failed", str(err))         # stderr — always emitted
 ```
 
-**Be verbose.** Log the start/end of the main flow, every external call, and each
-major decision at `info`; dump payloads and intermediate state at `debug` (free
-in production — gated off unless `LOG_LEVEL=debug`). **Always log inside `except`:**
-record the error with context — what operation, which inputs — at `error` before
-re-raising, or at `warn` for a recovered/skipped path. `error` is always emitted.
-
-Set `LOG_LEVEL=debug` in a local or dev workspace to trace a full run; production
-stays at `info`. Never log secrets.
+**Be verbose** — the logging policy (start/end, external calls and decisions at
+`info`; payloads at `debug`; always log inside `except` with context before
+re-raising) is in `fcode-core-concepts` §General rules. Set `LOG_LEVEL=debug`
+in a local or dev workspace to trace a full run; production stays at `info`.
+Never log secrets.
 
 ## Dependencies
 
@@ -137,6 +134,9 @@ content = fcode.storage.download("path/myfile.txt")
 with open(local_path, "wb") as f:
     f.write(content)
 
+# Form file params arrive as "fcode.storage://…" references — strip the
+# prefix before download; see fcode-forms.
+
 # Signed download URL — { "url", "expiresAt" }. A real HTTPS link in the
 # cloud, a file:// URL locally (same shape, no special-casing).
 signed = fcode.storage.create_signed_url("path/myfile.txt")
@@ -145,16 +145,6 @@ fcode.storage.delete("path/myfile.txt")
 ```
 
 **Local disk:** write temp files under `os.environ.get("TMP_DATA_DIR")`.
-
-**Form file uploads:** a form file field (`"ui:widget": "file"`) is uploaded to
-Storage before execution and arrives as an `fcode.storage://…` reference (a list
-if multiple files). Strip the prefix to download:
-
-```python
-parameters = fcode.context.parameters
-uploaded_path = parameters.get("inputFile")
-content = fcode.storage.download(uploaded_path.replace("fcode.storage://", ""))
-```
 
 ## Variables & schedules
 
@@ -180,6 +170,8 @@ schedule = fcode.schedule.create(
     allow_concurrent_executions=False,  # optional
 )
 schedules = fcode.schedule.list(process_id=fcode.execution.process.id)
+current = fcode.schedule.get(schedule["id"])
+fcode.schedule.update(schedule["id"], cron="0 0 7 * * SUN")
 fcode.schedule.pause(schedule["id"])
 fcode.schedule.resume(schedule["id"])
 fcode.schedule.delete(schedule["id"])
@@ -192,28 +184,18 @@ fcode.schedule.delete_for_process(fcode.execution.process.id)
 
 ### Inherited variables
 
-`list()`/`get()` return the variables the workspace **inherits from its parent
-workspaces** alongside its own (model in `fcode-core-concepts`). An inherited one
-carries `resolving_team_slug` naming the workspace it comes from; it is readable
-and usable exactly like an own variable, but it is owned elsewhere:
-
-- **`set()` on an inherited key creates an override in this workspace** rather
-  than updating the parent's variable. That is the only way to change the value
-  from here — updating by the parent's id would `404`.
-- **`delete()` on an inherited key does nothing** (silently). Only variables this
-  workspace owns can be deleted. An uninstall process cleaning up
-  `fcode.variables.delete("API_KEY")` therefore leaves a parent's credential
-  intact — which is what you want, but check `resolving_team_slug` if the process
-  must report what it actually removed.
-- `fcode.env.set_env_var` / `del_env_var` behave the same way.
-
-An older platform that doesn't report `resolvingTeamSlug` makes every variable
-look owned, so the pre-inheritance behaviour is preserved.
+`list()`/`get()` include variables inherited from parent workspaces (model in
+`fcode-core-concepts`); an inherited one carries `resolving_team_slug` naming
+its owner. `set()` on an inherited key creates an **override** in this
+workspace — the only way to change the value from here — and `delete()` on one
+is a **silent no-op**, so an uninstall process never removes a parent's
+credential (check `resolving_team_slug` if it must report what it actually
+removed). `fcode.env.set_env_var` / `del_env_var` behave the same way.
 
 ## Sending email
 
-Send email with the built-in `fcode.send_mail` — no SMTP setup required. The mail
-server and credentials live in the executor manager, never in your process.
+Send email with the built-in `fcode.send_mail` — no SMTP setup required (model
+in `fcode-core-concepts`):
 
 ```python
 info = fcode.send_mail(

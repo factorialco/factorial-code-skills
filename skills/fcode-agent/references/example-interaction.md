@@ -49,27 +49,8 @@ when ready."
 both Shopify and SendGrid, and fetch sample order data to understand the
 structure."
 
-_[Agent runs discovery script via `run_code`]_
+_[Agent runs discovery script via `run_code`, shares what it learned about the
+order structure, and asks to proceed…]_
 
-**Agent:** "Great! Both connections are working:
-
-- Shopify: connected to your shop, found 3 order statuses (pending, processing,
-  completed)
-- SendGrid: API key validated, ready to send emails
-
-I can see the order structure includes: order_id, customer_email, order_total,
-items. Now I'll create the main process with the order-fetching and
-email-sending logic. Should I proceed?"
-
-**User:** "Yes"
-
-**Agent:** "Process created. I've implemented:
-
-- Order fetching from Shopify with date-range and status filtering
-- Email template with order details
-- Error handling and logging
-
-The process is ready. Would you like me to run a test execution with sample
-data?"
-
-_[… continues iteratively, validating each step with the user.]_
+_[… continues iteratively — implement, test, review — validating each step
+with the user before the next.]_
