@@ -51,13 +51,11 @@ web UI (see below).
   publishes that workspace version, removing one deletes it from the cloud
   (cascading), re-pointing an alias is a release or rollback. Same rule as
   `team:versions:*` / `team:aliases:*` — **don't touch unless explicitly asked.**
-- **Never edit `variables.inherited.env`.** It holds the parent workspaces'
-  variables, is regenerated on pull, and `fcode push` skips it with a warning.
-  Overriding an inherited value means adding the key to `variables.env`.
-- **Never edit an inherited process or module.** They sit in `processes/` and
-  `modules/` next to the workspace's own but are owned by a parent workspace and
-  written read-only; `fcode push` never uploads them. Edit them where they are
-  owned.
+- **Never edit inherited resources.** `variables.inherited.env`,
+  `i18n/<locale>.inherited.yaml`, and inherited processes/modules are owned by
+  parent workspaces, regenerated on pull, and never pushed (see below).
+  Override a variable by adding the key to `variables.env` (a locale key to
+  `i18n/<locale>.yaml`); edit processes and modules in the owning workspace.
 
 ## Commands
 
@@ -334,34 +332,24 @@ by several webhooks is named — and rotated — in one place. Two things about 
 - **Removing the object and pushing clears the cloud configuration**, which makes
   every webhook inheriting it reject all calls.
 
-## Inherited processes and modules on disk
+## Inherited resources on disk
 
-`fcode pull` writes the processes and modules inherited from `parentTeamSlugs`
-into the same `processes/` and `modules/` folders as the workspace's own. They
-are owned by the parent workspace, and the CLI keeps them that way:
+`fcode pull` writes everything inherited from `parentTeamSlugs` alongside the
+workspace's own resources: `variables.inherited.env`,
+`i18n/<locale>.inherited.yaml`, and the inherited process/module folders inside
+`processes/` and `modules/`. The CLI keeps them parent-owned:
 
-- **Their files are written read-only (mode `444`).** An edit needs a `chmod`
-  first, which is the signal to stop — change them in the owning workspace.
-- **They are gitignored, not committed.** `pull` regenerates a managed block in
-  `.gitignore` between `# BEGIN fcode inherited resources (auto-generated, do
-  not edit)` and `# END fcode inherited resources`, listing every inherited
-  `processes/<slug>/` and `modules/<name>/` (plus `variables.inherited.env` and
-  each `i18n/<locale>.inherited.yaml`). Lines outside the block are preserved;
-  resources that stop being inherited drop out on the next pull. **Don't
-  hand-edit the block.**
-- **`fcode processes:status` / `fcode modules:status` grow an `inherited`
-  column** showing the owning workspace (`🔗 <slug>`), hidden when nothing is
-  inherited — same as `variables:status` and `i18n:status`.
-- **`fcode push` never uploads them.** They are filtered out of both sides of
-  the comparison, so an inherited resource can never be created, updated, or
-  deleted in the cloud by a push from a child workspace. One that was modified
-  locally logs a red warning naming the owning team and telling you to run
-  `fcode processes:pull` / `modules:pull` to restore it.
+- **Read-only** — process/module files are written mode `444`; needing a
+  `chmod` to edit is the signal to stop and change them in the owning workspace.
+- **Gitignored** via a CLI-managed block in `.gitignore`, regenerated on every
+  pull — don't hand-edit the block.
+- **`fcode push` never uploads them.** One that was modified locally logs a
+  warning naming the owning team — restore it with `fcode processes:pull` /
+  `modules:pull` (or the aggregate `fcode pull`).
+- The `*:status` commands show an **inherited** column with the owning
+  workspace (`🔗 <slug>`), hidden when nothing is inherited.
 
-Which resources are inherited comes from the CLI's own sync metadata under
-`.fcode/` (a `resolvingTeamSlug` on the entry; owned resources have none) — not
-from anything in the workspace files. Treat `.fcode/` as internal bookkeeping.
-The model-level rules are in `fcode-core-concepts`.
+Inheritance model (resolution order, overrides) in `fcode-core-concepts`.
 
 ## The three variables files
 
@@ -386,8 +374,6 @@ string rather than falling through to the parent.
 treats it as this workspace's own variable: `fcode status` shows it as new,
 `fcode push` creates it here, and `fcode variables:add` offers it.
 
-- **Don't edit `variables.inherited.env`** — it is regenerated on every pull, and
-  `fcode push` skips inherited variables with a warning. Editing one only warns.
 - **Don't copy a parent's variables into a child workspace** to "make them
   available" — they already resolve. Only add a key when this workspace genuinely
   needs a different value. (Workspaces provisioned before inheritance existed may
@@ -397,9 +383,7 @@ treats it as this workspace's own variable: `fcode status` shows it as new,
 - Deleting your override (removing the key from `variables.env` and pushing)
   brings the parent's value back.
 
-`fcode variables:status` grows an **inherited** column showing the source
-workspace (`🔗 <slug>`) when any variable is inherited; the column is hidden
-otherwise. Model and web-UI behaviour in `fcode-core-concepts`; the runtime
+Model and web-UI behaviour in `fcode-core-concepts`; the runtime
 `fcode.variables` behaviour in `fcode-javascript` / `fcode-python`.
 
 The file names are settings (`variablesFileName`,
