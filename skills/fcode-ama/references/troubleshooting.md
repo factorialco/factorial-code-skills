@@ -97,6 +97,15 @@ instead — see the routing table in `SKILL.md`.
   suspended/archived apps can't release.
 - **"My release failed validation."** Fix what the notification lists and
   request a new, higher version; the gate's criteria are in `journey.md` §8.
+- **"Who promotes my release to production?"** Requesting a release is open
+  to any member; promoting it (pushing to prod and marking it deployed) takes
+  a **Factorial admin of the app's owning team** — self-service, the App
+  detail page's "How to promote" dialog has the commands — or an **operator**
+  for everyone else. See `journey.md` §8 and `/docs/building-apps/permissions`.
+- **"I'm a team admin but my push into `prod-…` is refused."** Prod write is
+  granted when the release is requested, and access rides in the access
+  token — a session opened before the grant doesn't have it. Run
+  `fcode login` (or sign out and back in) and retry.
 
 ## Publication & marketplace
 

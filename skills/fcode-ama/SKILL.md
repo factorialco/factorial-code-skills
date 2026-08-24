@@ -91,7 +91,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
 | 6 | Demo company | Demo Companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
 | 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
-| 8 | Release | App detail → Production tab | Request a release (semver + notes); the platform validates it and deploys the snapshot to the read-only prod workspace |
+| 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
 
@@ -106,9 +106,11 @@ that is unrelated to the **development team** of humans described above.
 Each app maps to workspaces (slugs carry an encoded token, not the raw id):
 
 - `dev-{appId}` — the development workspace you clone and push to.
-- `prod-{appId}` — production copy; its code is read-only, updated only by
-  deployed releases, but its variables are live — shared defaults and
-  credentials for all installations are managed there.
+- `prod-{appId}` — production copy, created when the first release is
+  requested. Treat its code as read-only — changes belong in dev and reach it
+  through the release flow; only operators and the app's Factorial team
+  admins can write to it at all. Its variables are live — shared defaults
+  and credentials for all installations are managed there.
 - `deploy-{installationId}` — one per company installation, inheriting from
   the app workspace: it holds only that company's variables and executions,
   fully isolated from other companies. A change in the parent workspace is
@@ -137,6 +139,7 @@ by hand.
 | Integrations framework | docs: `/docs/building-apps/integrations-framework/` |
 | OAuth & API tokens | docs: `/docs/building-apps/oauth/` |
 | Workspace hierarchy | docs: `/docs/building-apps/workspaces/` |
+| Roles & permissions: who can read/write/promote per workspace | `references/journey.md` §8 — docs: `/docs/building-apps/permissions/` |
 | The end-to-end journey (public version) | docs: `/docs/building-apps/developer-journey/` |
 
 Doc paths are relative to `https://code.factorialhr.com`.
@@ -149,5 +152,6 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | OAuth app for a Partner / Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
 | Demo company (Partner / IC) | "Request a demo company" on the Demo Companies page; you're emailed when it's ready |
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
+| Promote a release to production | A Factorial admin of the owning team does it themselves (the App detail page's "How to promote" dialog has the commands); everyone else's route is an operator — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
 | Anything not covered | Internal Factorial users: Slack `#factorial-code-users`. Others: the in-platform request flows above |
