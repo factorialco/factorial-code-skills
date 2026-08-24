@@ -67,6 +67,7 @@ own rules and note the mix in the report header.
 | FORM-09 | Form-uploaded files only needed transiently are deleted at the end of the process | W | `fcode-forms` §Automatic file uploads |
 | FORM-10 | Result `message`/`errorMessage` and schema markdown blocks are markdown, not HTML (HTML is dropped, never rendered) | W | `fcode-forms` §Handle submission results |
 | FORM-11 | Schema quality: secret inputs use `isSensitive: true`; `nextProcessId` carries a slug, not a UUID; schema follows `fcode-json-schema` | S | `fcode-json-schema`, `fcode-forms` §Multi-step forms |
+| FORM-12 | A long form (≈10+ fields) declares `ui:steps` to group fields into steps; a `nextProcessId` chain whose intermediate processes do no real work exists only for visual steps — replace it with `ui:steps` in a single process | S | `fcode-forms` §Multi-step forms |
 
 ## I18N — internationalization
 

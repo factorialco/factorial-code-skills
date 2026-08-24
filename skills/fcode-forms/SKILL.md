@@ -256,10 +256,64 @@ flow between steps. For passing data, don't block the submit — instead:
 
 - **`preRenderProcess`** computes server-side `variables` before the form
   renders (see `references/advanced.md`).
-- **Multi-step forms** carry state forward via `nextProcessId` + `variables`
-  (below).
+- **Chained multi-step forms** carry state forward via `nextProcessId` +
+  `variables` (below). If the steps are only visual — no work between them —
+  use `ui:steps` instead and keep a single process.
 
 ## Multi-step forms
+
+Two mechanisms, and picking the right one matters:
+
+| Mechanism | Processes | Executions | Use when |
+|---|---|---|---|
+| **`ui:steps`** — steps within one form | one | one, after the last step | The split is purely visual; all the logic lives in one process |
+| **`nextProcessId`** — chaining | one per step | one per step | An intermediate step must actually execute something (validate externally, compute `variables` for the next form) |
+
+They compose: a chained process's form can itself declare `ui:steps`.
+
+**When a form grows long — roughly ten fields or more — split it with
+`ui:steps`** rather than shipping one overwhelming page or faking steps with a
+`nextProcessId` chain of do-nothing processes (empty intermediate processes,
+all persistence crammed into the last one). Group related fields per step and
+put the required ones early, so users fail fast.
+
+### Steps within a single form (`ui:steps`)
+
+Declare steps in the schema's root `ui` node, assigning each property to a step.
+The SDK shows one step at a time with a "Next" button; only the **last** step's
+button submits and starts the (single) execution, which receives every collected
+parameter exactly as a one-page form would — process code needs no changes.
+
+```json
+"ui": {
+  "ui:steps": {
+    "config": { "layout": "tabs" },
+    "steps": [
+      { "title": "About you", "description": "Optional text", "fields": ["name"] },
+      { "title": "Details", "fields": ["age", "subscribe"] }
+    ]
+  }
+}
+```
+
+- `config` (optional): `layout` — `"tabs"` (default) or `"sidebar"`;
+  `nextLabel` / `backLabel` — button labels, default `"Next"` / `"Back"`.
+  `ui:submitButtonOptions` applies to the **last** step's button.
+- "Next" validates only the fields on screen (including that step's share of
+  `required`); a Back button and the step navigation revisit completed steps
+  without losing input, and unreached steps stay disabled.
+- **Fail-safe authoring**: properties not listed in any step are appended to the
+  last step; an unusable `ui:steps` (fewer than two usable steps, `steps` not an
+  array) logs a console warning and renders the ordinary one-page form.
+- Step titles/descriptions/labels are schema text — `fcode.i18n(...)` and
+  mustache variables work as anywhere else in the schema.
+- Supports root-level `properties` + `required` + `dependencies`; root-level
+  `oneOf`/`allOf` compositions are not split into steps.
+- Needs the hosted SDK, or `@factorialco/fcode-react-forms` **≥ 3.2.0**
+  (inside Factorial, `@factorialco/rjsf-f0` **≥ 2.1.0** renders the step
+  navigation with f0 components — see `references/advanced.md`).
+
+### Chaining processes (`nextProcessId`)
 
 Each step is its own process. Return the next process's **slug** to advance:
 
