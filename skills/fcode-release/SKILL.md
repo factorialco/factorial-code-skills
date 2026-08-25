@@ -19,6 +19,11 @@ Gate every release with `fcode-code-validation` — see the procedure.
 
 ## Gotchas
 
+- **Prod write access is required.** Only operators and the app's Factorial
+  team admins can push to a `prod-…` workspace; the admin's grant lands when
+  a release is requested and rides in the access token — if prod access is
+  refused right after requesting, run `fcode login` and retry. Who promotes
+  and why: `fcode-ama`.
 - **A ✅ validation is required before pushing.** Run `fcode-code-validation`
   on the dev workspace first; while the report has Blockers, refuse to push.
   Only an explicit user override ("push anyway despite the Blockers")
