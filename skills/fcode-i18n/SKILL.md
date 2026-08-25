@@ -96,7 +96,9 @@ through a module still gets its translations):
 const greeting = fcode.i18n("greetings.hello", { name: "Ada" }); // "Hi Ada" in `en`
 fcode.i18n("greetings.farewell");                    // no placeholders → no args
 fcode.i18n("legal.terms", null, { version: "v1.0.0" }); // pinned to a published version
-fcode.i18n("greetings.hello", { name }, { locale: employee.locale }); // another locale, this lookup only
+fcode.i18n("greetings.hello", { name: "Ada" }, { locale: "es" }); // another locale, this lookup only
+const recipient = { name: "Ada", locale: "pt-BR" };               // ...and the value may be dynamic,
+fcode.i18n("greetings.hello", { name: recipient.name }, { locale: recipient.locale }); // per recipient
 fcode.i18n("legal.terms", null, { version: "v1.0.0", locale: "es" }); // both combine
 const locale = fcode.i18n.locale;                    // the execution's locale
 ```
@@ -105,7 +107,9 @@ const locale = fcode.i18n.locale;                    // the execution's locale
 greeting = fcode.i18n("greetings.hello", {"name": "Ada"})
 fcode.i18n("greetings.farewell")
 fcode.i18n("legal.terms", None, {"version": "v1.0.0"})
-fcode.i18n("greetings.hello", {"name": name}, {"locale": employee["locale"]})
+fcode.i18n("greetings.hello", {"name": "Ada"}, {"locale": "es"})
+recipient = {"name": "Ada", "locale": "pt-BR"}
+fcode.i18n("greetings.hello", {"name": recipient["name"]}, {"locale": recipient["locale"]})
 fcode.i18n("legal.terms", None, {"version": "v1.0.0", "locale": "es"})
 locale = fcode.i18n.locale
 ```
@@ -273,18 +277,20 @@ code, module code, and form schemas:
 
 ```javascript
 // Working copy (never modified)
-fcode.i18n("greetings.hello", { name });
-fcode.i18n("welcome", { name }, { locale: employee.locale });
+fcode.i18n("greetings.hello", { name: "Ada" });
+fcode.i18n("welcome", { name: "Ada" }, { locale: "es" });
 
 // Published v1.0.0 snapshot
-fcode.i18n("greetings.hello", { name }, { version: "v1.0.0" });
-fcode.i18n("welcome", { name }, { version: "v1.0.0", locale: employee.locale });
+fcode.i18n("greetings.hello", { name: "Ada" }, { version: "v1.0.0" });
+fcode.i18n("welcome", { name: "Ada" }, { version: "v1.0.0", locale: "es" });
 ```
 
 A call whose options already name a `version` — even a dynamic one — is
 considered intentional and left untouched; options naming none (only a
 `locale`, an empty object, an explicit `null`/`None`) get the tag spliced in,
-so a localized call freezes with the release while its locale stays as written.
+so a localized call freezes with the release while its locale stays as
+written — a dynamic value (`{ locale: employee.locale }`) is preserved
+verbatim too.
 (Note the asymmetry with module imports, which are pinned in the string form —
 `fcode.import("m", "v1.0.0")` — for compatibility with older executors; don't
 "fix" one to look like the other.) Fixing a released typo means publishing
