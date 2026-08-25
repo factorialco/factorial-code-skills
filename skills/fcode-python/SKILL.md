@@ -76,6 +76,7 @@ fcode.processes.run("process-identifier", options)
 
 # Translations (workspace locales — see fcode-i18n)
 greeting = fcode.i18n("greetings.hello", {"name": "Ada"})  # %{name} filled in
+fcode.i18n("greetings.hello", {"name": name}, {"locale": employee["locale"]})  # another locale, this lookup only
 locale = fcode.i18n.locale  # the execution's locale
 ```
 

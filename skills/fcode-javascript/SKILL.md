@@ -77,6 +77,7 @@ await fcode.processes.run("process-identifier", options);
 
 // Translations (workspace locales — see fcode-i18n)
 const greeting = fcode.i18n("greetings.hello", { name: "Ada" }); // %{name} filled in
+fcode.i18n("greetings.hello", { name }, { locale: employee.locale }); // another locale, this lookup only
 const locale = fcode.i18n.locale; // the execution's locale
 ```
 
