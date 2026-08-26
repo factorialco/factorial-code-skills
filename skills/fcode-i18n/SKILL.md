@@ -1,6 +1,6 @@
 ---
 name: fcode-i18n
-description: Workspace locales and translations for Factorial Code — i18n/<locale>.yaml files, the fcode.i18n helper in code and in form schemas, execution-locale selection, primary-locale fallback, locale versioning, and the i18n:* CLI commands. Use when adding a locale, internationalizing process code or form text, or testing and syncing translations.
+description: Workspace locales and translations for Factorial Code — i18n/<locale>.yaml files, the fcode.i18n helper in code and in form schemas, execution-locale selection, per-call locale overrides, primary-locale fallback, locale versioning, and the i18n:* CLI commands. Use when adding a locale, internationalizing process code or form text, rendering several languages in one execution, or testing and syncing translations.
 license: MIT
 metadata:
   category: factorial-code
@@ -45,7 +45,12 @@ embedding in `fcode-forms`.
   with nested braces is left untouched in the served schema.
 - **A mistyped `version` tag resolves against the current files silently** —
   it never blanks output. When released text looks un-frozen, check the pinned
-  tag before anything else.
+  tag before anything else. Same shape for a per-call `{ locale }` naming a
+  locale that doesn't exist: the lookup behaves as if no locale was named.
+- **A pinned `version` must be an inline literal string** — the snapshot to
+  ship is read from the source, so `{ version: chosenTag }` resolves against
+  the current files. The `locale` option has no such rule: its value may be any
+  runtime expression, and options built elsewhere still work.
 - **A YAML key written without a value counts as untranslated** — it falls
   through to the fallback locale rather than resolving to an empty string.
 
@@ -91,6 +96,10 @@ through a module still gets its translations):
 const greeting = fcode.i18n("greetings.hello", { name: "Ada" }); // "Hi Ada" in `en`
 fcode.i18n("greetings.farewell");                    // no placeholders → no args
 fcode.i18n("legal.terms", null, { version: "v1.0.0" }); // pinned to a published version
+fcode.i18n("greetings.hello", { name: "Ada" }, { locale: "es" }); // another locale, this lookup only
+const recipient = { name: "Ada", locale: "pt-BR" };               // ...and the value may be dynamic,
+fcode.i18n("greetings.hello", { name: recipient.name }, { locale: recipient.locale }); // per recipient
+fcode.i18n("legal.terms", null, { version: "v1.0.0", locale: "es" }); // both combine
 const locale = fcode.i18n.locale;                    // the execution's locale
 ```
 
@@ -98,11 +107,22 @@ const locale = fcode.i18n.locale;                    // the execution's locale
 greeting = fcode.i18n("greetings.hello", {"name": "Ada"})
 fcode.i18n("greetings.farewell")
 fcode.i18n("legal.terms", None, {"version": "v1.0.0"})
+fcode.i18n("greetings.hello", {"name": "Ada"}, {"locale": "es"})
+recipient = {"name": "Ada", "locale": "pt-BR"}
+fcode.i18n("greetings.hello", {"name": recipient["name"]}, {"locale": recipient["locale"]})
+fcode.i18n("legal.terms", None, {"version": "v1.0.0", "locale": "es"})
 locale = fcode.i18n.locale
 ```
 
-- The only option today is `version` — a locale version tag or alias; see
-  versioning below.
+- `version` — a locale version tag or alias, as an **inline literal string**
+  (see Gotchas); versioning below.
+- `locale` — reads **that lookup** in another locale, and the value may be
+  dynamic (an employee's language), so one execution can speak several
+  languages. A key the named locale hasn't translated falls back to the
+  execution's locale, then the primary; a locale that doesn't exist behaves as
+  if none was named — never worse than without the option. `fcode.i18n.locale`
+  keeps reporting the execution's locale. Form-schema tokens do **not** take
+  this option — a render is already in the language the request chose.
 - Interpolation is a **single pass over own properties**: a substituted value
   containing `%{...}` is never rescanned (one argument can't reach another),
   and `%{constructor}` resolves nothing. Missing keys and arguments never
@@ -152,6 +172,7 @@ validation messages when `locale` isn't one it ships.)
 | Run now | Locale selector in the run dialog |
 | Schedule | Locale selector when creating or editing the schedule |
 | Rerun | Reuses the original execution's stored locale |
+| Per call | `locale` in the helper's options — that lookup only, value may be dynamic |
 
 A malformed locale on the public endpoints is a `400`; an unknown-but-valid
 one merely falls back. The chosen locale is stored on the execution, which is
@@ -243,8 +264,10 @@ with its current content when it has no snapshot at that tag, layered key by
 key as usual. So a locale created after the version was cut still contributes
 its keys, a parent that never published the tag still contributes its text,
 and a mistyped tag resolves everything against the current files rather than
-blanking output. Deleting a version sends the calls pinned to it back to the
-current files; deleting a locale deletes its versions with it.
+blanking output. `{ version: "v1.0.0", locale: "es" }` combine: the snapshot is
+read in the requested locale, with the same fallbacks. Deleting a version sends
+the calls pinned to it back to the current files; deleting a locale deletes its
+versions with it.
 
 **A workspace version freezes translations with the release.** Creating one
 (`fcode team:versions:create`, see `fcode-cli`) publishes a version of every
@@ -254,15 +277,20 @@ code, module code, and form schemas:
 
 ```javascript
 // Working copy (never modified)
-fcode.i18n("greetings.hello", { name });
-fcode.i18n("legal.terms");
+fcode.i18n("greetings.hello", { name: "Ada" });
+fcode.i18n("welcome", { name: "Ada" }, { locale: "es" });
 
 // Published v1.0.0 snapshot
-fcode.i18n("greetings.hello", { name }, { version: "v1.0.0" });
-fcode.i18n("legal.terms", null, { version: "v1.0.0" }); // None in Python
+fcode.i18n("greetings.hello", { name: "Ada" }, { version: "v1.0.0" });
+fcode.i18n("welcome", { name: "Ada" }, { version: "v1.0.0", locale: "es" });
 ```
 
-Calls already passing options are considered intentional and left untouched.
+A call whose options already name a `version` — even a dynamic one — is
+considered intentional and left untouched; options naming none (only a
+`locale`, an empty object, an explicit `null`/`None`) get the tag spliced in,
+so a localized call freezes with the release while its locale stays as
+written — a dynamic value (`{ locale: employee.locale }`) is preserved
+verbatim too.
 (Note the asymmetry with module imports, which are pinned in the string form —
 `fcode.import("m", "v1.0.0")` — for compatibility with older executors; don't
 "fix" one to look like the other.) Fixing a released typo means publishing

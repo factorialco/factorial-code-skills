@@ -177,9 +177,11 @@ When a workspace version is published, bare `fcode.import("mod")` /
 `fcode.import_module("mod")` calls of workspace-owned modules are pinned to the
 tag **inside the published snapshots only** — the working copy is never
 modified, and imports that already carry a tag or alias are left untouched.
-A workspace version also publishes every owned **locale** and pins bare
-`fcode.i18n` calls the same way, in code and in form schemas, so a release
-ships with its translations frozen — see `fcode-i18n`.
+A workspace version also publishes every owned **locale** and pins
+`fcode.i18n` calls the same way — calls already naming a `version` are left
+untouched, everything else (bare calls, locale-only options) gets the tag —
+in code and in form schemas, so a release ships with its translations frozen —
+see `fcode-i18n`.
 
 A **version alias** is a movable pointer to a version. The `stable` alias
 always exists and points at the workspace's stable version. Webhooks, forms,
