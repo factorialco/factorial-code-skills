@@ -105,7 +105,7 @@ programmatically from a process, use the `fcode.variables` helper
 ### Inheritance from parent workspaces
 
 A workspace uses the **processes, modules, variables, i18n locales, and
-dependencies** of its `parentTeamSlugs` parents as if they were its own.
+dependencies** of its `parentTeams` parents as if they were its own.
 Resolution is the same for all of them: the workspace first, then its
 **direct** parents in the order they are configured, capped at 5 — so it is
 **not transitive** (a grandparent's resources don't reach a grandchild).
@@ -140,6 +140,36 @@ Resolution is the same for all of them: the workspace first, then its
 - **A workspace version never publishes inherited resources** — only owned ones
   get the tag (see Versioning & aliases).
 
+#### Pinning a parent to one of its versions
+
+Each parent link carries an optional **version pin**: a tag, or an alias such as
+`stable`, of one of that parent's workspace versions. Without one the parent
+resolves **live** — its current code, which is the behaviour above. With one,
+that parent contributes **the release, not its working copy**:
+
+- **Only what that version published, with that version's content.** A process
+  or module the parent added after cutting the release is simply not there, and
+  resolution falls through to the next parent as if the pinned one didn't have
+  it. The parent can keep editing — and keep publishing — without moving what
+  the child runs.
+- **An alias pin follows the alias.** Pin a child to `stable` and re-pointing
+  `stable` in the parent moves every child pinned to it, in one operation. This
+  is how a base app rolls a fix out to its installations.
+- **Dependencies follow the pin too** — the child installs the packages the
+  release was cut with. One exception: a version published before dependencies
+  were versioned has no package snapshot, and the parent then keeps contributing
+  what it installs today rather than the child losing the packages its code
+  imports.
+- **Variables always resolve live**, pin or no pin: they have no versioned form.
+- **The child cannot pick a version of an inherited resource.** The pin decides
+  it. In the web UI an inherited process, module or locale shows its version
+  read-only (the pinned tag, or *Live*) and has no Versions tab; publishing and
+  aliasing a resource belongs to the workspace that owns it.
+
+The pin is set per parent in the web UI (team settings → **Details** → parent
+teams) or in `team.json`; the field reference is in `fcode-cli`. Don't add or
+change a pin unless explicitly asked — it decides which release a workspace runs.
+
 On-disk layout, gitignoring, and push/pull behaviour of inherited resources are
 in `fcode-cli`.
 
@@ -168,7 +198,7 @@ emails by default. See `fcode-javascript` / `fcode-python` for usage.
 
 Processes and modules can be versioned individually, and a **workspace version**
 publishes one tag (e.g. `v1.0.0`) on **every process and module the team owns**
-at once — resources inherited through `parentTeamSlugs` are never touched. Each
+at once — resources inherited through `parentTeams` are never touched. Each
 entity's outcome (created / skipped / failed) is recorded in the version's
 **manifest**, so re-creating the same tag after a partial failure only publishes
 what is still missing.
@@ -199,6 +229,9 @@ Two consequences of that model:
 - **Deleting a workspace version cascades** — every owned process/module
   version carrying the tag is deleted, together with the aliases, executions,
   and schedules referencing them.
+- **A version or alias another workspace pins is protected.** Deleting it is
+  rejected, naming the workspaces that would break; they have to unpin first.
+  Re-pointing an alias stays allowed — that is how a release is promoted.
 
 Versions are published and aliases linked from the web UI (team settings →
 **Versions** tab). The CLI equivalents (`fcode team:versions:*` /

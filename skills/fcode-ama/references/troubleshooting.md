@@ -106,6 +106,18 @@ instead — see the routing table in `SKILL.md`.
   granted when the release is requested, and access rides in the access
   token — a session opened before the grant doesn't have it. Run
   `fcode login` (or sign out and back in) and retry.
+- **"I edited the base app but the workspace inheriting it still runs the old
+  code."** / **"A process I just added to the base app isn't visible in the
+  child."** The parent link is pinned to one of the base app's versions, so the
+  child gets that release and nothing published after it. Check `parentTeams` in
+  the child's `team.json` (or team settings → parent teams): an entry like
+  `{ "slug": "base-app", "version": "stable" }` is pinned, a plain slug is live.
+  Ship the change by publishing a new version in the base app and moving the
+  alias the children pin — that re-points all of them at once. Model in
+  `fcode-core-concepts`.
+- **"I can't delete this version/alias — it says workspaces are pinned to
+  it."** Exactly that: other workspaces inherit through it. Unpin them (or
+  re-point the alias, which is allowed) before deleting.
 
 ## Publication & marketplace
 

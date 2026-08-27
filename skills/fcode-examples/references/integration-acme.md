@@ -89,7 +89,7 @@ Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
 ```
 
 Set `webhookAuth` in **every** app workspace — it is not inherited through
-`parentTeamSlugs` (why, and field reference, in `fcode-cli`).
+`parentTeams` (why, and field reference, in `fcode-cli`).
 
 The platform authenticates the caller before the process runs, so there is
 nothing to check in code and the body stays minimal:
