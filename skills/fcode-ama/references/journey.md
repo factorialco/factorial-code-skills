@@ -79,7 +79,7 @@ Docs: `/docs/building-apps/oauth/`.
 
 OAuth lives on the **App settings → OAuth tab**: the requested scopes,
 followed by the development and production credentials. The Getting started
-checklist and the Dev Marketplace's "Configure dev OAuth" both link there.
+checklist and the Test marketplace's "Configure dev OAuth" both link there.
 
 On the Factorial side there are **two kinds of OAuth application**, and the
 difference matters when authorization fails:
@@ -129,18 +129,18 @@ and continue integration testing there. CLI reference: `fcode-cli` skill and
 ## 6. Demo companies
 
 Demo companies simulate Factorial customers for the testing phase. They are
-managed on the **Demo Companies** page and belong to the development team.
+managed on the **Demo companies** page and belong to the development team.
 
 - **Internal**: create demo companies directly using the **Demo generator**,
   and save them in Factorial Code.
 - **Partner / IC**: use **Request a demo company**; an administrator
   provisions it and you are notified by email when it's ready.
 
-## 7. Dev Marketplace — test the install
+## 7. Test marketplace — test the install
 
-The **Dev Marketplace** is a simulation of the production Factorial
-marketplace that runs against demo companies. It lists the apps in the
-team's development environment. From there you:
+The **Test marketplace** (formerly "Dev marketplace") is a simulation of the
+production Factorial marketplace that runs against demo companies. It lists
+the apps in the team's development environment. From there you:
 
 1. Pick the app and the demo company.
 2. Go through the real **OAuth flow** with that demo company's access
@@ -156,18 +156,20 @@ available in every installation.
 Installation lifecycle: `configuration_pending → active → suspended →
 deprovisioned` (`active` once the customer completes setup).
 
-For each company that has an installation, the Dev Marketplace app page
-links to its `deploy-` workspace (beside the company selector) — that
+For each company that has an installation, the Test marketplace app page
+links to its `deploy-` workspace — the **"Open on platform"** button beside
+the company selector, landing on the workspace's executions page. That
 workspace is where the installation's execution logs, variables, schedules,
-and webhooks live. The app's Development and Production tabs show an
+and webhooks live; the Installations page's row action ("Open on platform")
+opens the same page, and each row also links to the installation's App
+("View App"). The app's Development and Production tabs show an
 installations count linking to the Installations page filtered for that app
 and environment.
 
-An installation's "…" menu offers **Copy FACTORIAL_TOKEN** — that `deploy-`
-workspace's Factorial API token, for running processes locally in that
-company's context (goes in `variables.local.env`; handle as a secret — see
-`fcode-cli`). The menu is available on the Dev Marketplace app page (with
-Re-install / Uninstall) and on the Installations page (with Suspend).
+The Test marketplace app page's "…" menu offers **Copy FACTORIAL_TOKEN** —
+that `deploy-` workspace's Factorial API token, for running processes
+locally in that company's context (goes in `variables.local.env`; handle as
+a secret — see `fcode-cli`) — alongside Re-install / Uninstall.
 
 ### appRole forms
 
@@ -262,7 +264,7 @@ customer-specific apps).
 ## 10. Production
 
 Published apps appear in the production **Marketplace** with the same views
-tested in the Dev Marketplace: install (OAuth flow + `INSTALL` form),
+tested in the Test marketplace: install (OAuth flow + `INSTALL` form),
 settings, user-facing utilities, uninstall. Each installing company gets its
 own isolated installation workspace, exactly as in stage 7. The customer
 connect flow (production OAuth) is available once the app has a production
