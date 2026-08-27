@@ -48,16 +48,16 @@ instead — see the routing table in `SKILL.md`.
   working copy. The released version changes when a new release moves the
   alias. See `fcode-core-concepts`.
 
-## Demo companies & Dev Marketplace
+## Demo companies & Test marketplace
 
 - **"I can't create a demo company, only request one."** Direct creation
   (and the Demo generator) is for Factorial internal users; Partners and
   Individual Contributors request one and get an email when it's provisioned.
-- **"My app isn't listed in the Dev Marketplace."** It lists the apps in
+- **"My app isn't listed in the Test marketplace."** It lists the apps in
   *your team's* development environment — check you're in the right team and
   the app is live.
-- **"The install asks for credentials."** That's the point: the Dev
-  Marketplace runs the real OAuth flow against the demo company, using that
+- **"The install asks for credentials."** That's the point: the Test
+  marketplace runs the real OAuth flow against the demo company, using that
   demo company's access credentials.
 - **"My development OAuth doesn't work."** A development OAuth application
   linked to a demo environment authorizes against **that demo environment's
@@ -81,13 +81,13 @@ instead — see the routing table in `SKILL.md`.
   values belong in the parent (dev/prod) workspace; per-company overrides in
   the installation. See `fcode-core-concepts` for inheritance rules.
 - **"Where do I see an installation's logs / variables / schedules?"** In its
-  `deploy-` workspace — the Dev Marketplace app page links to it beside the
-  company selector for every company with an installation.
+  `deploy-` workspace — the "Open on platform" action lands on its executions
+  page, from the Installations page rows or (beside the company selector) the
+  Test marketplace app page.
 - **"How do I get a `FACTORIAL_TOKEN` for an installed company?"** Use
-  **Copy FACTORIAL_TOKEN** in the installation's "…" menu — on the
-  Installations page or the Dev Marketplace app page. It's a live API
-  credential for that company: put it in `variables.local.env`, never commit
-  or log it (procedure in `fcode-cli`).
+  **Copy FACTORIAL_TOKEN** in the "…" menu on the Test marketplace app page.
+  It's a live API credential for that company: put it in
+  `variables.local.env`, never commit or log it (procedure in `fcode-cli`).
 ## Releases
 
 - **"Version must be greater than the latest deployed release."** Releases

@@ -1,6 +1,6 @@
 ---
 name: fcode-ama
-description: Factorial Code platform user journey and support — from requesting access through app creation, OAuth setup, demo companies and the Dev Marketplace to releases and marketplace publication. Use when answering "how do I…" questions about using the platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
+description: Factorial Code platform user journey and support — from requesting access through app creation, OAuth setup, demo companies and the Test marketplace to releases and marketplace publication. Use when answering "how do I…" questions about using the platform, guiding a user through any journey stage, or acting as a Factorial Code support agent.
 license: MIT
 metadata:
   category: factorial-code
@@ -66,17 +66,19 @@ surfaces users often conflate:
   marketplaces, installations. Where the journey below happens.
 - **Workspace console** (`/platform/...`) — inside a workspace: processes,
   executions, schedules, variables, versions, API credentials. The app
-  console links into it (e.g. "open workspace" on an environment tab).
+  console links into it — every such jump is labelled **"Open on platform"**;
+  for a `deploy-` (installation) workspace it lands on the executions page.
 
-App console areas:
+App console areas (the sidebar groups them into **Build**, **Operate**, and
+**Admin** sections):
 
 | Area | What it's for |
 |---|---|
 | **Apps** | The team's apps; where a new app is created |
 | **App detail page** | Per-app home: the Getting started checklist and the **Development / Production / Publication** tabs |
 | **App settings** | **Configuration** (marketplace visibility, lifecycle) and **OAuth** (requested scopes plus the development and production credentials) |
-| **Demo Companies** | Demo Factorial companies for testing installs |
-| **Dev Marketplace** | Simulation of the production marketplace, run against demo companies |
+| **Demo companies** | Demo Factorial companies for testing installs |
+| **Test marketplace** | Simulation of the production marketplace, run against demo companies |
 
 Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 
@@ -89,8 +91,8 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure OAuth (when scopes were requested), publish a release, add marketplace metadata |
 | 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
-| 6 | Demo company | Demo Companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
-| 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
+| 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
+| 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
@@ -150,7 +152,7 @@ Doc paths are relative to `https://code.factorialhr.com`.
 |---|---|
 | Access request pending | It's under review; you'll be notified of the outcome |
 | OAuth app for a Partner / Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
-| Demo company (Partner / IC) | "Request a demo company" on the Demo Companies page; you're emailed when it's ready |
+| Demo company (Partner / IC) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
 | Promote a release to production | A Factorial admin of the owning team does it themselves (the App detail page's "How to promote" dialog has the commands); everyone else's route is an operator — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
