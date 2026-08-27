@@ -180,8 +180,8 @@ why a rerun reproduces the original run's language even if the workspace's
 default has moved since.
 
 When nothing names a locale, the workspace's **primary locale** is used —
-`primaryLocale` in `team.json` (set it under Settings → Details, or edit the
-file and `fcode team:push`; field reference in `fcode-cli`) — and when none is
+`primaryLocale` in `settings.json` (set it under Settings → Details, or edit the
+file and `fcode settings:push`; field reference in `fcode-cli`) — and when none is
 chosen, the first locale alphabetically. The primary locale is **also the
 key-level fallback**: a key the chosen locale hasn't translated resolves from
 the primary, and only a key missing from both resolves to its own name. So a
@@ -207,7 +207,7 @@ fcode i18n:reset           # discard local changes
   is the agent's job (next section); the CLI only syncs the files.
 - **Pushing an identifier a parent workspace owns creates an override here**,
   layered key by key — it never edits the parent's file.
-- `primaryLocale` lives in `team.json` and syncs with `fcode team:push`.
+- `primaryLocale` lives in `settings.json` and syncs with `fcode settings:push`.
 
 Local runs resolve `fcode.i18n` against the same `i18n/` files, layered
 exactly as the cloud does, so `fcode run my-process` behaves like production.
@@ -227,7 +227,7 @@ There is no automated extraction — internationalizing a workspace is a code
 transformation you perform, with the CLI as the sync vehicle:
 
 1. **Agree scope with the user**: which locales, and which is primary. If
-   unset, write `primaryLocale` in `team.json` and `fcode team:push`.
+   unset, write `primaryLocale` in `settings.json` and `fcode settings:push`.
 2. **Inventory the user-facing strings.** Translate: form-schema titles,
    descriptions, placeholders and `loadingOverlayContent`; result `message`
    strings a form displays (these are markdown — keep any formatting like
@@ -249,7 +249,7 @@ transformation you perform, with the CLI as the sync vehicle:
    the output is a missing translation; a literal `%{name}` is a missing
    argument.
 7. **Push**: `fcode i18n:push` (or aggregate `fcode push`), plus
-   `fcode team:push` if `primaryLocale` changed.
+   `fcode settings:push` if `primaryLocale` changed.
 
 ## Versioning locales
 
@@ -270,7 +270,7 @@ the calls pinned to it back to the current files; deleting a locale deletes its
 versions with it.
 
 **A workspace version freezes translations with the release.** Creating one
-(`fcode team:versions:create`, see `fcode-cli`) publishes a version of every
+(`fcode settings:versions:create`, see `fcode-cli`) publishes a version of every
 owned locale — locales first, so the pins below have a target — and rewrites
 the **published snapshots** so bare `fcode.i18n` calls pin the tag, in process
 code, module code, and form schemas:

@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, team.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, or version settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -45,13 +45,13 @@ web UI (see below).
 - **`fcode add` is only for NEW resources.** For edits to existing process/module
   code or variables, go straight to `fcode push`.
 - **`--force` (on `push`/`pull`) overwrites the other side.** Both commands fail
-  when local and cloud diverge — `team:pull` included, which refuses to wipe an
-  unpushed `team.json`. Run `fcode diff` first to show the user exactly what
+  when local and cloud diverge — `settings:pull` included, which refuses to wipe an
+  unpushed `settings.json`. Run `fcode diff` first to show the user exactly what
   would be discarded, and only use `--force` with explicit user confirmation.
-- **Editing `versions` / `aliases` in `team.json` releases on push**: adding a tag
+- **Editing `versions` / `aliases` in `settings.json` releases on push**: adding a tag
   publishes that workspace version, removing one deletes it from the cloud
   (cascading), re-pointing an alias is a release or rollback. Same rule as
-  `team:versions:*` / `team:aliases:*` — **don't touch unless explicitly asked.**
+  `settings:versions:*` / `settings:aliases:*` — **don't touch unless explicitly asked.**
 - **Never edit inherited resources.** `variables.inherited.env`,
   `i18n/<locale>.inherited.yaml`, and inherited processes/modules are owned by
   parent workspaces, regenerated on pull, and never pushed (see below).
@@ -100,7 +100,7 @@ webhook-triggered processes and forms can be exercised without deploying.
 `--auth-user` / `--auth-password` protect the **whole** local server with basic
 auth. Per-process webhook auth is separate, and enforced exactly as the cloud
 does it: the server reads `webhook.authMode` from the process's `metadata.json`,
-resolves `TEAM` against `webhookAuth` in `team.json`, and requires the named
+resolves `TEAM` against `webhookAuth` in `settings.json`, and requires the named
 variable's value in the configured header — `Bearer <token>` in `Authorization`,
 the raw value in any other header. Values come from the workspace variables in
 the precedence every local run uses — `variables.inherited.env`, overridden by
@@ -134,9 +134,9 @@ first only if you created new resources); recommended to `fcode run` first.
 ### `fcode status`
 
 Reports what differs between local and cloud without changing either —
-processes, modules, variables, dependencies, locales, and `team.json`.
+processes, modules, variables, dependencies, locales, and `settings.json`.
 Per-resource variants exist too: `processes:status`, `modules:status`,
-`variables:status`, `i18n:status`, `team:status`.
+`variables:status`, `i18n:status`, `settings:status`.
 
 **Inherited resources the cloud agrees on are hidden**, since there is nothing
 to pull or push for them; a line reports how many were left out. An inherited
@@ -157,7 +157,7 @@ Shows **what** differs, where `status` only says **that** something does: a
 git-style unified diff of every file the workspace is stored as, with the cloud
 as the old side and the local files as the new one. Per-resource variants take
 an optional slug: `processes:diff`, `modules:diff`, `variables:diff`,
-`i18n:diff`, `dependencies:diff`, `team:diff`.
+`i18n:diff`, `dependencies:diff`, `settings:diff`.
 
 ```sh
 fcode diff                          # the whole workspace
@@ -184,51 +184,51 @@ subsequent `fcode pull` / `push` sync with that one instead — how code is
 promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
 promotion procedure is in `fcode-release`.
 
-### `fcode team:pull` / `team:push` / `team:status`
+### `fcode settings:pull` / `settings:push` / `settings:status`
 
-Sync the workspace-level settings in `team.json` on their own: `team:pull` writes
-the cloud settings into the file, `team:push` applies the file, and `team:status`
-reports whether they changed locally, in the cloud, or both. Plain `fcode pull` /
-`fcode push` include them too, running them **last** so a referenced error-handler
-process slug resolves against processes that already exist.
+Sync the workspace-level settings in `settings.json` on their own: `settings:pull`
+writes the cloud settings into the file, `settings:push` applies the file, and
+`settings:status` reports whether they changed locally, in the cloud, or both.
+Plain `fcode pull` / `fcode push` include them too, running them **last** so a
+referenced error-handler process slug resolves against processes that already exist.
 
-The `versions` / `aliases` fields sync like the rest of the file: `team:push`
+The `versions` / `aliases` fields sync like the rest of the file: `settings:push`
 diffs them against the cloud and applies the difference — publishing versions
 listed locally but not yet in the cloud (carrying their `comment`), asking per
 version before deleting one removed from the file (the deletion **cascades**;
 `--force` skips the prompt), and creating, re-pointing or deleting aliases to
-match. `team:status` compares them too, and `team:pull` refuses to overwrite a
-`team.json` with unpushed local edits.
+match. `settings:status` compares them too, and `settings:pull` refuses to
+overwrite a `settings.json` with unpushed local edits.
 
-### `fcode team:versions:*` / `fcode team:aliases:*`
+### `fcode settings:versions:*` / `fcode settings:aliases:*`
 
 Workspace versioning publishes a version of the **whole workspace**: every
 process and module the team owns gets a version with the same tag, and bare
 module imports are pinned to it inside the published snapshots (model in
 `fcode-core-concepts`). Releases normally happen from the web UI (team
 settings → **Versions** tab) — these commands are the imperative equivalent, and
-editing `team.json`'s `versions` / `aliases` then pushing is the declarative one.
+editing `settings.json`'s `versions` / `aliases` then pushing is the declarative one.
 **Don't create versions or move `stable` unless explicitly asked.**
 
 ```sh
-fcode team:versions:create v1.0.0 --comment "First stable release"
-fcode team:versions:list
-fcode team:versions:delete v1.0.0     # cascades; asks confirmation unless --force
+fcode settings:versions:create v1.0.0 --comment "First stable release"
+fcode settings:versions:list
+fcode settings:versions:delete v1.0.0     # cascades; asks confirmation unless --force
 
-fcode team:aliases:set stable v1.0.0  # create or re-point; rollback = older tag
-fcode team:aliases:list
-fcode team:aliases:delete stable
+fcode settings:aliases:set stable v1.0.0  # create or re-point; rollback = older tag
+fcode settings:aliases:list
+fcode settings:aliases:delete stable
 ```
 
-- **`team:versions:create`** skips entities already carrying the exact tag and
+- **`settings:versions:create`** skips entities already carrying the exact tag and
   reports a per-entity summary (created / skipped / failed — the version's
-  manifest), then pulls so the `versions/<tag>/` folders and `team.json` refresh
+  manifest), then pulls so the `versions/<tag>/` folders and `settings.json` refresh
   locally. Re-running the same tag after a partial failure only publishes what
   is still missing.
-- **`team:versions:delete` cascades**: every owned process/module version with
+- **`settings:versions:delete` cascades**: every owned process/module version with
   the tag is deleted, together with the aliases, executions, and schedules
   referencing them.
-- **`team:aliases:set` upserts** — it creates the alias or re-points an existing
+- **`settings:aliases:set` upserts** — it creates the alias or re-points an existing
   one on every owned entity that has the target tag published (entities without
   it are skipped and reported). Re-pointing `stable` at an older tag **is** the
   rollback: every consumer pinned to `stable` switches in one operation.
@@ -255,7 +255,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `name` | string | Display name (defaults to the slug) |
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
-| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `team.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
+| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
 | `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL` \| `NONE`) restricts who may open the form; `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
 
 ```json
@@ -290,11 +290,11 @@ Notes:
   so the file is safe to commit. The variable doesn't have to exist yet; until it
   does, every call to the webhook is rejected with `403`. Both plain and secret
   variables work.
-- **`authMode: TEAM` inherits `webhookAuth` from `team.json`.** When that
+- **`authMode: TEAM` inherits `webhookAuth` from `settings.json`.** When that
   configuration is missing, the webhook rejects every call — it never reads as
   public. Through MCP this matters: an agent can set `authMode: TEAM` but there is
   no team-settings tool, so the configuration has to exist already (set it in
-  `team.json` and `fcode team:push`).
+  `settings.json` and `fcode settings:push`).
 - **`webhook.auth.headerName` defaults to `Authorization`**, whose value must be
   `Bearer <token>`; any other header carries the raw variable value. Valid names
   are RFC 7230 token characters, at most 64 of them, and `Cookie`, `Host` and the
@@ -335,10 +335,10 @@ curl -X POST "https://code.factorialhr.com/platform/api/<team-slug>/webhooks/<pr
   runs the current version silently. When a run behaves unexpectedly, check the
   execution's version.
 
-## Team settings — `team.json`
+## Workspace settings — `settings.json`
 
-A singleton file at the workspace root holding team-level settings. Synced by
-`fcode team:pull` / `team:push` / `team:status`, and included in plain
+A singleton file at the workspace root holding workspace-level settings. Synced by
+`fcode settings:pull` / `settings:push` / `settings:status`, and included in plain
 `fcode push` / `pull` (pushed last, so a referenced error-handler process
 exists first).
 
@@ -368,12 +368,12 @@ exists first).
 }
 ```
 
-The error handler is referenced by **slug** (not id) so `team.json` is
-portable across teams; the CLI resolves it to the cloud id on push.
+The error handler is referenced by **slug** (not id) so `settings.json` is
+portable across workspaces; the CLI resolves it to the cloud id on push.
 
 `versions` and `aliases` are **synced state**, not a read-only mirror: they count
 towards the content hash (edits show as modified in `fcode status`) and
-`team:push` applies them, with the diff semantics above. Only the set of tags and
+`settings:push` applies them, with the diff semantics above. Only the set of tags and
 the `name` → `tag` pairings are compared — a published version's `comment` can
 no longer be changed, and `createdAt` is server-assigned.
 

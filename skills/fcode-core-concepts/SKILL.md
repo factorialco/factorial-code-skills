@@ -201,8 +201,8 @@ Two consequences of that model:
   and schedules referencing them.
 
 Versions are published and aliases linked from the web UI (team settings →
-**Versions** tab). The CLI equivalents (`fcode team:versions:*` /
-`team:aliases:*`) are documented in `fcode-cli` — don't create versions or move
+**Versions** tab). The CLI equivalents (`fcode settings:versions:*` /
+`settings:aliases:*`) are documented in `fcode-cli` — don't create versions or move
 `stable` unless explicitly asked.
 
 A **version tag** (`v1.0.0`) is unrelated to `metadata.json` `tags` — those are
@@ -259,7 +259,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
-┣ 📜 team.json             # team settings: inheritance, timezone, error handler, webhook auth
+┣ 📜 settings.json         # workspace settings: inheritance, timezone, error handler, webhook auth
 ┣ 📜 variables.env         # team variables this workspace owns (KEY=VALUE)
 ┣ 📜 variables.inherited.env  # variables from parent workspaces (read-only, gitignored)
 ┣ 📜 variables.local.env   # local overrides (not shared)
@@ -275,7 +275,7 @@ versioning section above. `dependencies/package.json` holds only the inner
 `metadata.json` is where a process's webhook trigger and form settings
 (`enabled`, `authMode`, and a marketplace `appRole`) are configured — edit it and
 `fcode push`. A webhook is public (`authMode: NONE`), inherits the workspace
-`webhookAuth` from `team.json` (`TEAM`), or carries its own header and team
+`webhookAuth` from `settings.json` (`TEAM`), or carries its own header and team
 variable (`CUSTOM`). Full field reference in `fcode-cli`.
 
 ## General rules

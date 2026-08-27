@@ -12,7 +12,7 @@ repeat the explanation across skills.
 |---|---|
 | Platform model: processes, modules, execution context, variables, the inheritance model (processes, modules, variables, locales, dependencies), datastore vs storage, versioning & alias model | `fcode-core-concepts` |
 | Platform journey & support: access requests, development teams, app creation, OAuth app setup, demo companies, Dev/production marketplace experience, installations, the workspace-kinds map (`dev-` / `prod-` / `deploy-` / `base-app`), release & promotion flow, publication (DatoCMS, private apps), escalation channels, support-agent behavior | `fcode-ama` |
-| CLI commands and flow, `metadata.json` / `team.json` field reference, webhook auth mechanics, the three variables files, `variables.meta.json`, inherited resources on disk, the `FACTORIAL_TOKEN` OAuth procedure, `version_tag` on URLs | `fcode-cli` |
+| CLI commands and flow, `metadata.json` / `settings.json` field reference, webhook auth mechanics, the three variables files, `variables.meta.json`, inherited resources on disk, the `FACTORIAL_TOKEN` OAuth procedure, `version_tag` on URLs | `fcode-cli` |
 | Language usage: runtime helpers, code snippets, logging, dependencies, return values | `fcode-javascript` / `fcode-python` |
 | `parametersSchema.json` field types, widgets, validation | `fcode-json-schema` |
 | Form embedding, themes, access restriction, pre-render / pre-fill contract, multi-step | `fcode-forms` |
