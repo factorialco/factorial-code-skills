@@ -88,7 +88,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 2 | Create an App | Apps → create | Name and purpose; language (**JavaScript** or **Python**); **OAuth scopes**; the **integrations framework** opt-in (decision rule in `references/journey.md`) |
 | 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure OAuth (when scopes were requested), publish a release, add marketplace metadata |
 | 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
-| 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
+| 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace (or `fcode team:clone` for every App of your team at once), code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
 | 6 | Demo company | Demo Companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
 | 7 | Test installs | Dev Marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
@@ -102,7 +102,8 @@ Per-stage detail, per-role callouts, and lifecycle states: `references/journey.m
 Naming caution: a Factorial Code **workspace** is also called a "team" in the
 workspace console, in the platform API, and in a few CLI surfaces ("team
 variables", the `parentTeamSlugs` field) — that sense is unrelated to the
-**development team** of humans described above.
+**development team** of humans described above. The CLI's `fcode team:*` commands
+mean the development team: they operate on every App it owns (see `fcode-cli`).
 
 Each app maps to workspaces (slugs carry an encoded token, not the raw id):
 
