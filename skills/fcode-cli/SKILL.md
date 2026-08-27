@@ -137,6 +137,19 @@ processes, modules, variables, dependencies, locales, and `team.json`.
 Per-resource variants exist too: `processes:status`, `modules:status`,
 `variables:status`, `i18n:status`, `team:status`.
 
+**Inherited resources the cloud agrees on are hidden**, since there is nothing
+to pull or push for them; a line reports how many were left out. An inherited
+resource reappears as soon as it differs — out-of-date, new, removed, conflict,
+modified, sensitivity-changed — so a parent moving one is never silently
+swallowed. `--showInherited` lists them all:
+
+```sh
+fcode status --showInherited        # or any per-resource variant above
+```
+
+An inherited **sensitive** variable counts as unchanged and is hidden too: its
+value is never compared, so it could never report as up to date.
+
 ### `fcode remote:add <workspace-slug>`
 
 Points an already-cloned workspace folder at a different cloud workspace, so
@@ -362,8 +375,9 @@ workspace's own resources: `variables.inherited.env`,
 - **`fcode push` never uploads them.** One that was modified locally logs a
   warning naming the owning team — restore it with `fcode processes:pull` /
   `modules:pull` (or the aggregate `fcode pull`).
-- The `*:status` commands show an **inherited** column with the owning
-  workspace (`🔗 <slug>`), hidden when nothing is inherited.
+- The `*:status` commands list only the inherited resources that differ from
+  the cloud (`--showInherited` for the rest), marking each with an **inherited**
+  column naming the owning workspace (`🔗 <slug>`).
 
 Inheritance model (resolution order, overrides) in `fcode-core-concepts`.
 
