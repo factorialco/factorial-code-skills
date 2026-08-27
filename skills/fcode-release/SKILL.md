@@ -12,7 +12,7 @@ Promotes an app's code from its `dev-…` workspace to its `prod-…` workspace
 using CLI remotes. Input: the two workspace slugs. This updates prod's
 **current** (unversioned) code only — publishing a workspace version and moving
 the `stable` alias is the separate platform release (model in
-`fcode-core-concepts`, journey in `fcode-ama`): don't run `team:versions:*` or
+`fcode-core-concepts`, journey in `fcode-ama`): don't run `settings:versions:*` or
 move `stable` in this flow unless explicitly asked.
 
 Gate every release with `fcode-code-validation` — see the procedure.

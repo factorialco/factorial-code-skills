@@ -102,8 +102,9 @@ Per-stage detail, per-role callouts, and lifecycle states: `references/journey.m
 ## Workspaces behind the journey
 
 Naming caution: a Factorial Code **workspace** is also called a "team" in the
-workspace console and CLI (`team.json`, team variables, `fcode team:*`) —
-that is unrelated to the **development team** of humans described above.
+workspace console, in the platform API, and in a few CLI surfaces ("team
+variables", the `parentTeamSlugs` field) — that sense is unrelated to the
+**development team** of humans described above.
 
 Each app maps to workspaces (slugs carry an encoded token, not the raw id):
 
@@ -131,7 +132,7 @@ by hand.
 | Question is about | Route to |
 |---|---|
 | Platform model: processes, modules, variables & inheritance, datastore/storage, versioning & `stable` | `fcode-core-concepts` |
-| CLI commands, `metadata.json` / `team.json` fields, `appRole` field reference, webhook auth, `FACTORIAL_TOKEN` | `fcode-cli` — docs: `/docs/cli/` |
+| CLI commands, `metadata.json` / `settings.json` fields, `appRole` field reference, webhook auth, `FACTORIAL_TOKEN` | `fcode-cli` — docs: `/docs/cli/` |
 | Writing process/module code | `fcode-javascript` / `fcode-python` — docs: `/docs/processes/` |
 | Input-parameter schemas (forms definition) | `fcode-json-schema` |
 | Embedding forms on webpages, themes, pre-fill | `fcode-forms` — docs: `/docs/forms/` |
