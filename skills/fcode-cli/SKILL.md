@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, team.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, or configuring a process's webhook, form, or version settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, team.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -46,7 +46,8 @@ web UI (see below).
   code or variables, go straight to `fcode push`.
 - **`--force` (on `push`/`pull`) overwrites the other side.** Both commands fail
   when local and cloud diverge — `team:pull` included, which refuses to wipe an
-  unpushed `team.json`. Only use `--force` with explicit user confirmation.
+  unpushed `team.json`. Run `fcode diff` first to show the user exactly what
+  would be discarded, and only use `--force` with explicit user confirmation.
 - **Editing `versions` / `aliases` in `team.json` releases on push**: adding a tag
   publishes that workspace version, removing one deletes it from the cloud
   (cascading), re-pointing an alias is a release or rollback. Same rule as
@@ -149,6 +150,32 @@ fcode status --showInherited        # or any per-resource variant above
 
 An inherited **sensitive** variable counts as unchanged and is hidden too: its
 value is never compared, so it could never report as up to date.
+
+### `fcode diff [<slug>]`
+
+Shows **what** differs, where `status` only says **that** something does: a
+git-style unified diff of every file the workspace is stored as, with the cloud
+as the old side and the local files as the new one. Per-resource variants take
+an optional slug: `processes:diff`, `modules:diff`, `variables:diff`,
+`i18n:diff`, `dependencies:diff`, `team:diff`.
+
+```sh
+fcode diff                          # the whole workspace
+fcode processes:diff my-process     # one process
+```
+
+Use it before resolving a `🔥 (conflict)` from `pull` / `push`, so the user sees
+what each side would lose before choosing. Notes:
+
+- **Exits `1` when local and cloud differ**, `0` when in sync — usable as a check.
+  A non-zero exit here is the answer, not a failure to report as an error.
+- Sensitive variable values are never printed; both sides render as
+  `<sensitive value hidden>`, so a changed secret shows in `status` but not here.
+- Inherited resources follow the same rule as `status`: the ones the cloud agrees
+  on are hidden behind a count, and any a parent has moved **are** diffed, marked
+  with the owning workspace. Fix those with `fcode pull`, never a push — they
+  stay read-only. Inherited variables diff as `variables.inherited.env`, the
+  generated file they live in.
 
 ### `fcode remote:add <workspace-slug>`
 
