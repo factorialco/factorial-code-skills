@@ -55,7 +55,7 @@ instead — see the routing table in `SKILL.md`.
   Individual Contributors request one and get an email when it's provisioned.
 - **"My app isn't listed in the Test marketplace."** It lists the apps in
   *your team's* development environment — check you're in the right team and
-  the app is live. (The page was formerly named "Dev marketplace".)
+  the app is live.
 - **"The install asks for credentials."** That's the point: the Test
   marketplace runs the real OAuth flow against the demo company, using that
   demo company's access credentials.

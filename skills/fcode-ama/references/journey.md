@@ -138,9 +138,9 @@ managed on the **Demo companies** page and belong to the development team.
 
 ## 7. Test marketplace — test the install
 
-The **Test marketplace** (formerly "Dev marketplace") is a simulation of the
-production Factorial marketplace that runs against demo companies. It lists
-the apps in the team's development environment. From there you:
+The **Test marketplace** is a simulation of the production Factorial
+marketplace that runs against demo companies. It lists the apps in the
+team's development environment. From there you:
 
 1. Pick the app and the demo company.
 2. Go through the real **OAuth flow** with that demo company's access
