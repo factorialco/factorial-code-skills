@@ -81,6 +81,10 @@ The `Authentication` field next to the `Forms` flag (`form.authMode` in
 | `FACTORIAL` | Only Factorial users of the company that installed the app. Every request must carry a Factorial-issued user token in the `Fcode-Factorial-Token` header, and that token's company must own the workspace. Anything else gets a `401` |
 | `NONE` | Anyone who knows the form URL can open and submit it |
 
+- **Forms are public by default** — enabling one without an `authMode` leaves it
+  reachable by anyone with the URL. Requiring a Factorial user is an explicit
+  opt-in: set `authMode: FACTORIAL` on every form that runs app code against
+  customer data from inside Factorial.
 - Forms embedded **inside Factorial** (the marketplace `INSTALL` / `SETTINGS` /
   `USER_FACING_FORM` / `UNINSTALL` screens) send the token for you — this is what
   `FACTORIAL` is for.
