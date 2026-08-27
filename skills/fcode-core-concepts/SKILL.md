@@ -275,8 +275,8 @@ acme-payroll/               # the development team
 ┣ 📂 .fcode/team.json       # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/        # installed once, symlinked into every App
 ┗ 📂 payroll-sync/          # one folder per App — a future git repo
-  ┣ 📜 app.json             #   the App's name and description (mirror, read-only)
-  ┗ 📂 dev-<token>/         #   the workspace laid out above
+  ┣ 📜 settings.json        #   the App — name, description (mirror, read-only)
+  ┗ 📂 app/                 #   the workspace laid out above
 ```
 
 Processes and modules also carry `versions/<tag>/` subfolders (e.g.

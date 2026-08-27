@@ -197,27 +197,33 @@ fcode team:clone                 # lists your teams, or clones the only one
 fcode team:clone <teamId>
 ```
 
-It creates one folder per App, each holding that App's `dev-` workspace:
+It creates one folder per App, each holding a checkout of that App's workspace:
 
 ```
 acme-payroll/
 ┣ 📂 .fcode/team.json      # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/       # installed once, symlinked into every App below
 ┗ 📂 payroll-sync/
-  ┣ 📜 app.json            # the App's name and description
-  ┗ 📂 dev-<token>/        # a normal workspace — settings.json, processes/, …
+  ┣ 📜 settings.json       # the App — name, description, id
+  ┗ 📂 app/                # a normal workspace — settings.json, processes/, …
 ```
+
+The checkout is called `app`, never the `dev-<token>` slug it came from: the slug
+is in the metadata, and the directory is only a checkout — `fcode remote:add` can
+re-point it at the prod workspace. Each level's `settings.json` describes the
+thing that level holds, and they never collide, being one directory apart.
 
 Inside an App's workspace every ordinary command works as usual; the team
 commands only add the ones that span Apps:
 
 - **`team:pull`** re-reads the team: it clones Apps added since the last run,
-  pulls every workspace, and refreshes each `app.json`. An App that left the team
-  is **reported, never deleted** — remove the folder yourself if you want it gone.
+  pulls every workspace, and refreshes each App's `settings.json`. An App that
+  left the team is **reported, never deleted** — remove the folder yourself if
+  you want it gone.
 - **`team:status`** runs `fcode status` in each App workspace under its own header.
 - **There is no `team:push`.** Push from inside a workspace, one App at a time.
-- `app.json` is a **mirror** of the dashboard, refreshed on pull. Editing it
-  changes nothing upstream — rename an App in the dashboard.
+- The App's `settings.json` is a **mirror** of the dashboard, refreshed on pull.
+  Editing it changes nothing upstream — rename an App in the dashboard.
 - A failing App doesn't abort the run: it is listed in the summary, and rerunning
   `team:pull` retries only what is still missing.
 
