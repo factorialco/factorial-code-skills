@@ -29,9 +29,12 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **The `Forms` flag must be enabled** — on the process Dashboard, or via
   `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
-- **A new form requires a Factorial user by default** (`authMode: FACTORIAL`).
-  An embed on a public page needs `authMode: NONE`, or every request gets a
-  `401` (below).
+- **A form is public unless you say otherwise** (`authMode` absent = `NONE`).
+  A form opened from inside Factorial (marketplace `INSTALL` / `SETTINGS` /
+  `USER_FACING_FORM` / `UNINSTALL` screens) should carry `authMode: FACTORIAL`
+  explicitly (below).
+- **A form opened from a UI trigger button must stay public for now** — the
+  trigger dialog sends no user token yet. See `fcode-ui-triggers`.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.

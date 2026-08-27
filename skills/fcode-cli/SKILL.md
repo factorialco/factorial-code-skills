@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, or version settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, UI trigger, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -257,6 +257,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
 | `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL` \| `NONE`) restricts who may open the form; `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
+| `uiTrigger` | object, optional | Button inside the Factorial UI (see `fcode-ui-triggers`): `enabled` (boolean); `locationId` (string, required when enabled, ≤ 200 chars) names the Factorial location; `label` (string, may carry `fcode.i18n("key")` tokens); `icon` (string, allowlisted name); `awaitResult` (boolean) runs the process synchronously and shows its result instead of fire-and-forget |
 
 ```json
 {
@@ -309,6 +310,9 @@ Notes:
   omitting the field leaves the stored mode untouched, and sending `auth` without
   `authMode: CUSTOM` is rejected.
 - Omit `form.appRole` unless the process belongs to a marketplace app.
+- **`fcode pull` writes `"uiTrigger": { "enabled": false }` on every process**;
+  `locationId`, `label` and `icon` appear only when set, and `awaitResult` only
+  when `true`. Enabling a trigger without a `locationId` is rejected on push.
 - If `metadata.json` is missing, `fcode add` scaffolds
   `{ "name": "<slug>", "tags": [] }`; invalid JSON falls back to those
   defaults with a warning.

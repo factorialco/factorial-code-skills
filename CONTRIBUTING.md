@@ -16,6 +16,7 @@ repeat the explanation across skills.
 | Language usage: runtime helpers, code snippets, logging, dependencies, return values | `fcode-javascript` / `fcode-python` |
 | `parametersSchema.json` field types, widgets, validation | `fcode-json-schema` |
 | Form embedding, themes, access restriction, pre-render / pre-fill contract, multi-step | `fcode-forms` |
+| UI trigger buttons inside Factorial: location contract, what the process receives, the `{ data }` / `{ errors }` envelope, form-backed triggers, icon allowlist | `fcode-ui-triggers` |
 | Locales & translations: locale files and inheritance, the `fcode.i18n` helper, form-schema i18n tokens, execution-locale selection, locale versioning, `i18n:*` commands | `fcode-i18n` |
 | Agent working method, MCP tools | `fcode-agent` |
 | Pre-production app validation: the check catalog and its severities (Blocker/Warning/Suggestion), the `APP_VALIDATION_REPORT.md` format, the read-only review procedure and verdict rules — each checked *rule* stays with its owning skill | `fcode-code-validation` |
