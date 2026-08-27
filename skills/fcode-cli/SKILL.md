@@ -171,9 +171,11 @@ what each side would lose before choosing. Notes:
   A non-zero exit here is the answer, not a failure to report as an error.
 - Sensitive variable values are never printed; both sides render as
   `<sensitive value hidden>`, so a changed secret shows in `status` but not here.
-- Inherited resources are **never** compared, not even when they differ — unlike
-  `status`, which surfaces those. They are read-only, so a summary line just
-  reports how many were skipped; use `status` to see whether a parent moved one.
+- Inherited resources follow the same rule as `status`: the ones the cloud agrees
+  on are hidden behind a count, and any a parent has moved **are** diffed, marked
+  with the owning workspace. Fix those with `fcode pull`, never a push — they
+  stay read-only. Inherited variables diff as `variables.inherited.env`, the
+  generated file they live in.
 
 ### `fcode remote:add <workspace-slug>`
 
