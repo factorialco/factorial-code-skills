@@ -156,10 +156,7 @@ that parent contributes **the release, not its working copy**:
   `stable` in the parent moves every child pinned to it, in one operation. This
   is how a base app rolls a fix out to its installations.
 - **Dependencies follow the pin too** — the child installs the packages the
-  release was cut with. One exception: a version published before dependencies
-  were versioned has no package snapshot, and the parent then keeps contributing
-  what it installs today rather than the child losing the packages its code
-  imports.
+  pinned release was cut with, not the ones the parent installs today.
 - **Variables always resolve live**, pin or no pin: they have no versioned form.
 - **The child cannot pick a version of an inherited resource.** The pin decides
   it. In the web UI an inherited process, module or locale shows its version
