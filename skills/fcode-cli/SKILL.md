@@ -462,7 +462,7 @@ workspace's own resources: `variables.inherited.env`,
 - **From a pinned parent you get that version's content, not the parent's
   current code**, and only the resources the pinned version published — a
   process the parent added afterwards is not pulled at all. Changing the pin in
-  `team.json` and pulling again is what moves those files.
+  `settings.json` and pulling again is what moves those files.
 
 Inheritance model (resolution order, overrides, pinning) in
 `fcode-core-concepts`.

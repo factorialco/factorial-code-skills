@@ -103,7 +103,7 @@ Per-stage detail, per-role callouts, and lifecycle states: `references/journey.m
 
 Naming caution: a Factorial Code **workspace** is also called a "team" in the
 workspace console, in the platform API, and in a few CLI surfaces ("team
-variables", the `parentTeamSlugs` field) — that sense is unrelated to the
+variables", the `parentTeams` field) — that sense is unrelated to the
 **development team** of humans described above. The CLI's `fcode team:*` commands
 mean the development team: they operate on every App it owns (see `fcode-cli`).
 

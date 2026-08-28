@@ -117,8 +117,9 @@ instead — see the routing table in `SKILL.md`.
   code."** / **"A process I just added to the base app isn't visible in the
   child."** The parent link is pinned to one of the base app's versions, so the
   child gets that release and nothing published after it. Check `parentTeams` in
-  the child's `team.json` (or team settings → parent teams): an entry like
-  `{ "slug": "base-app", "version": "stable" }` is pinned, a plain slug is live.
+  the child workspace's `settings.json` (or team settings → parent teams): an
+  entry like `{ "slug": "base-app", "version": "stable" }` is pinned, a plain
+  slug is live.
   Ship the change by publishing a new version in the base app and moving the
   alias the children pin — that re-points all of them at once. Model in
   `fcode-core-concepts`.

@@ -164,8 +164,9 @@ that parent contributes **the release, not its working copy**:
   aliasing a resource belongs to the workspace that owns it.
 
 The pin is set per parent in the web UI (team settings → **Details** → parent
-teams) or in `team.json`; the field reference is in `fcode-cli`. Don't add or
-change a pin unless explicitly asked — it decides which release a workspace runs.
+teams) or in the workspace's `settings.json`; the field reference is in
+`fcode-cli`. Don't add or change a pin unless explicitly asked — it decides
+which release a workspace runs.
 
 On-disk layout, gitignoring, and push/pull behaviour of inherited resources are
 in `fcode-cli`.
