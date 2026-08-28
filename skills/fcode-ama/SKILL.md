@@ -92,7 +92,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace, code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
 | 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
-| 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms |
+| 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms and any UI trigger buttons inside the demo company's Factorial |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
@@ -127,6 +127,32 @@ current one (model in `fcode-core-concepts`). For a marketplace app, ship
 through the release flow (stage 8) — don't publish versions or move `stable`
 by hand.
 
+## Buttons inside Factorial — UI triggers
+
+Besides forms and webhooks, an installed app can put **its own buttons on
+Factorial's pages**. Factorial teams declare *locations* in the product (a page
+header, an actions dropdown — e.g. `calendar.header.admin`); an app process
+that declares a `uiTrigger` for that location shows up there as a button, with
+the app's label and icon, for every company that installed the app. Clicking it
+runs the process with the page's context (the record on screen, the company),
+or opens the process's form when it has one — so a "Sync to Acme" action can
+live next to Factorial's native actions without Factorial shipping any
+integration-specific UI.
+
+What to tell users:
+
+- It works only for **installed marketplace apps** — the buttons are read from
+  the company's `deploy-` workspace, so a trigger reaches customers through the
+  release flow (stage 8) like any other change; in development, the demo company
+  shows the dev workspace's triggers (stage 7).
+- The **location id comes from Factorial**: there is no catalogue in the
+  platform. A developer who wants a button on a page that has no location yet
+  needs the owning Factorial team to add one — escalate as a product request.
+- Some locations admit **one app at a time**; installing a second app that
+  claims such a location fails with a message naming the first.
+- Configuration lives on the process page (**Triggered from Factorial UI**) or
+  in `metadata.json`; the developer-facing rules are in `fcode-ui-triggers`.
+
 ## Routing — where deep questions live
 
 | Question is about | Route to |
@@ -136,6 +162,7 @@ by hand.
 | Writing process/module code | `fcode-javascript` / `fcode-python` — docs: `/docs/processes/` |
 | Input-parameter schemas (forms definition) | `fcode-json-schema` |
 | Embedding forms on webpages, themes, pre-fill | `fcode-forms` — docs: `/docs/forms/` |
+| Buttons inside Factorial (`uiTrigger`, locations, result envelope) | `fcode-ui-triggers` |
 | Recommended agent working method, MCP tools | `fcode-agent` — docs: `/docs/mcp-server/` |
 | Worked examples (integration, install/uninstall lifecycle) | `fcode-examples` |
 | Executions, schedules, webhooks at runtime | docs: `/docs/executions/` |

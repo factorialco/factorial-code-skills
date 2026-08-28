@@ -226,4 +226,8 @@ return { "status": 404, "body": { "message": "Not found" }, "headers": { "Conten
 
 # Transient (not persisted in execution results)
 return { "transient": True, "data": sensitive_data }
+
+# Synchronous UI trigger button inside Factorial (see fcode-ui-triggers)
+return { "data": { "synced": 42 } }
+return { "errors": [{ "code": "missing_mapping", "message": "Map the Bonus concept first." }] }
 ```

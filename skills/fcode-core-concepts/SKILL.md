@@ -255,7 +255,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 index.js          #   or main.py — the process entry file
 ┃   ┣ 📜 parametersSchema.json   # input parameter schema (the form)
 ┃   ┣ 📜 parameters.json   #   default test parameters for `fcode run`
-┃   ┣ 📜 metadata.json     #   name, description, tags, webhook/form settings + auth
+┃   ┣ 📜 metadata.json     #   name, description, tags, webhook/form/UI trigger settings + auth
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
@@ -272,8 +272,9 @@ Processes and modules also carry `versions/<tag>/` subfolders (e.g.
 versioning section above. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
-`metadata.json` is where a process's webhook trigger and form settings
-(`enabled`, `authMode`, and a marketplace `appRole`) are configured — edit it and
+`metadata.json` is where a process's webhook trigger, form settings
+(`enabled`, `authMode`, and a marketplace `appRole`) and UI trigger (a button
+inside Factorial, see `fcode-ui-triggers`) are configured — edit it and
 `fcode push`. A webhook is public (`authMode: NONE`), inherits the workspace
 `webhookAuth` from `settings.json` (`TEAM`), or carries its own header and team
 variable (`CUSTOM`). Full field reference in `fcode-cli`.
