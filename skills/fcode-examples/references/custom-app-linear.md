@@ -83,7 +83,7 @@ screen (re-map teams later), which is what `appRole: SETTINGS` marks:
 }
 ```
 
-`authMode: TEAM` inherits the workspace `webhookAuth` from `team.json` — the
+`authMode: TEAM` inherits the workspace `webhookAuth` from `settings.json` — the
 same challenge token `setupWebhook` embeds in the subscription at install (see
 below), checked by the platform before the process runs, so webhook processes
 carry no auth code. Setup in `references/integration-acme.md`; field reference

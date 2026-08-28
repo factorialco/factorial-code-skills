@@ -27,7 +27,7 @@ cited on the catalog row — read the owner when a finding needs context.
 
 - **This review is read-only.** The only permitted writes are the clone
   itself and `APP_VALIDATION_REPORT.md`. Never `fcode push`, never
-  `--force`, never `team:versions:create` / `team:aliases:set`, never edit
+  `--force`, never `settings:versions:create` / `settings:aliases:set`, never edit
   workspace files, never `fcode add` the report.
 - **Never `fcode run` during the review.** Processes may call real APIs
   with credentials inherited from parent workspaces
@@ -73,9 +73,9 @@ cited on the catalog row — read the owner when a finding needs context.
    review the local state as-is and record the answer in the report header.
 3. **Inventory** (read-only). Detect the language per process (`index.js`
    vs `main.py`). List processes, modules, `appRole`s, and webhook/form
-   settings from each `processes/<slug>/metadata.json`; read `team.json`,
+   settings from each `processes/<slug>/metadata.json`; read `settings.json`,
    the three variables files, `variables.meta.json`, and `i18n/`. Run
-   `fcode status`, `fcode variables:status`, `fcode team:status`, and
+   `fcode status`, `fcode variables:status`, `fcode settings:status`, and
    `fcode i18n:status`. Separate owned from inherited as you go — the
    catalog applies to owned resources only (see Gotchas).
 4. **Run the check catalog.** Read `references/checks.md` and evaluate

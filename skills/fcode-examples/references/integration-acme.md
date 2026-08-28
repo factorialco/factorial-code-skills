@@ -75,7 +75,7 @@ form, so its `metadata.json` enables the webhook and disables the form:
 }
 ```
 
-`authMode: TEAM` inherits the workspace configuration in `team.json`, which for a
+`authMode: TEAM` inherits the workspace configuration in `settings.json`, which for a
 Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
 `x-factorial-wh-challenge` header Factorial's sender provides:
 

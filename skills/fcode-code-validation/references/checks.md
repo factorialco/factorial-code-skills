@@ -56,7 +56,7 @@ own rules and note the mix in the report header.
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|
-| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` appRole (on a clash the first slug alphabetically wins, silently) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Dev Marketplace |
+| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` appRole (on a clash the first slug alphabetically wins, silently) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
 | FORM-02 | A stored secret is never echoed back to a form — pre-render reports only *whether* it is set, blank submit keeps the value; escalation: echoing the value is **B**, marking the secret field `required` (locking users out of partial edits) is **W** | B/W | `fcode-forms` references/advanced.md §Pre-filling current values |
 | FORM-03 | `form.authMode` is intentional: a public (`NONE`) form on a process that handles credentials or writes data is **B**; a form whose intended audience is unclear is **W** (omitting the field keeps it protected — that's fine) | B/W | `fcode-forms` §Restrict who can open the form |
 | FORM-04 | No secrets in embed code, embed `options`, or the schema — they all reach the browser | B | `fcode-forms` §Gotchas |
@@ -92,12 +92,12 @@ not a coverage issue.
 | SEC-02 | No secrets in log calls at any level (incl. payload dumps at `debug` that carry credentials) | B | `fcode-javascript`/`fcode-python` §Logging |
 | SEC-03 | No real sensitive value in any synced or committed file — masked `********` entries in `variables.env` are the normal state; real values belong only in `variables.local.env` (never pushed) | B | `fcode-cli` §Getting secret values for local runs, §Variable sensitivity |
 | SEC-04 | Credential-looking variables are `isSensitive: true` in `variables.meta.json` (immutable once pushed — the fix is recreating the variable) | B | `fcode-cli` §Variable sensitivity |
-| SEC-05 | Webhook auth is correct: `authMode: TEAM` has a `webhookAuth` in `team.json` (per-workspace, not inherited — missing = every call rejected, **B**); an enabled webhook with `authMode: NONE` doing sensitive work is **B**; a bespoke `headerName` without a sender constraint is **S** (loses `Authorization` redaction) | B/S | `fcode-cli` §Process metadata, §Team settings |
+| SEC-05 | Webhook auth is correct: `authMode: TEAM` has a `webhookAuth` in `settings.json` (per-workspace, not inherited — missing = every call rejected, **B**); an enabled webhook with `authMode: NONE` doing sensitive work is **B**; a bespoke `headerName` without a sender constraint is **S** (loses `Authorization` redaction) | B/S | `fcode-cli` §Process metadata, §Workspace settings |
 | SEC-06 | Sensitive data returned to callers uses `{transient: true, data}` so it is not persisted in execution results | W | `fcode-javascript`/`fcode-python` §Return values |
 | SEC-07 | Runtime `fcode.variables.set` flags are right: secrets stay default-sensitive, plain config passes `sensitive: false` — a secret created non-sensitive is **W**, config created sensitive is **S** | W/S | `fcode-javascript`/`fcode-python` §Variables & schedules |
 | SEC-08 | No eval-like execution of user-controlled input (`eval`, `Function`, `exec`, dynamic `require` of user data) — child workspaces run this code with the parents' credentials | W | `fcode-core-concepts` §Inheritance from parent workspaces |
 | SEC-09 | OAuth scopes match the API calls actually made — request only what the app needs (static approximation; note uncertainty) | S | `fcode-ama` references/journey.md §4 |
-| SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Team settings, `fcode-examples` §The base workspaces |
+| SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Workspace settings, `fcode-examples` §The base workspaces |
 
 ## REUSE — base-app reuse
 
@@ -144,7 +144,7 @@ category "N/A — no lifecycle".
 | ID | Check | Sev | Owner |
 |---|---|---|---|
 | REL-01 | The workspace has at least one process — an empty workspace has nothing to promote | B | `fcode-core-concepts` §Processes |
-| REL-02 | `fcode status` / `team:status` / `variables:status` / `i18n:status` show local and cloud in sync — on divergence, note in the report header which state was reviewed | W | `fcode-cli` §Command flow |
+| REL-02 | `fcode status` / `settings:status` / `variables:status` / `i18n:status` show local and cloud in sync — on divergence, note in the report header which state was reviewed | W | `fcode-cli` §Command flow |
 | REL-03 | Consumers found in code/READMEs pin the `stable` alias: `?version_tag=stable` on webhook URLs, `processVersion: "stable"` on embeds | W | `fcode-forms` §Pin the form to a version, `fcode-cli` §Calling a webhook |
-| REL-04 | `errorHandlerConfig.processSlug` in `team.json` resolves to an existing process | W | `fcode-cli` §Team settings |
+| REL-04 | `errorHandlerConfig.processSlug` in `settings.json` resolves to an existing process | W | `fcode-cli` §Workspace settings |
 | REL-05 | Slugs are settled (renaming breaks every pasted embed and webhook URL); each locale file is under 256 KB | S | `fcode-forms` §Embed a form, `fcode-i18n` §Locale files |
