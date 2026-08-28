@@ -56,7 +56,7 @@ own rules and note the mix in the report header.
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|
-| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` appRole (on a clash the first slug alphabetically wins, silently) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Dev Marketplace |
+| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` appRole (on a clash the first slug alphabetically wins, silently) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
 | FORM-02 | A stored secret is never echoed back to a form — pre-render reports only *whether* it is set, blank submit keeps the value; escalation: echoing the value is **B**, marking the secret field `required` (locking users out of partial edits) is **W** | B/W | `fcode-forms` references/advanced.md §Pre-filling current values |
 | FORM-03 | `form.authMode` is intentional: a public (`NONE`) form on a process that handles credentials or writes data is **B**; a form whose intended audience is unclear is **W** (omitting the field keeps it protected — that's fine) | B/W | `fcode-forms` §Restrict who can open the form |
 | FORM-04 | No secrets in embed code, embed `options`, or the schema — they all reach the browser | B | `fcode-forms` §Gotchas |

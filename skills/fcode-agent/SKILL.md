@@ -70,8 +70,8 @@ Propose a full execution test using the `fcode` CLI (see `fcode-cli`), get
 confirmation, run it with test parameters, review results together, and iterate.
 Then offer next steps: scheduling, webhooks (public, inheriting the workspace
 `webhookAuth` configuration, or with their own header and team variable), a form
-(public, or restricted to Factorial users), or exposing the process as an MCP
-tool — and pushing to cloud when ready. Pushing never affects consumers pinned
+(public, or restricted to Factorial users), a button inside the Factorial UI
+(`fcode-ui-triggers`), or exposing the process as an MCP tool — and pushing to cloud when ready. Pushing never affects consumers pinned
 to the `stable` alias (model in `fcode-core-concepts`); don't create workspace
 versions or move `stable` unless explicitly asked.
 
