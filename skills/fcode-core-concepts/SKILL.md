@@ -267,6 +267,18 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┗ 📂 .fcode
 ```
 
+A whole development team checks out one level up, one folder per App, with the
+workspace above nested inside it — `fcode team:clone` in `fcode-cli`:
+
+```
+acme-payroll/               # the development team
+┣ 📂 .fcode/team.json       # the team and the Apps cloned into it
+┣ 📂 .claude/skills/        # installed once, symlinked into every App
+┗ 📂 payroll-sync/          # one folder per App — a future git repo
+  ┣ 📜 settings.json        #   the App — name, description (mirror, read-only)
+  ┗ 📂 app/                 #   the workspace laid out above
+```
+
 Processes and modules also carry `versions/<tag>/` subfolders (e.g.
 `versions/v1.0.0/`) holding their published version snapshots — see the
 versioning section above. `dependencies/package.json` holds only the inner

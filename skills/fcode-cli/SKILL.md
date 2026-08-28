@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, UI trigger, or version settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, cloning every App of a development team, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, UI trigger, or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -18,7 +18,8 @@ then **`fcode clone <workspace-slug>`** to bring a cloud workspace down into a
 `<workspace-slug>/` folder (it also installs these agent skills; skip that with
 `--skipSkillsSetup`). The "How to build locally" guide on an App's Development
 tab shows the exact clone command for its dev workspace — copy it from there,
-the slug is an encoded token, not the App's UUID.
+the slug is an encoded token, not the App's UUID. To bring down **every** App
+your development team owns in one layout, use `fcode team:clone` instead (below).
 
 When making and testing changes in an already-cloned workspace:
 
@@ -183,6 +184,48 @@ Points an already-cloned workspace folder at a different cloud workspace, so
 subsequent `fcode pull` / `push` sync with that one instead — how code is
 promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
 promotion procedure is in `fcode-release`.
+
+### `fcode team:clone` / `team:pull` / `team:status`
+
+Work on every App a **development team** owns at once — the team of humans in the
+dashboard, not the workspace sense of the word (see `fcode-ama`). `team:clone`
+with no argument lists the development teams you belong to so you can copy an id;
+with exactly one, it goes ahead:
+
+```sh
+fcode team:clone                 # lists your teams, or clones the only one
+fcode team:clone <teamId>
+```
+
+It creates one folder per App, each holding a checkout of that App's workspace:
+
+```
+acme-payroll/
+┣ 📂 .fcode/team.json      # the team and the Apps cloned into it
+┣ 📂 .claude/skills/       # installed once, symlinked into every App below
+┗ 📂 payroll-sync/
+  ┣ 📜 settings.json       # the App — name, description, id
+  ┗ 📂 app/                # a normal workspace — settings.json, processes/, …
+```
+
+The checkout is called `app`, never the `dev-<token>` slug it came from: the slug
+is in the metadata, and the directory is only a checkout — `fcode remote:add` can
+re-point it at the prod workspace. Each level's `settings.json` describes the
+thing that level holds, and they never collide, being one directory apart.
+
+Inside an App's workspace every ordinary command works as usual; the team
+commands only add the ones that span Apps:
+
+- **`team:pull`** re-reads the team: it clones Apps added since the last run,
+  pulls every workspace, and refreshes each App's `settings.json`. An App that
+  left the team is **reported, never deleted** — remove the folder yourself if
+  you want it gone.
+- **`team:status`** runs `fcode status` in each App workspace under its own header.
+- **There is no `team:push`.** Push from inside a workspace, one App at a time.
+- The App's `settings.json` is a **mirror** of the dashboard, refreshed on pull.
+  Editing it changes nothing upstream — rename an App in the dashboard.
+- A failing App doesn't abort the run: it is listed in the summary, and rerunning
+  `team:pull` retries only what is still missing.
 
 ### `fcode settings:pull` / `settings:push` / `settings:status`
 

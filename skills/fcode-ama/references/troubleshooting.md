@@ -43,6 +43,13 @@ instead — see the routing table in `SKILL.md`.
 - **"`fcode clone dev-<id>` can't find the workspace."** The slug is an
   encoded token, not the app's UUID — copy the exact command from the
   Development tab's "How to build locally" guide (`fcode-cli`).
+- **"How do I get all my team's apps at once?"** `fcode team:clone` — it lists
+  your development teams when run without an id, then creates one folder per
+  app with that app's dev workspace inside. `fcode team:pull` afterwards picks
+  up apps added since, and `fcode team:status` reports them all (`fcode-cli`).
+- **"`fcode team:pull` says this isn't a development team folder."** Run it at
+  the root created by `fcode team:clone` — the one holding `.fcode/team.json` —
+  not inside an app or its workspace.
 - **"I pushed but the released form/webhook didn't change."** Expected:
   consumers pin to the `stable` alias, and `fcode push` only updates the
   working copy. The released version changes when a new release moves the

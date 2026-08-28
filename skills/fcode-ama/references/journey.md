@@ -119,6 +119,10 @@ Copy both commands from the **"How to build locally"** guide on the app's
 Development tab — it fills in the real workspace slug, whose `dev-…` token is
 an encoded value, not the app's UUID (see `fcode-cli`).
 
+Working on several of the team's apps? `fcode team:clone` brings all of them
+down at once, one folder per app, each holding that app's dev workspace — and
+gives the team a common layout to create per-app git repos from (`fcode-cli`).
+
 The clone brings the whole skeleton: the workspace layout, and the shared
 base code every app inherits — Factorial API clients, helpers for webhooks,
 schedules, email, and forms. Implement and test locally (`fcode run
