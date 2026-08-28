@@ -48,7 +48,7 @@ cited on the catalog row — read the owner when a finding needs context.
 - **A mixed JS/Python workspace is fine** — review each process with its
   own language's rules and note the mix in the report header.
 - **Review only what the workspace owns.** Inherited resources — modules,
-  processes, and variables from `parentTeamSlugs` parents,
+  processes, and variables from `parentTeams` parents,
   `variables.inherited.env`, `i18n/<locale>.inherited.yaml` — were already
   validated when their owning workspace was published. Don't audit their
   content; findings may only concern how *this* workspace uses them.

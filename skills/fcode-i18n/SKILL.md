@@ -269,6 +269,11 @@ read in the requested locale, with the same fallbacks. Deleting a version sends
 the calls pinned to it back to the current files; deleting a locale deletes its
 versions with it.
 
+One layer resolves differently: a **parent workspace pinned to one of its
+versions** answers with its snapshot at the pin, and falls back to that snapshot
+rather than to its current file when the call names a tag it never published.
+Its live translations never reach the child — see `fcode-core-concepts`.
+
 **A workspace version freezes translations with the release.** Creating one
 (`fcode settings:versions:create`, see `fcode-cli`) publishes a version of every
 owned locale — locales first, so the pins below have a target — and rewrites

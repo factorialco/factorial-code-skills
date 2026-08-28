@@ -391,7 +391,7 @@ exists first).
 
 | Field | Type | Meaning |
 |---|---|---|
-| `parentTeamSlugs` | string[] | Teams this workspace inherits processes, modules **and variables** from (direct parents only, max 5) |
+| `parentTeams` | array | Teams this workspace inherits processes, modules **and variables** from (direct parents only, max 5). Each entry is a plain slug (parent resolves live) or `{ slug, version }` to pin that parent to one of its workspace versions — a tag or an alias |
 | `zoneId` | string, optional | Team timezone (e.g. for schedules) |
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
@@ -401,7 +401,7 @@ exists first).
 
 ```json
 {
-  "parentTeamSlugs": ["base-app"],
+  "parentTeams": ["shared-utils", { "slug": "base-app", "version": "stable" }],
   "zoneId": "Europe/Madrid",
   "errorHandlerConfig": { "processSlug": "error-handler", "tag": null },
   "webhookAuth": {
@@ -418,6 +418,13 @@ exists first).
 The error handler is referenced by **slug** (not id) so `settings.json` is
 portable across workspaces; the CLI resolves it to the cloud id on push.
 
+A `parentTeams` entry is written as a plain slug while the parent resolves live,
+and as `{ slug, version }` once pinned — both forms are accepted on read, so a
+hand-written list of slugs stays valid. The `version` is a tag or an alias of
+**that parent's** workspace versions, and it must exist there or the push is
+rejected. What pinning changes is in `fcode-core-concepts`; don't add or change
+one unless explicitly asked.
+
 `versions` and `aliases` are **synced state**, not a read-only mirror: they count
 towards the content hash (edits show as modified in `fcode status`) and
 `settings:push` applies them, with the diff semantics above. Only the set of tags and
@@ -427,7 +434,7 @@ no longer be changed, and `createdAt` is server-assigned.
 `webhookAuth` is one shared configuration for the whole workspace, so a token used
 by several webhooks is named — and rotated — in one place. Two things about it:
 
-- **It is per-workspace and not inherited through `parentTeamSlugs`.** Auth is
+- **It is per-workspace and not inherited through `parentTeams`.** Auth is
   resolved against the workspace addressed in the webhook URL, not the one that
   owns the code, so an app inheriting a webhook process from a base app still
   needs its own `webhookAuth` entry.
@@ -436,7 +443,7 @@ by several webhooks is named — and rotated — in one place. Two things about 
 
 ## Inherited resources on disk
 
-`fcode pull` writes everything inherited from `parentTeamSlugs` alongside the
+`fcode pull` writes everything inherited from `parentTeams` alongside the
 workspace's own resources: `variables.inherited.env`,
 `i18n/<locale>.inherited.yaml`, `dependencies/package.inherited.json` /
 `requirements.inherited.txt`, and the inherited process/module folders inside
@@ -452,8 +459,13 @@ workspace's own resources: `variables.inherited.env`,
 - The `*:status` commands list only the inherited resources that differ from
   the cloud (`--showInherited` for the rest), marking each with an **inherited**
   column naming the owning workspace (`🔗 <slug>`).
+- **From a pinned parent you get that version's content, not the parent's
+  current code**, and only the resources the pinned version published — a
+  process the parent added afterwards is not pulled at all. Changing the pin in
+  `settings.json` and pulling again is what moves those files.
 
-Inheritance model (resolution order, overrides) in `fcode-core-concepts`.
+Inheritance model (resolution order, overrides, pinning) in
+`fcode-core-concepts`.
 
 ## The three variables files
 
@@ -462,7 +474,7 @@ Team variables live in three `.env` files at the workspace root:
 | File | Holds | Synced |
 |---|---|---|
 | `variables.env` | The variables this workspace **owns** | Committed; pushed and pulled |
-| `variables.inherited.env` | The variables inherited from **parent workspaces** (`parentTeamSlugs`) | Pull-only; **gitignored** (the CLI adds the entry) |
+| `variables.inherited.env` | The variables inherited from **parent workspaces** (`parentTeams`) | Pull-only; **gitignored** (the CLI adds the entry) |
 | `variables.local.env` | Local-only overrides | Never pushed, never pulled |
 
 **Resolution order for a local run** (highest wins), matching what the cloud
