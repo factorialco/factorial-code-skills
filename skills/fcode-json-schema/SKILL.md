@@ -50,6 +50,11 @@ so its `ui:` options apply.
   (`references/advanced.md`).
 - **Long forms** — split roughly ten or more fields into steps with a root-level
   `ui:steps` node; see `fcode-forms` §Multi-step forms.
+- **Connect an external account** — a `string` or `boolean` with
+  `"ui": { "ui:widget": "oauth", "ui:options": { "authorizationUrl": … } }`
+  renders a button that completes an OAuth flow in a popup (`"ui:field":
+  "oauth"` for an `object`). Contract and callback in `fcode-forms` §Connect an
+  external account.
 
 ## Gotchas
 
