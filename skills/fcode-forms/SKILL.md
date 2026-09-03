@@ -374,7 +374,21 @@ as everywhere; `markdown.before/after` for longer copy).
 `object` → every parameter except `status` / `message`. Empty until connected,
 so marking the field `required` keeps the form from being submitted before the
 account is connected. Closing the popup early counts as cancelled and re-enables
-the button; an error shows its `message` under the button.
+the button. An error shows its `message` under the button **and reloads the
+form definition, whatever `onComplete` says**: the callback has run and may have
+consumed the one-time `state` in the authorization URL, so only a fresh
+`preRenderProcess` run can put a working URL behind the button. Typed values and
+the message survive the reload, nothing is submitted, and the user simply
+retries. A reload that fails leaves the form as it was.
+
+**A `default` renders the button connected.** The button is in its connected
+state whenever the field has a value, so a `preRenderProcess` that finds an
+existing connection returns the property with a `default` set to the connection
+handle — the button renders as connected (disabled) and the handle travels with
+the submission like any other default. This is how a returning user, a
+connection finished after the popup was closed, or an `onComplete: "reload"`
+lands on the connected view; a value arriving this way also clears an earlier
+error message.
 
 **`onComplete`** — what happens once connected:
 
@@ -385,10 +399,11 @@ the button; an error shows its `message` under the button.
   form this advances to the next step.
 - `reload` — the form fetches its definition again, re-running the
   `preRenderProcess`, so the server can check the connection and render the
-  connected state (different copy, more fields, a pre-filled `default` that
-  turns the button into "Connected as …"). Values typed into other fields are
-  kept. Because the server is the source of truth here, the form also reloads
-  when the popup is closed without reaching the callback page.
+  connected state (different copy, more fields, a `default` that turns the
+  button into "Connected as …"). Values typed into other fields are kept.
+  Because the server is the source of truth here, the form also reloads when
+  the popup is closed without reaching the callback page — the only mode that
+  reloads on cancel, since the callback never ran and the URL is still good.
 
 Limits worth knowing: the popup is opened from the click itself, so default
 popup blockers let it through — a browser set to block *all* pop-ups gets a

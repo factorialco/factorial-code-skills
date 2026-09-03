@@ -228,8 +228,13 @@ module.exports = { main };
 ```
 
 Every exit is a redirect to the callback page: with `status=error` the page
-posts the `message`, which the form shows under the button, and the user can
-retry. A thrown error would leave the popup on a platform error page instead.
+posts the `message`, which the form shows under the button, and the form reloads
+its definition (in every `onComplete` mode) so this pre-render mints a fresh
+nonce — necessary here, since `verifyState` deletes the nonce on first use and
+the old URL is spent. The user retries with the new URL, typed values intact.
+A thrown error would leave the popup on a platform error page instead. Note the
+early `if (error)` return runs before `verifyState`: when the provider itself
+denies, the nonce stays in the datastore until its TTL, which is harmless.
 
 ## The form process — verify, then do the work
 
