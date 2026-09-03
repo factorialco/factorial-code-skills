@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, an OAuth account connection from a form, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code
@@ -26,6 +26,7 @@ case doesn't need.
 | A marketplace integration that delivers Factorial data (payroll, leaves, …) to an external system | [`references/integration-acme.md`](references/integration-acme.md) |
 | A custom app with install/uninstall lifecycle: setup form, webhooks, schedules | [`references/custom-app-linear.md`](references/custom-app-linear.md) |
 | A one-shot automation: export/report generation, file processing | [`references/utility-processes.md`](references/utility-processes.md) |
+| An app that connects a third-party account through OAuth from a form (no pasted API tokens) | [`references/oauth-connect.md`](references/oauth-connect.md) |
 
 ## Pattern index
 
@@ -40,6 +41,8 @@ Where to find a specific pattern, regardless of which app you build:
 | Activating and protecting webhook / form triggers in `metadata.json` (`webhook.authMode` + the workspace `webhookAuth`, `form.authMode`, marketplace `appRole`) | integration-acme, custom-app-linear |
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
+| OAuth connect button in a form (`ui:widget: "oauth"`): pre-render mints the `state` + authorize URL, public callback webhook exchanges the code and 302s to the SDK callback page, `onComplete: "reload"` renders the connected state | oauth-connect |
+| Verifying a signed, single-use `state` on a public (`authMode: NONE`) webhook | oauth-connect |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
 | Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |
