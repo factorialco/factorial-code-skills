@@ -165,6 +165,22 @@
     "anotherBooleanField": {
       "title": "A input that shows other inputs",
       "type": "boolean"
+    },
+    "oneOauthConnectField": {
+      "type": "string",
+      "title": "Provider account",
+      "description": "Renders a Connect button that completes an OAuth flow in a popup. The authorizationUrl must come from a preRenderProcess variable via $ref.",
+      "ui": {
+        "ui:widget": "oauth",
+        "ui:options": {
+          "authorizationUrl": {
+            "$ref": "#/variables/authorizeUrl"
+          },
+          "connectLabel": "Connect provider",
+          "connectedLabel": "Connected",
+          "onComplete": "reload"
+        }
+      }
     }
   },
   "dependencies": {

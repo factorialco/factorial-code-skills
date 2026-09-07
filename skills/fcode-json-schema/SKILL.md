@@ -44,6 +44,17 @@ so its `ui:` options apply.
   `"ui": { "ui:field": "json" }`.
 - **Conditional fields** — use top-level `dependencies` to show/hide fields based
   on another field's value (see `anotherBooleanField` in the sample).
+- **OAuth connect** — a `string` or `boolean` field with
+  `"ui": { "ui:widget": "oauth" }` renders a Connect button that completes a
+  third-party OAuth flow in a popup before the form is submitted (an `object`
+  field takes `"ui:field": "oauth"` instead and receives every callback
+  parameter). `ui:options`: `authorizationUrl` (required), `connectLabel` /
+  `connectedLabel` / `pendingLabel`, `onComplete` (`none` | `submit` |
+  `reload`), `popup`, `closeDelay`. Give it `minLength: 1` + `required` so the
+  form can't submit unconnected, and a `default` of the pre-render's
+  connection id so an already-connected workspace renders connected. The flow
+  and its callback contract live in `fcode-forms` §Connect an external
+  account; a worked app in `fcode-examples`.
 - **Content around a field** — a per-field `markdown` object with `before` /
   `after` strings renders block markdown (full GFM, incl. tables) above/below
   the field. Detail and a worked example in `fcode-forms`
@@ -58,6 +69,10 @@ so its `ui:` options apply.
   not the file contents. Strip the prefix before `fcode.storage.download(...)`.
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
+- **An oauth field's `authorizationUrl` must be injected with
+  `{ "$ref": "#/variables/x" }`** from a `preRenderProcess` variable — never
+  `{{x}}`, which Mustache HTML-escapes into a URL the widget refuses (the
+  button renders disabled with a console warning).
 - The schema is the single source of the form's fields — to change fields, edit
   the schema, not the form embed code.
 - **The schema is data, not code** — no executable JavaScript, and all form

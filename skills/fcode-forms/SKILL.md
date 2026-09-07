@@ -295,6 +295,64 @@ The SDK then renders the form for `nextProcessId`. Each later step receives all
 previous steps' data and results in `fcode.context.parameters` under a `steps`
 array. Return a `variables` node alongside `nextProcessId` to pass state forward.
 
+## Connect an external account (OAuth)
+
+A form can require the user to connect a third-party account (DATEV, Slack,
+Google, …) before it can be submitted: a field with `"ui:widget": "oauth"`
+renders a Connect button that opens the provider's authorization page in a
+popup and reacts when the flow finishes. The field declaration and its
+`ui:options` are in `fcode-json-schema`; a complete worked app (state minting,
+callback webhook, token storage) is in `fcode-examples`
+(`references/oauth-connect.md`). What happens after the popup succeeds is the
+field's `onComplete` option:
+
+| `onComplete` | After the flow succeeds | Use for |
+|---|---|---|
+| `none` (default) | The field takes the callback's `value`; the user submits normally | Optional connections |
+| `submit` | The form submits itself | Install forms — connecting is the last step |
+| `reload` | The form definition is refetched (the `preRenderProcess` runs again) with typed values kept | Settings forms — the server renders the connected state |
+
+**The callback contract.** The provider redirects the popup to your
+`redirect_uri` — make it a public webhook process (`GET`, no `authMode`: a
+browser redirect can't carry a header, so validity comes from the single-use
+`state` your pre-render minted). The process exchanges the `code` for tokens
+server-side, stores them, and ends by redirecting the popup to the Forms SDK's
+callback page, echoing the state it received:
+
+```js
+return {
+  status: 302,
+  headers: {
+    Location:
+      "https://code.factorialhr.com/sdk/oauth-callback.html" +
+      "?status=success&value=" + encodeURIComponent(connectionId) +
+      "&state=" + encodeURIComponent(state),
+  },
+};
+```
+
+That page hands the outcome to the form and closes itself. Its query
+parameters: `status` (`success`; anything else counts as an error), `value`
+(becomes the field value), `message` (shown under the button on error),
+`state` (**echo the one you received** — required whenever your authorization
+URL carries a state: the form only accepts a completion for a flow it opened
+itself), plus any extra parameter an `object`-typed field should receive.
+
+- **`value` is an opaque handle** (a connection id, an account key) — it
+  reaches the browser and travels with the submission. **Never a token.**
+- **The connected state is a signal, not proof**: the process receiving the
+  submission must verify the connection against its stored tokens and return a
+  field error when it isn't live.
+- A failed attempt reloads the form definition automatically (whatever
+  `onComplete` says), so the pre-render can mint a fresh authorization URL —
+  the one behind the button may carry a spent `state` once a callback ran.
+- **Providers that send `Cross-Origin-Opener-Policy` (DATEV's login does) are
+  handled** when the embedding page is served from the SDK's host — every
+  Factorial surface: the completion arrives over a same-origin channel and the
+  button keeps its waiting state while the user signs in. On a cross-origin
+  embed such a flow ends as cancelled; `onComplete: "reload"` still lets the
+  server confirm the connection.
+
 ## Automatic file uploads
 
 A file field is `"type": "string"` with a `"ui": { "ui:widget": "file" }` key

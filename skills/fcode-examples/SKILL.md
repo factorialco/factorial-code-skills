@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, a third-party OAuth connection flow, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code
@@ -25,6 +25,7 @@ case doesn't need.
 |---|---|
 | A marketplace integration that delivers Factorial data (payroll, leaves, …) to an external system | [`references/integration-acme.md`](references/integration-acme.md) |
 | A custom app with install/uninstall lifecycle: setup form, webhooks, schedules | [`references/custom-app-linear.md`](references/custom-app-linear.md) |
+| A form that connects a third-party account over OAuth (per-customer tokens) | [`references/oauth-connect.md`](references/oauth-connect.md) |
 | A one-shot automation: export/report generation, file processing | [`references/utility-processes.md`](references/utility-processes.md) |
 
 ## Pattern index
@@ -43,6 +44,10 @@ Where to find a specific pattern, regardless of which app you build:
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
 | Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |
+| Minting a single-use OAuth `state` (+ PKCE) in a `preRenderProcess` | oauth-connect |
+| OAuth callback webhook: code→token exchange, redirect to the SDK callback page | oauth-connect |
+| Per-connection token storage with rotating refresh tokens | oauth-connect |
+| Sweeping expired one-time states on a schedule | oauth-connect |
 | Storage upload + signed download URL + email with `fcode.sendMail` | utility-processes |
 | Reading a form-uploaded file from Storage | utility-processes |
 | Calling the Factorial API SDK (`factorial-sdk` module) | all three |
