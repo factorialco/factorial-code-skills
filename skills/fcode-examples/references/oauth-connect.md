@@ -276,6 +276,10 @@ module.exports = { main };
 
 1. Swap the two provider URLs (authorize, token) and the user-info call; keep
    `redirect_uri` exactly as registered with the provider (`OAUTH_REDIRECT_URI`).
+   Providers that allow only one fixed redirect URL cannot carry per-customer
+   routing in the URL — one possible workaround is to put that info inside the
+   `state` (identifiers only, never secrets); another is to keep it server-side
+   in the datastore record behind the nonce.
 2. Keep the `state` discipline: random nonce, HMAC with a dedicated secret,
    datastore TTL, deleted on first use, constant-time comparison. Without it the
    public webhook is an open door.
@@ -290,3 +294,18 @@ module.exports = { main };
    connection per installation workspace (the `deploy-` workspace's own
    variables and datastore); add its teardown to the uninstall process
    (see `references/custom-app-linear.md`).
+7. Check whether the provider requires **PKCE** (GitHub doesn't; many do). If
+   so, the pre-render generates the verifier, stores it in the record behind
+   the nonce and puts the challenge in the authorization URL; the callback
+   sends the verifier with the token exchange. It never travels through the
+   browser.
+8. Providers whose access tokens expire return a `refresh_token` — and many
+   rotate it: persist the returned token set on every refresh before using the
+   new access token.
+9. For more than one connection per workspace, key the stored record (and
+   token) per connection — an account id, a tenant id — instead of a single
+   `CONNECTION_KEY`.
+10. The connect field doesn't need a form of its own: it can sit directly in
+    an install or settings form, or live in a dedicated connect process
+    reached with `nextProcessId` (or opened directly as a user form) when
+    other steps must run first.
