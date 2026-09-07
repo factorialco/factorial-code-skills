@@ -50,6 +50,11 @@ so its `ui:` options apply.
   (`references/advanced.md`).
 - **Long forms** — split roughly ten or more fields into steps with a root-level
   `ui:steps` node; see `fcode-forms` §Multi-step forms.
+- **Connect an external account** — a `string` or `boolean` with
+  `"ui": { "ui:widget": "oauth", "ui:options": { "authorizationUrl": … } }`
+  renders a button that completes an OAuth flow in a popup (`"ui:field":
+  "oauth"` for an `object`; see `oneOauthConnectField` in the sample). Contract
+  and callback in `fcode-forms` §Connect an external account.
 
 ## Gotchas
 
@@ -58,6 +63,10 @@ so its `ui:` options apply.
   not the file contents. Strip the prefix before `fcode.storage.download(...)`.
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
+- **An oauth field's `authorizationUrl` must be injected with
+  `{ "$ref": "#/variables/x" }`** from a `preRenderProcess` variable — never
+  `{{x}}`, which Mustache HTML-escapes into a URL the widget refuses (the
+  button renders disabled with a console warning).
 - The schema is the single source of the form's fields — to change fields, edit
   the schema, not the form embed code.
 - **The schema is data, not code** — no executable JavaScript, and all form

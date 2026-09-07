@@ -39,6 +39,10 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
+- **Connecting a third-party account (Slack, GitHub, …) is a schema feature** —
+  `"ui:widget": "oauth"` plus a public callback webhook that redirects to the
+  SDK's callback page. Never ask users to paste an API token into a form when
+  the vendor offers OAuth. See "Connect an external account".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
   substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
@@ -294,6 +298,124 @@ slug, so the same chain works in every workspace.
 The SDK then renders the form for `nextProcessId`. Each later step receives all
 previous steps' data and results in `fcode.context.parameters` under a `steps`
 array. Return a `variables` node alongside `nextProcessId` to pass state forward.
+
+## Connect an external account (OAuth)
+
+A form can make the user authorize a third-party provider before it is
+submitted. Declare a `string` or `boolean` property with `"ui:widget": "oauth"`
+(an `object` property takes `"ui:field": "oauth"` instead — rjsf never reads
+`ui:widget` on objects):
+
+```json
+"github_account": {
+  "title": "GitHub account",
+  "description": "You will be asked to authorize in a new window.",
+  "type": "string",
+  "ui": {
+    "ui:widget": "oauth",
+    "ui:options": {
+      "authorizationUrl": { "$ref": "#/variables/githubAuthorizeUrl" },
+      "connectLabel": "Connect GitHub",
+      "connectedLabel": { "$ref": "#/variables/connectedLabel" },
+      "onComplete": "reload"
+    }
+  }
+}
+```
+
+The SDK renders a **Connect** button that opens `authorizationUrl` in a small
+popup, waits for the flow to end, closes the popup and fills the field. The
+property's `title` / `description` are the message around the button (markdown,
+as everywhere; `markdown.before/after` for longer copy).
+
+| `ui:options` | Default | Purpose |
+|---|---|---|
+| `authorizationUrl` | — | The provider's authorization URL, `client_id`, `redirect_uri`, `scope` and `state` included. Required; an invalid URL disables the button with a console warning |
+| `connectLabel` / `connectedLabel` / `pendingLabel` | `Connect` / `Connected` / `Waiting for authorization…` | Button text before, after and during the flow |
+| `onComplete` | `none` | What the form does once connected (below) |
+| `popup` | `{ "width": 600, "height": 700 }` | Popup size, centred on the page |
+| `closeDelay` | `3000` | Milliseconds the popup stays open after finishing, so the user sees the confirmation |
+
+**The three rules that make it work:**
+
+1. **`authorizationUrl` comes from a `preRenderProcess`** (it carries a
+   per-render signed `state`) and is injected with
+   `{"$ref": "#/variables/…"}` — a plain `{{mustache}}` token is HTML-escaped
+   (`/` → `&#x2F;`, `&` → `&amp;`) and the SDK refuses the URL. Pre-render
+   contract in `references/advanced.md`.
+2. **The provider's `redirect_uri` is a public GET webhook process**
+   (`"webhook": { "enabled": true, "authMode": "NONE" }` — a browser redirect
+   carries no header, so the process verifies the signed `state` it minted
+   instead; field reference in `fcode-cli`). It exchanges the `code`, stores
+   the tokens server-side (a sensitive variable, the datastore) and ends by
+   redirecting the popup to the SDK's callback page:
+
+   ```js
+   return {
+     status: 302,
+     headers: {
+       Location: "https://code.factorialhr.com/sdk/oauth-callback.html"
+         + "?status=success&value=" + encodeURIComponent(login),
+     },
+   };
+   ```
+
+   That page tells the form how it went — the form only trusts a message from
+   the very window it opened — then closes itself. Query parameters: `status`
+   (`success`; anything else counts as an error), `value` (becomes the field
+   value), `message` (shown under the button on error), plus any extra
+   parameter an `object` field should receive.
+3. **`value` is an opaque handle** (an account login, a connection id) — never
+   a token: it reaches the browser and travels in the submission. The connected
+   state is a signal for the user, not a proof: the process receiving the
+   submission must verify the connection on its side.
+
+**Field value.** `boolean` → `true`; `string` → the `value` parameter;
+`object` → every parameter except `status` / `message`. Empty until connected,
+so marking the field `required` keeps the form from being submitted before the
+account is connected. Closing the popup early counts as cancelled and re-enables
+the button. An error shows its `message` under the button **and reloads the
+form definition, whatever `onComplete` says**: the callback has run and may have
+consumed the one-time `state` in the authorization URL, so only a fresh
+`preRenderProcess` run can put a working URL behind the button. Typed values and
+the message survive the reload, nothing is submitted, and the user simply
+retries. A reload that fails leaves the form as it was.
+
+**A `default` renders the button connected.** The button is in its connected
+state whenever the field has a value, so a `preRenderProcess` that finds an
+existing connection returns the property with a `default` set to the connection
+handle — the button renders as connected (disabled) and the handle travels with
+the submission like any other default. This is how a returning user, a
+connection finished after the popup was closed, or an `onComplete: "reload"`
+lands on the connected view; a value arriving this way also clears an earlier
+error message.
+
+**`onComplete`** — what happens once connected:
+
+- `none` — the button shows its connected state; the user submits as usual and
+  the process receives the value with the other parameters.
+- `submit` — the form is submitted immediately, so the return value's
+  `message` / `redirect` / `nextProcessId` apply right away. In a `ui:steps`
+  form this advances to the next step.
+- `reload` — the form fetches its definition again, re-running the
+  `preRenderProcess`, so the server can check the connection and render the
+  connected state (different copy, more fields, a `default` that turns the
+  button into "Connected as …"). Values typed into other fields are kept.
+  Because the server is the source of truth here, the form also reloads when
+  the popup is closed without reaching the callback page — the only mode that
+  reloads on cancel, since the callback never ran and the URL is still good.
+
+Limits worth knowing: the popup is opened from the click itself, so default
+popup blockers let it through — a browser set to block *all* pop-ups gets a
+message under the button instead; a `Cross-Origin-Opener-Policy` header on the
+embedding page or the provider can sever the link with the popup, in which case
+the flow ends as cancelled and `onComplete: "reload"` is the recovery path.
+Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.3.0 (f0 control:
+`@factorialco/rjsf-f0` ≥ 2.3.0).
+
+A complete sample — pre-render minting the `state`, callback webhook, the form
+process verifying the connection — is in `fcode-examples`
+(`references/oauth-connect.md`).
 
 ## Automatic file uploads
 

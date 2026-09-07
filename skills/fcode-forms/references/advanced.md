@@ -47,7 +47,8 @@ schema:
 - **CSS hooks** — `.fcode-form-container`, `.fcode-form-wrapper`,
   `form.fcode-form`; the result views that replace the form after submit are
   `.fcode-form-success-message` / `.fcode-form-error-message`; a `ui:steps`
-  form's navigation uses `.fcode-steps-*` classes; set
+  form's navigation uses `.fcode-steps-*` classes; an OAuth connect field
+  renders inside `.fcode-oauth[data-status="idle|pending|connected"]`; set
   `embedFormOptions.className` for a custom wrapper class.
 - **Submit button text** — in the schema:
   `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!" } }`.
@@ -103,9 +104,13 @@ same markdown renders as plain elements.
   `@factorialco/fcode-react-forms` ≥ 3.2.0; since `@factorialco/rjsf-f0` 2.1.0
   the theme renders its navigation with f0 components (sidebar → table of
   contents, tabs → button strip) — `rjsfTheme={Theme}` brings it along.
+- The OAuth connect button (`ui:widget: "oauth"`, see `SKILL.md`) needs
+  `@factorialco/fcode-react-forms` ≥ 3.3.0; `@factorialco/rjsf-f0` ≥ 2.3.0
+  renders it as an `F0Button` — the flow itself (popup, completion, form
+  reaction) lives in the SDK, the theme only draws the control.
 
 **Never pull the f0 theme into a hosted-embed page** — f0 cannot be tree-shaken
-(~3.2 MB gzip against the 262 KB hosted bundle); only the React component path
+(~3.2 MB gzip against the ~270 KB hosted bundle); only the React component path
 can opt in.
 
 Three gaps in the f0 mapping worth knowing, since they look inconsistent in a
@@ -138,6 +143,8 @@ root set to a process slug/id. When the form is served the API runs that process
 `{ variables: { ... } }`. Form query-string params arrive as
 `fcode.context.parameters`. Since it runs before any user input, it can't use
 data derived from user-submitted secrets — that still needs a multi-step form.
+It is also where an OAuth connect field's `authorizationUrl` and its signed
+`state` are minted (see `SKILL.md` "Connect an external account").
 The form is only served once the pre-render finishes, so set `loadingContent`
 (above).
 
