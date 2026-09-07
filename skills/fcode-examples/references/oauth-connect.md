@@ -41,8 +41,12 @@ modules/provider-oauth/             # everything OAuth: state, exchange, tokens
 
 ## Triggers per process — `metadata.json`
 
-The connect form is reached by `nextProcessId` from install (or settings), and
-is also directly openable as a user form. The callback must be a public
+The connect form is reached by `nextProcessId` from install (or settings) —
+the choice made here because install stores the config the connect pre-render
+reads — but chaining is only one way to surface it: the oauth field can live
+directly in the install form instead (a single process, optionally split with
+`ui:steps`), and the form is also directly openable as a user form (it is a
+`USER_FACING_FORM`). The callback must be a public
 webhook: the provider redirects the user's **browser** to it, so no header can
 authenticate the call — the single-use `state` is what ties it to a flow this
 app started.
@@ -264,9 +268,11 @@ Everything sensitive happens server-side; the browser only ever carries the
 
 - **Register the callback URL with the provider.** The `redirect_uri` must
   match what the provider has on file. Providers that allow only one fixed
-  redirect URL cannot carry per-customer routing in the URL — put it inside
-  the `state` instead (sign the payload and give it an expiry; it transits the
-  browser, so identifiers only, never secrets).
+  redirect URL cannot carry per-customer routing in the URL. One possible
+  workaround is to put that info inside the `state` (sign the payload and give
+  it an expiry; it transits the browser, so identifiers only, never secrets);
+  another is to keep it server-side in the state record, keyed by the opaque
+  `state` — as this app already does with `connectionKey`.
 - **Scopes, PKCE and token rotation are provider-specific** — check whether
   the provider requires PKCE (keep it regardless; it costs nothing) and
   whether refresh tokens rotate (persist the returned set every time).
