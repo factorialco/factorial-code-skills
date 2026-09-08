@@ -197,14 +197,19 @@ fcode team:clone                 # lists your teams, or clones the only one
 fcode team:clone <teamId>
 ```
 
-It creates one folder per App, each holding a checkout of that App's workspace:
+It creates one folder per App, holding the App's metadata files and a checkout of
+that App's workspace:
 
 ```
 acme-payroll/
 ┣ 📂 .fcode/team.json      # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/       # installed once, symlinked into every App below
 ┗ 📂 payroll-sync/
-  ┣ 📜 settings.json       # the App — name, description, id
+  ┣ 📜 settings.json       # the App — name, description, id (mirror)
+  ┣ 📜 README.md           # the App's README — yours, pushed with `fcode app:push`
+  ┣ 📜 MARKETPLACE.md      # the marketplace listing — yours, pushed with `fcode app:push`
+  ┣ 📜 CHANGELOG.md        # generated from the App's releases (mirror)
+  ┣ 📂 marketplace/logo.*  # the App logo set in the dashboard (mirror)
   ┗ 📂 app/                # a normal workspace — settings.json, processes/, …
 ```
 
@@ -217,15 +222,57 @@ Inside an App's workspace every ordinary command works as usual; the team
 commands only add the ones that span Apps:
 
 - **`team:pull`** re-reads the team: it clones Apps added since the last run,
-  pulls every workspace, and refreshes each App's `settings.json`. An App that
+  pulls every workspace, and refreshes each App's metadata files. An App that
   left the team is **reported, never deleted** — remove the folder yourself if
   you want it gone.
-- **`team:status`** runs `fcode status` in each App workspace under its own header.
-- **There is no `team:push`.** Push from inside a workspace, one App at a time.
-- The App's `settings.json` is a **mirror** of the dashboard, refreshed on pull.
-  Editing it changes nothing upstream — rename an App in the dashboard.
+- **`team:status`** reports the state of each App's `README.md` and
+  `MARKETPLACE.md` (up to date, modified locally, out of date, conflict), then
+  runs `fcode status` in the App workspace under its own header.
+- **There is no `team:push`.** Code is pushed from inside a workspace, one App at
+  a time; the App's README and listing go up with `fcode app:push` (below).
+- The App folder's files come in two kinds. **Mirrors** — `settings.json`,
+  `CHANGELOG.md`, `marketplace/logo.*` — are rewritten on every pull; editing
+  them changes nothing upstream (rename an App in the dashboard, release notes
+  are the comments given when a release is requested). **Yours** — `README.md`
+  and `MARKETPLACE.md` — are kept when edited: a pull only overwrites a file you
+  have not changed since the last sync, and reports the ones it kept.
 - A failing App doesn't abort the run: it is listed in the summary, and rerunning
-  `team:pull` retries only what is still missing.
+  `team:pull` retries only what is still missing. A metadata file the dashboard
+  could not serve is left as it was and reported as a warning — it never fails
+  the App's clone.
+
+### `fcode app:push`
+
+Uploads the App folder's `README.md` and `MARKETPLACE.md` to the dashboard. Run it
+from the App folder or anywhere inside its `app/` checkout — it recognises the
+folder by the `settings.json` + `app/` pair. It moves documentation only, never
+code.
+
+```sh
+cd payroll-sync
+fcode app:push            # uploads the files that changed since the last sync
+fcode app:push --force    # local wins over a cloud edit
+```
+
+- **`README.md`** is the App's README, also shown and editable on the App page's
+  **README** tab in the dashboard. A blank file clears it; a cloud README that
+  was never written comes down as a stub (`# <App name>` + description) so the
+  file exists to be edited.
+- **`MARKETPLACE.md`** is the Publication tab's listing: YAML front matter
+  `tagline`, `category_id` (a DatoCMS category id), `support_link`, `help_link`
+  (`http(s)://` or `mailto:`), then the full description (markdown, 1–5000 chars)
+  as the body. Fields the dashboard owns — `publication_state`, `datocms_id` —
+  appear as comments and are never pushed. A linked DatoCMS record still wins
+  over these fields in the marketplace (see `fcode-ama`).
+- **Conflicts**: a file changed both locally and in the dashboard since the last
+  pull is refused. `--force` makes the local file win; deleting the file and
+  running `fcode team:pull` makes the dashboard win. A file that is only behind
+  the cloud is skipped with a hint to pull.
+- A file the dashboard rejects is reported with the field and reason (e.g. a
+  tagline over 140 characters); the other file is still pushed and the command
+  exits non-zero.
+- After a push the local file is rewritten in the canonical form a pull would
+  produce, so `team:status` reads it as up to date.
 
 ### `fcode settings:pull` / `settings:push` / `settings:status`
 

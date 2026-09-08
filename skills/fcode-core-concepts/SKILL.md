@@ -307,6 +307,10 @@ acme-payroll/               # the development team
 ┣ 📂 .claude/skills/        # installed once, symlinked into every App
 ┗ 📂 payroll-sync/          # one folder per App — a future git repo
   ┣ 📜 settings.json        #   the App — name, description (mirror, read-only)
+  ┣ 📜 README.md            #   the App's README (editable, `fcode app:push`)
+  ┣ 📜 MARKETPLACE.md       #   the marketplace listing (editable, `fcode app:push`)
+  ┣ 📜 CHANGELOG.md         #   generated from the App's releases (read-only)
+  ┣ 📂 marketplace/logo.*   #   the App logo (read-only)
   ┗ 📂 app/                 #   the workspace laid out above
 ```
 

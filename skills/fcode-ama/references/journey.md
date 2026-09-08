@@ -255,7 +255,13 @@ The App detail page's **Publication** tab manages what the listing shows:
 - **Fallback metadata** — tagline, markdown description, categories, and a
   screenshot gallery, kept in Factorial Code itself. Enough for apps without
   a public DatoCMS page (e.g. one built for a single customer), where a
-  single language suffices.
+  single language suffices. The same fields (minus the screenshots) live in
+  the App folder as `MARKETPLACE.md` and can be edited from Git — see
+  `fcode app:push` in `fcode-cli`.
+
+The **README** tab holds the App's internal README — documentation for the
+team that owns and operates the App, not shown to end users. It is the same
+`README.md` the CLI writes into the App folder (`fcode-cli`).
 
 **Private apps**: a private app is discoverable and installable only by an
 allow-list of Factorial companies (it must still be published). The

@@ -136,6 +136,10 @@ instead — see the routing table in `SKILL.md`.
 - **"I edited the Publication tab but the listing shows something else."**
   A linked DatoCMS record overrides fallback metadata **field by field** —
   edit the DatoCMS record (or unlink it) for those fields.
+- **"`fcode team:pull` didn't refresh my App's `README.md` / `MARKETPLACE.md`."**
+  It keeps a file you edited locally and have not pushed — `fcode app:push`
+  uploads it, or delete the file and pull again to take the dashboard's copy
+  (`fcode-cli`).
 - **"How do I install a private app for one customer?"** Create a production
   installation from the App detail page, providing the Factorial company ID —
   developers can do this themselves (an administrator can too).

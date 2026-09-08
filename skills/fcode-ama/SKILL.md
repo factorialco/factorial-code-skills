@@ -75,7 +75,7 @@ App console areas (the sidebar groups them into **Build**, **Operate**, and
 | Area | What it's for |
 |---|---|
 | **Apps** | The team's apps; where a new app is created |
-| **App detail page** | Per-app home: the Getting started checklist and the **Development / Production / Publication** tabs |
+| **App detail page** | Per-app home: the Getting started checklist and the **Development / Production / Publication / README** tabs |
 | **App settings** | **Configuration** (marketplace visibility, lifecycle) and **OAuth** (requested scopes plus the development and production credentials) |
 | **Demo companies** | Demo Factorial companies for testing installs |
 | **Test marketplace** | Simulation of the production marketplace, run against demo companies |
