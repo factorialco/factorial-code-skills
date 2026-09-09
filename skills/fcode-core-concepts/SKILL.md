@@ -320,7 +320,7 @@ versioning section above. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
 `metadata.json` is where a process's webhook trigger, form settings
-(`enabled`, `authMode`, and a marketplace `appRole`) and UI trigger (a button
+(`enabled` and a marketplace `appRole`) and UI trigger (a button
 inside Factorial, see `fcode-ui-triggers`) are configured — edit it and
 `fcode push`. A webhook is public (`authMode: NONE`), inherits the workspace
 `webhookAuth` from `settings.json` (`TEAM`), or carries its own header and team

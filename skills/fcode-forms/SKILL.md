@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — embed methods, version pinning to the stable alias, access restriction, driving behavior from the process return value, styling and themes, multi-step flows, and file uploads. Use when embedding, configuring, styling, or wiring up a Factorial Code (fcode) form.
+description: Embed a Factorial Code process's input-parameter form on a webpage — embed methods, version pinning to the stable alias, what a public form means for the process behind it, driving behavior from the process return value, styling and themes, multi-step flows, and file uploads. Use when embedding, configuring, styling, or wiring up a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -29,12 +29,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **The `Forms` flag must be enabled** — on the process Dashboard, or via
   `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
-- **A form is public unless you say otherwise** (`authMode` absent = `NONE`).
-  A form opened from inside Factorial (marketplace `INSTALL` / `SETTINGS` /
-  `USER_FACING_FORM` / `UNINSTALL` screens) should carry `authMode: FACTORIAL`
-  explicitly (below).
-- **A form opened from a UI trigger button must stay public for now** — the
-  trigger dialog sends no user token yet. See `fcode-ui-triggers`.
+- **Every form is public** — anyone who knows the team and process slugs can
+  read the schema and submit it. There is no access restriction to switch on, so
+  the process behind the form is the only guard (below).
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.
@@ -75,29 +72,24 @@ should show the **current** values rather than an empty form — the
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
 
-## Restrict who can open the form
+## Every form is public
 
-The `Authentication` field next to the `Forms` flag (`form.authMode` in
-`metadata.json`) decides who may read the form schema **and** submit it:
+There is no access restriction on forms: whoever knows the team and process
+slugs can read the form schema and submit it, from anywhere. Forms opened from
+inside Factorial are no exception — the marketplace `INSTALL` / `SETTINGS` /
+`USER_FACING_FORM` / `UNINSTALL` screens and the UI-trigger dialog
+(`fcode-ui-triggers`) send no user identity the process can trust.
 
-| `authMode` | Who gets in |
-|---|---|
-| `FACTORIAL` | Only Factorial users of the company that installed the app. Every request must carry a Factorial-issued user token in the `Fcode-Factorial-Token` header, and that token's company must own the workspace. Anything else gets a `401` |
-| `NONE` | Anyone who knows the form URL can open and submit it |
+So the process behind the form is the only guard:
 
-- **Forms are public by default** — enabling one without an `authMode` leaves it
-  reachable by anyone with the URL. Requiring a Factorial user is an explicit
-  opt-in: set `authMode: FACTORIAL` on every form that runs app code against
-  customer data from inside Factorial.
-- Forms embedded **inside Factorial** (the marketplace `INSTALL` / `SETTINGS` /
-  `USER_FACING_FORM` / `UNINSTALL` screens) send the token for you — this is what
-  `FACTORIAL` is for.
-- A protected form is still openable from the **playground link** on the process
-  Dashboard: the playground sends the developer's own Factorial Code token as
-  `Fcode-Platform-Token` and access is granted through workspace membership.
-
-Field encoding rules (`authMode` omitted when `NONE`, lifting protection needs
-an explicit `"authMode": "NONE"`) and the full reference in `fcode-cli`.
+- **Treat every submitted parameter as caller-controlled** — including the ones
+  an embedding page pre-filled (`company_id`, `triggered_from_location`). Never
+  authorize on them.
+- **Return nothing the caller shouldn't already have** — the result of a
+  submission, and a `preRenderProcess`'s `variables`, reach whoever opened the
+  URL.
+- **Keep credentials one-way**: a settings form reports only *whether* a secret
+  is set, never its value (`references/advanced.md`).
 
 ## Embed a form
 

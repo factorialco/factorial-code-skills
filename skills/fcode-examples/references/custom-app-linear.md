@@ -53,12 +53,13 @@ app's `INSTALL` role; the runtime push process is webhook-only:
 {
   "name": "Connect Linear",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
+  "form": { "enabled": true, "appRole": "INSTALL" }
 }
 ```
 
-Both setup forms are opened from inside Factorial, so they carry
-`authMode: FACTORIAL` — never leave an app form public (see `fcode-forms`).
+Both setup forms are opened from inside Factorial, but that doesn't protect
+them: every form is public, so each of these processes authorizes the caller
+itself and never trusts a submitted `company_id` (see `fcode-forms`).
 
 `processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
 via `nextProcessId`. It also doubles as the app's post-install settings
@@ -68,7 +69,7 @@ screen (re-map teams later), which is what `appRole: SETTINGS` marks:
 {
   "name": "Map Linear teams",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "SETTINGS" }
+  "form": { "enabled": true, "appRole": "SETTINGS" }
 }
 ```
 

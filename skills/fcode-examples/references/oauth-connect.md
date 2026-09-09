@@ -60,7 +60,7 @@ documented way (`fcode-cli`).
 
 ```json
 // processes/star-repository/metadata.json
-{ "name": "Star repository", "tags": ["github"], "form": { "enabled": true, "authMode": "FACTORIAL" } }
+{ "name": "Star repository", "tags": ["github"], "form": { "enabled": true } }
 ```
 
 ## The form — `processes/star-repository/parametersSchema.json`
@@ -290,10 +290,10 @@ module.exports = { main };
    `none` when the user still has fields to fill.
 5. Verify the connection server-side in every process that trusts it — the
    field value is what the browser said, not what the callback stored.
-6. For a marketplace app, give the form `authMode: FACTORIAL` and store the
-   connection per installation workspace (the `deploy-` workspace's own
-   variables and datastore); add its teardown to the uninstall process
-   (see `references/custom-app-linear.md`).
+6. For a marketplace app, store the connection per installation workspace (the
+   `deploy-` workspace's own variables and datastore) and remember the form
+   itself is public — the process authorizes the caller; add the connection's
+   teardown to the uninstall process (see `references/custom-app-linear.md`).
 7. Check whether the provider requires **PKCE** (GitHub doesn't; many do). If
    so, the pre-render generates the verifier, stores it in the record behind
    the nonce and puts the challenge in the authorization URL; the callback
