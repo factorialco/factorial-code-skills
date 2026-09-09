@@ -37,6 +37,17 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | [`fcode-release`](skills/fcode-release) | Promote an app's code from its `dev-` workspace to its `prod-` workspace via `fcode remote:add`, gated by validation and explicit confirmation. |
 | [`fcode-examples`](skills/fcode-examples) | Reference implementations: a marketplace payroll integration, a custom app with install/uninstall lifecycle, and utility processes. |
 
+### Integrations framework
+
+Skills for Factorial's integrations framework — the payroll and finance
+connectors — rather than the Factorial Code platform. The framework itself is
+documented in the API reference: [payroll integrations](https://apidoc.factorialhr.com/v2026-10-01/docs/payroll-integrations) and
+[finance integrations](https://apidoc.factorialhr.com/v2026-10-01/docs/finance-integrations).
+
+| Skill | What it covers |
+|-------|----------------|
+| [`integration-capability-analysis`](skills/integration-capability-analysis) | Analysing a third-party API or file specification against the framework's capabilities, producing an integration mapping document: per capability, the verdict, the vendor endpoints to use, and the field-by-field mapping between the two APIs. |
+
 ## Format
 
 Each skill is a directory under `skills/` containing a `SKILL.md`

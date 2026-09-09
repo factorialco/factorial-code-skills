@@ -22,6 +22,14 @@ repeat the explanation across skills.
 | Pre-production app validation: the check catalog and its severities (Blocker/Warning/Suggestion), the `APP_VALIDATION_REPORT.md` format, the read-only review procedure and verdict rules — each checked *rule* stays with its owning skill | `fcode-code-validation` |
 | Dev→prod code promotion: the `fcode remote:add` release flow, its validation gate, divergence and confirmation rules | `fcode-release` |
 | Worked, adaptable examples (code, not rules — rules live with their owner) | `fcode-examples` |
+| Analysing a third-party specification against the integrations framework: domain classification, per-capability endpoint matching by direction, field and value mapping, the fully / partially / not-supported rubric, the integration mapping document format | `integration-capability-analysis` |
+
+`integration-capability-analysis` covers Factorial's integrations framework — the
+payroll and finance connectors — rather than the Factorial Code platform, which
+is why it carries no `fcode-` prefix. The framework's capabilities, their
+directions and their Factorial endpoints are defined in the API reference
+([payroll](https://apidoc.factorialhr.com/v2026-10-01/docs/payroll-integrations), [finance](https://apidoc.factorialhr.com/v2026-10-01/docs/finance-integrations)); the skill reads those pages at run
+time and must not keep its own copy of the capability list.
 
 One home per rule applies **within** a file too:
 
