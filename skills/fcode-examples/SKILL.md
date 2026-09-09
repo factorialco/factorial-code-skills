@@ -38,7 +38,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Per-item API push vs aggregate-to-file delivery | integration-acme |
 | Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme |
 | Webhook entry point authenticated by the platform, not in process code | integration-acme, custom-app-linear |
-| Activating and protecting webhook / form triggers in `metadata.json` (`webhook.authMode` + the workspace `webhookAuth`, `form.authMode`, marketplace `appRole`) | integration-acme, custom-app-linear |
+| Activating webhook / form triggers in `metadata.json`, and protecting the webhook (`webhook.authMode` + the workspace `webhookAuth`, marketplace `appRole`) | integration-acme, custom-app-linear |
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | OAuth connect button in a form (`ui:widget: "oauth"`): pre-render mints the `state` + authorize URL, public callback webhook exchanges the code and 302s to the SDK callback page, `onComplete: "reload"` renders the connected state | oauth-connect |

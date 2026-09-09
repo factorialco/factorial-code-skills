@@ -346,7 +346,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
-| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL` \| `NONE`) restricts who may open the form; `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL` |
+| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL`. Every enabled form is public — there is no access restriction to configure |
 | `uiTrigger` | object, optional | Button inside the Factorial UI (see `fcode-ui-triggers`): `enabled` (boolean); `locationId` (string, required when enabled, ≤ 200 chars) names the Factorial location; `label` (string, may carry `fcode.i18n("key")` tokens); `icon` (string, allowlisted name); `awaitResult` (boolean) runs the process synchronously and shows its result instead of fire-and-forget |
 
 ```json
@@ -371,7 +371,7 @@ A webhook that inherits the workspace configuration carries
 {
   "name": "Connect your account",
   "tags": ["setup"],
-  "form": { "enabled": true, "authMode": "FACTORIAL", "appRole": "INSTALL" }
+  "form": { "enabled": true, "appRole": "INSTALL" }
 }
 ```
 
@@ -393,12 +393,12 @@ Notes:
   redaction proxies and log pipelines give `Authorization`. Use one only when the
   sender can't set `Authorization` — Factorial's own webhook sender, which puts
   its token in `x-factorial-wh-challenge`, is the case in point.
-- **`form.authMode`, `form.appRole` and `webhook.authMode` are omitted when they
-  are `NONE`**, as is `webhook.auth.headerName` when it is `Authorization`, so a
-  plain public form carries only `"form": { "enabled": true }`. To lift protection
-  from a protected form or webhook, write `"authMode": "NONE"` **explicitly** —
-  omitting the field leaves the stored mode untouched, and sending `auth` without
-  `authMode: CUSTOM` is rejected.
+- **`form.appRole` and `webhook.authMode` are omitted when unset or `NONE`**, as
+  is `webhook.auth.headerName` when it is `Authorization`, so a form carries only
+  `"form": { "enabled": true }`. To lift protection from a protected webhook,
+  write `"authMode": "NONE"` **explicitly** — omitting the field leaves the
+  stored mode untouched, and sending `auth` without `authMode: CUSTOM` is
+  rejected.
 - Omit `form.appRole` unless the process belongs to a marketplace app.
 - **`fcode pull` writes `"uiTrigger": { "enabled": false }` on every process**;
   `locationId`, `label` and `icon` appear only when set, and `awaitResult` only

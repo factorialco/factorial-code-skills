@@ -36,10 +36,9 @@ form. It sits next to the webhook and form triggers in the process's
 - **A form-enabled process opens its form instead of running.** With
   `"form": { "enabled": true }` the button opens the form in a dialog inside
   Factorial and `awaitResult` is ignored (the console hides the switch).
-- **Trigger-opened forms are not authenticated yet.** The dialog sends no
-  Factorial user token, so a form behind a trigger must be public
-  (`form.authMode` absent or `NONE`) or every request gets a `401`. An
-  authenticated flow is a platform follow-up.
+- **Trigger-opened forms are not authenticated.** The dialog sends no Factorial
+  user token, and forms carry no access restriction of their own — a form behind
+  a trigger is public like any other (see `fcode-forms`).
 - **Never authorize on `company_id` / `triggered_from_location` in a form.**
   On the *execute* path they are injected server-side and trustworthy; on the
   *form* path they arrive as pre-filled, client-editable fields.
@@ -154,8 +153,8 @@ trigger's.
 }
 ```
 
-Keep the form public for now (no `authMode`, or `"authMode": "NONE"`) — see
-the gotcha above.
+The form is public and the dialog carries no user identity, so authorize inside
+the process, never on the forwarded params — see the gotchas above.
 
 ## Labels and i18n
 
