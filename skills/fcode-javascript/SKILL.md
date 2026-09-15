@@ -211,6 +211,9 @@ const info = await fcode.sendMail({
 - The `From` address is fixed by the platform; a `from` you pass is ignored.
 - Each execution can send up to 3 emails by default; once the limit is reached, further calls throw.
 - Locally (`fcode run`) there is no manager, so the email is logged, not sent.
+- Acceptable use — who may be a recipient, what the body may carry — is a
+  platform rule that blocks a release when broken; see `fcode-core-concepts`
+  §Sending email.
 
 ## Return values
 

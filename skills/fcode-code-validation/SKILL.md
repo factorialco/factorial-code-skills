@@ -11,7 +11,7 @@ metadata:
 A pre-flight for the platform's own release validation (its criteria are in
 `fcode-ama` references/journey.md §8), run locally before the release is
 requested, adding the review dimensions a human gatekeeper would: forms and
-lifecycle, i18n, logging hygiene, security.
+lifecycle, i18n, logging hygiene, security, email abuse.
 
 It serves two audiences with the same procedure: an app developer
 self-checking before requesting a release, and a platform reviewer gating
@@ -57,7 +57,7 @@ cited on the catalog row — read the owner when a finding needs context.
 
 | Severity | Meaning | Effect on verdict |
 |---|---|---|
-| Blocker | Breaks at runtime, mishandles credentials, or fails a criterion the platform release gate checks | Any one → ❌ |
+| Blocker | Breaks at runtime, mishandles credentials, exposes the platform's mail domain to abuse, or fails a criterion the platform release gate checks | Any one → ❌ |
 | Warning | Violates a documented rule; expect reviewer pushback or future breakage | Advisory |
 | Suggestion | Improvement aligned with platform conventions | Advisory |
 
@@ -92,6 +92,6 @@ cited on the catalog row — read the owner when a finding needs context.
 
 ## Check categories
 
-`STRUCT` · `LANG` · `FORM` · `I18N` · `SEC` · `REUSE` · `LOG` · `LIFE` ·
-`REL` — the full catalog, with per-check severities and owner citations, is
-in `references/checks.md`.
+`STRUCT` · `LANG` · `FORM` · `I18N` · `SEC` · `MAIL` · `REUSE` · `LOG` ·
+`LIFE` · `REL` — the full catalog, with per-check severities and owner
+citations, is in `references/checks.md`.
