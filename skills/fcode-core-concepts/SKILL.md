@@ -192,6 +192,17 @@ pre-authenticated, no SMTP configuration. The mail server and credentials live i
 the executor manager, never in your process. Each execution can send up to 3
 emails by default. See `fcode-javascript` / `fcode-python` for usage.
 
+Every app sends from the same fixed Factorial address, so one abusive app is a
+phishing vector for its recipients and a deliverability problem for every other
+app. The built-in mailer is reserved for **transactional mail to people the
+customer's Factorial account already knows**; app validation
+(`fcode-code-validation`) blocks a release on anything else.
+
+Mail outside that envelope — customer-facing campaigns, volume, a custom
+sender — needs a dedicated email provider called with the app's own
+credentials (`fcode-agent` shows the choice); never work around the cap with
+the built-in mailer.
+
 ### Versioning & aliases
 
 Processes and modules can be versioned individually, and a **workspace version**

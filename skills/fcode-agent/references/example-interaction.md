@@ -9,8 +9,9 @@ notifications with order details to customers"
 **Agent:** "I'll help you create this integration. First, for sending emails,
 would you prefer:
 
-1. **Built-in `fcode.sendMail`** — zero setup, but a fixed From address and a
-   cap of 3 emails per execution (see `fcode-javascript` / `fcode-python`)
+1. **Built-in `fcode.sendMail`** — zero setup, but a fixed From address, a
+   cap of 3 emails per execution, and reserved for transactional mail to the
+   customer's own people (see `fcode-core-concepts` §Sending email)
 2. **Email service** (SendGrid, AWS SES) — custom From, better for volume
 3. **Direct SMTP** — more control, no third-party needed
 

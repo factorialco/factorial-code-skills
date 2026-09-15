@@ -99,6 +99,25 @@ not a coverage issue.
 | SEC-09 | OAuth scopes match the API calls actually made — request only what the app needs (static approximation; note uncertainty) | S | `fcode-ama` references/journey.md §4 |
 | SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Workspace settings, `fcode-examples` §The base workspaces |
 
+## MAIL — email delivery
+
+Every app sends through the same fixed Factorial address, so abuse of
+`fcode.sendMail` / `fcode.send_mail` is a phishing vector for recipients and a
+domain-reputation problem for every other app. Every row is a Blocker. Trusted
+recipient sources are: employee/company records read through `factorial-sdk`,
+team variables an admin set through an `INSTALL`/`SETTINGS` form, and a
+submitted address only after it is resolved against one of those. When a
+recipient's or a body's provenance cannot be traced statically, still report
+the Blocker and state what evidence would clear it. Mark the category
+"N/A — no email" when the workspace sends none.
+
+| ID | Check | Sev | Owner |
+|---|---|---|---|
+| MAIL-01 | Every recipient (`to`) comes from a trusted source (above); an address taken from a form parameter or an `authMode: NONE` webhook body and mailed unresolved is an open relay | B | `fcode-core-concepts` §Sending email |
+| MAIL-02 | Subject and body are authored by the app: no verbatim free text from a public entry point, and every link targets Factorial, the app's own vendor, or a signed Storage URL — never a caller-supplied URL | B | `fcode-core-concepts` §Sending email |
+| MAIL-03 | Mail is transactional — tied to an event in the customer's account; no newsletters, campaigns, external mailing lists, or fan-out (`fcode.processes.run`, schedules, large `to` arrays) that exists to get past the 3-per-execution cap | B | `fcode-core-concepts` §Sending email |
+| MAIL-04 | Content never poses as Factorial system mail (password reset, login alert, billing), as another company, or as a person; the app is named in the subject or heading | B | `fcode-core-concepts` §Sending email |
+
 ## REUSE — base-app reuse
 
 Reimplementations of the core base modules block because the platform

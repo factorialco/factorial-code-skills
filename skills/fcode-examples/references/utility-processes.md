@@ -10,7 +10,10 @@ platform features worth copying.
 fcode Storage → create a signed download URL → email the link with
 `fcode.sendMail`.
 
-Inputs (form): `start_date`, `end_date` (YYYY-MM-DD), `recipient_email`.
+Inputs (form): `start_date`, `end_date` (YYYY-MM-DD), `recipient_email` —
+accepted only when it belongs to an employee of the company, because every
+form is public and `fcode.sendMail` must never mail a caller-chosen address
+(`fcode-core-concepts` §Sending email).
 
 ```javascript
 async function main() {
@@ -26,6 +29,9 @@ async function main() {
   });
   const employees = await factorialClient.employees.employees.all();
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
+  // Resolve the caller-supplied address against company data before mailing it.
+  const recipient = employees.find((e) => e.email === recipient_email);
+  if (!recipient) throw new Error("recipient_email must belong to an employee of this company");
   const rows = leaves.map((leave) => ({ /* enrich with nameById, flatten */ }));
 
   // 2. Write locally, then upload to Storage.
@@ -48,7 +54,7 @@ async function main() {
   // 4. Email the link. brandedHtml (mail-helper, base-app) gives a styled body.
   const { brandedHtml } = fcode.import("mail-helper");
   await fcode.sendMail({
-    to: recipient_email,
+    to: recipient.email,
     subject: `Time-off export ${start_date} → ${end_date} (${rows.length} leaves)`,
     text: `Download (link expires): ${signed.url}`,
     html: brandedHtml({
@@ -68,8 +74,8 @@ values.
 
 **Patterns:** SDK `.all()` auto-pagination · enrichment via a prefetched
 `Map` (no N+1 lookups) · `TMP_DATA_DIR` with local fallback ·
-`storage.upload` + `storage.createSignedUrl` · `fcode.sendMail` +
-`brandedHtml`.
+`storage.upload` + `storage.createSignedUrl` · recipient resolved against
+company data before `fcode.sendMail` + `brandedHtml`.
 
 ## XML employee documents — form file upload + XML transform + document upload
 
