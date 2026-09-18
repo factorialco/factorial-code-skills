@@ -98,6 +98,7 @@ not a coverage issue.
 | SEC-08 | No eval-like execution of user-controlled input (`eval`, `Function`, `exec`, dynamic `require` of user data) — child workspaces run this code with the parents' credentials | W | `fcode-core-concepts` §Inheritance from parent workspaces |
 | SEC-09 | OAuth scopes match the API calls actually made — request only what the app needs (static approximation; note uncertainty) | S | `fcode-ama` references/journey.md §4 |
 | SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Workspace settings, `fcode-examples` §The base workspaces |
+| SEC-11 | Secrets kept in the datastore (OAuth/API tokens, credentials, personal data) are written with the encrypted flag — `set(key, value, true)` / `True`; a plain `set` of such a value is **W** | W | `fcode-javascript`/`fcode-python` §Datastore & storage |
 
 ## MAIL — email delivery
 

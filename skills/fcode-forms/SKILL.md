@@ -357,7 +357,8 @@ as everywhere; `markdown.before/after` for longer copy).
    `codeVerifier`, `redirectUri` (replay it in the token exchange — providers
    compare it byte for byte), `data` and `state`, or with `error` /
    `errorDescription` when the provider refused. It exchanges the code, stores
-   the tokens server-side (a sensitive variable, the datastore) and ends by
+   the tokens server-side (a sensitive variable, or the datastore with the
+   encrypted flag — see `fcode-javascript` / `fcode-python`) and ends by
    redirecting the popup to the SDK's callback page:
 
    ```js

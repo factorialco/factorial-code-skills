@@ -33,6 +33,9 @@ Guidelines for writing Python that runs on Factorial Code. Runtime is
   runtime. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `json.dumps` objects before
   `set`, `json.loads` after `get`.
+- **Encrypt secrets you keep in the datastore** — pass `True` as the third
+  argument of `set` (`fcode.datastore.set(key, token, True)`); `get` decrypts
+  transparently. Plain `set` stores the value in clear.
 - **Use snake_case**, not camelCase; follow PEP 8; add type hints where helpful.
 - Wrap the main flow in `try/except`, log the caught error with context via
   `fcode-logs` (see Logging), and raise actionable errors. Don't rely on global
@@ -125,6 +128,11 @@ fcode.datastore.set("key", "value")
 fcode.datastore.set("key", json.dumps({ "name": "John", "age": 30 }))
 value = fcode.datastore.get("key")
 fcode.datastore.delete("key")
+# Encrypted at rest with a key owned by the workspace — for tokens, credentials,
+# personal data. The third argument must be a bool; get() is transparent.
+# Keys (entry names) are never encrypted.
+fcode.datastore.set("oauth.token", access_token, True)
+token = fcode.datastore.get("oauth.token")
 
 # Storage (files)
 local_path = os.path.join(os.environ.get("TMP_DATA_DIR"), "localfile.txt")

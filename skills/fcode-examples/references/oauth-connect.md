@@ -275,8 +275,9 @@ module.exports = { main };
 4. Put routing and identifiers in `data` — a company id, a legal entity, which
    account is being connected — and **never a secret**: it is stored for the
    life of the flow. It comes back to the completion process untouched.
-5. Store the token in a sensitive variable or the datastore, never in the form
-   value; put a handle (login, account id, connection id) in `value`.
+5. Store the token in a sensitive variable or the datastore with the encrypted
+   flag (`fcode.datastore.set(key, token, true)`), never in the form value; put a
+   handle (login, account id, connection id) in `value`.
 6. Pick `onComplete`: `reload` when the connected state should change the form
    (as here); `submit` when connecting is the last thing the form does;
    `none` when the user still has fields to fill.
