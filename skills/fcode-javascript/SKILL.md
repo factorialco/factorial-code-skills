@@ -144,7 +144,7 @@ await fcode.storage.delete("path/myfile.txt");
 
 **Local disk:** write temp files under `process.env.TMP_DATA_DIR`.
 
-## Variables & schedules
+## Variables, schedules & OAuth
 
 Read/write team variables and manage process schedules at runtime — scoped to
 your own team, no API token needed (like datastore/storage):
@@ -178,7 +178,27 @@ await fcode.schedule.resume(schedule.id);
 await fcode.schedule.delete(schedule.id);
 // delete every schedule for a process (pass the process UUID)
 await fcode.schedule.deleteForProcess(fcode.execution.process.id);
+
+// Start a third-party OAuth authorization. The platform holds the state, the PKCE
+// verifier and the one redirect_uri registered with the provider, and invokes
+// `onComplete` when the provider redirects back — so never build an authorization
+// URL or a state by hand, and never expose a callback webhook.
+const flow = await fcode.oauth.start({
+  authorizeUrl: "https://login.example.com/authorize",
+  clientId: fcode.env.PROVIDER_CLIENT_ID,
+  scope: ["openid", "offline_access"],
+  onComplete: "oauth-callback",     // the process that receives the code
+  data: { companyId },              // carried back untouched; never a secret
+  extraParams: { nonce },           // optional, provider-specific
+  pkce: true,                       // default
+});
+flow.authorizationUrl; // hand this to the form's oauth widget
 ```
+
+`onComplete` is invoked with `code`, `codeVerifier`, `redirectUri`, `data` and
+`state` in `fcode.context.parameters` (or `error` / `errorDescription` when the
+provider refused). Replay `redirectUri` in the token exchange — providers compare
+it byte for byte. See `fcode-examples` `references/oauth-connect.md`.
 
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).

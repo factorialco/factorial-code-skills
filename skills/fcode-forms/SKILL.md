@@ -37,7 +37,7 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   never rendered. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
 - **Connecting a third-party account (Slack, GitHub, …) is a schema feature** —
-  `"ui:widget": "oauth"` plus a public callback webhook that redirects to the
+  `"ui:widget": "oauth"` plus an `fcode.oauth` flow whose completion redirects to the
   SDK's callback page. Never ask users to paste an API token into a form when
   the vendor offers OAuth. See "Connect an external account".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
@@ -330,15 +330,33 @@ as everywhere; `markdown.before/after` for longer copy).
 
 **The three rules that make it work:**
 
-1. **`authorizationUrl` comes from a `preRenderProcess`** (it carries a
-   per-render signed `state`) and is injected with
-   `{"$ref": "#/variables/…"}` — a plain `{{mustache}}` token is HTML-escaped
-   (`/` → `&#x2F;`, `&` → `&amp;`) and the SDK refuses the URL. Pre-render
-   contract in `references/advanced.md`.
-2. **The provider's `redirect_uri` is a public GET webhook process**
-   (`"webhook": { "enabled": true, "authMode": "NONE" }` — a browser redirect
-   carries no header, so the process verifies the signed `state` it minted
-   instead; field reference in `fcode-cli`). It exchanges the `code`, stores
+1. **`authorizationUrl` comes from `fcode.oauth.start()`**, called in a
+   `preRenderProcess`, and is injected with `{"$ref": "#/variables/…"}` — a
+   plain `{{mustache}}` token is HTML-escaped (`/` → `&#x2F;`, `&` → `&amp;`)
+   and the SDK refuses the URL. Pre-render contract in `references/advanced.md`.
+
+   ```js
+   const flow = await fcode.oauth.start({
+     authorizeUrl: "https://github.com/login/oauth/authorize",
+     clientId: fcode.env.GITHUB_CLIENT_ID,
+     scope: ["public_repo"],
+     onComplete: "github-oauth-callback",
+     data: { companyId },
+   });
+   return { variables: { authorizeUrl: flow.authorizationUrl } };
+   ```
+
+   Never build the authorization URL, the `state` or a PKCE pair by hand. The
+   platform holds all three, plus the one `redirect_uri` registered with the
+   provider — which is the only way this can work at all, since providers
+   require a pre-registered URI and every install is its own `deploy-`
+   workspace.
+2. **The completion process needs no webhook.** The platform invokes
+   `onComplete` itself once it has verified and spent the state, so there is no
+   endpoint to expose and nothing to authenticate. It arrives with `code`,
+   `codeVerifier`, `redirectUri` (replay it in the token exchange — providers
+   compare it byte for byte), `data` and `state`, or with `error` /
+   `errorDescription` when the provider refused. It exchanges the code, stores
    the tokens server-side (a sensitive variable, the datastore) and ends by
    redirecting the popup to the SDK's callback page:
 
@@ -405,7 +423,7 @@ the flow ends as cancelled and `onComplete: "reload"` is the recovery path.
 Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.3.0 (f0 control:
 `@factorialco/rjsf-f0` ≥ 2.3.0).
 
-A complete sample — pre-render minting the `state`, callback webhook, the form
+A complete sample — pre-render starting the flow, the completion process, the form
 process verifying the connection — is in `fcode-examples`
 (`references/oauth-connect.md`).
 
