@@ -49,7 +49,7 @@ own rules and note the mix in the report header.
 | LANG-02 | `fcode.import(...)` / `fcode.import_module(...)` names are hardcoded string literals, never variables | B | `fcode-javascript`/`fcode-python` §Gotchas |
 | LANG-03 | `fcode.i18n` is never aliased — every call is literal (aliasing throws "i18n is disabled" at runtime) | B | `fcode-i18n` §Gotchas |
 | LANG-04 | Return values match a supported shape: `{message}`, `{status, headers, body}`, `{transient: true, data}`, `{nextProcessId}`, `{redirect}` | W | `fcode-javascript`/`fcode-python` §Return values |
-| LANG-05 | Main flow wrapped in `try/catch` (`try/except`); code doesn't read `fcode.env` expecting a value it `fcode.variables.set` in the same run (snapshot at start) | W | `fcode-javascript`/`fcode-python` §Gotchas, §Variables & schedules |
+| LANG-05 | Main flow wrapped in `try/catch` (`try/except`); code doesn't read `fcode.env` expecting a value it `fcode.variables.set` in the same run (snapshot at start) | W | `fcode-javascript`/`fcode-python` §Gotchas, §Variables, schedules & OAuth |
 | LANG-06 | Idiom: `const`/`let` never `var`; `async/await` for async work; PEP 8 + type hints in Python | S | `fcode-javascript`/`fcode-python` §Gotchas |
 
 ## FORM — forms & appRole lifecycle
@@ -94,7 +94,7 @@ not a coverage issue.
 | SEC-04 | Credential-looking variables are `isSensitive: true` in `variables.meta.json` (immutable once pushed — the fix is recreating the variable) | B | `fcode-cli` §Variable sensitivity |
 | SEC-05 | Webhook auth is correct: `authMode: TEAM` has a `webhookAuth` in `settings.json` (per-workspace, not inherited — missing = every call rejected, **B**); an enabled webhook with `authMode: NONE` doing sensitive work is **B**; a bespoke `headerName` without a sender constraint is **S** (loses `Authorization` redaction) | B/S | `fcode-cli` §Process metadata, §Workspace settings |
 | SEC-06 | Sensitive data returned to callers uses `{transient: true, data}` so it is not persisted in execution results | W | `fcode-javascript`/`fcode-python` §Return values |
-| SEC-07 | Runtime `fcode.variables.set` flags are right: secrets stay default-sensitive, plain config passes `sensitive: false` — a secret created non-sensitive is **W**, config created sensitive is **S** | W/S | `fcode-javascript`/`fcode-python` §Variables & schedules |
+| SEC-07 | Runtime `fcode.variables.set` flags are right: secrets stay default-sensitive, plain config passes `sensitive: false` — a secret created non-sensitive is **W**, config created sensitive is **S** | W/S | `fcode-javascript`/`fcode-python` §Variables, schedules & OAuth |
 | SEC-08 | No eval-like execution of user-controlled input (`eval`, `Function`, `exec`, dynamic `require` of user data) — child workspaces run this code with the parents' credentials | W | `fcode-core-concepts` §Inheritance from parent workspaces |
 | SEC-09 | OAuth scopes match the API calls actually made — request only what the app needs (static approximation; note uncertainty) | S | `fcode-ama` references/journey.md §4 |
 | SEC-10 | Every Factorial webhook subscription the app creates (`setupWebhook` from `factorial-utils`, or a direct API call) carries a challenge token, and the receiving process verifies it from the `x-factorial-wh-challenge` header — via the workspace `webhookAuth` + `authMode: TEAM`, or the base `checkWebhookChallenge()` helper | B | `fcode-cli` §Workspace settings, `fcode-examples` §The base workspaces |

@@ -158,7 +158,7 @@ fcode.storage.delete("path/myfile.txt")
 
 **Local disk:** write temp files under `os.environ.get("TMP_DATA_DIR")`.
 
-## Variables & schedules
+## Variables, schedules & OAuth
 
 Read/write team variables and manage process schedules at runtime — scoped to
 your own team, no API token needed (like datastore/storage):
