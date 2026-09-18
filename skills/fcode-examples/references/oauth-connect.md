@@ -2,25 +2,38 @@
 
 A three-process app whose form connects the user's **GitHub** account through
 OAuth instead of asking for a pasted API token: a form with an
-`"ui:widget": "oauth"` field, a pre-render process that mints the authorization
-URL, and a public callback webhook that exchanges the code, stores the token
-and hands the popup back to the form. The pattern is the same for Slack, Jira,
-Google or any authorization-code provider — only the two provider URLs change.
-The contract itself (options, callback page, `onComplete`) is owned by
-`fcode-forms` §Connect an external account; this is the code.
+`"ui:widget": "oauth"` field, a pre-render process that starts the flow, and a
+completion process that exchanges the code, stores the token and hands the popup
+back to the form. The pattern is the same for Slack, Jira, Google, DATEV or any
+authorization-code provider — only the two provider URLs change. The contract
+itself (options, callback page, `onComplete`) is owned by `fcode-forms`
+§Connect an external account; this is the code.
+
+**The platform runs the authorization.** You never build an authorization URL,
+mint a `state` or generate a PKCE pair, and the completion process is not a
+webhook. That is not a convenience: providers require the redirect URI to be
+registered in advance, and every customer install is its own `deploy-`
+workspace, so no URL of yours could ever be the registered one. The platform
+holds a single registered URI and dispatches each callback to the installation
+it belongs to.
 
 ## Architecture
 
 ```
 FORM   star-repository (form, preRenderProcess: star-repository-prerender)
-         │ renders a Connect button whose URL the pre-render minted,
-         │ with a per-render signed `state`
+         │ the pre-render calls fcode.oauth.start() and hands the form the
+         │ authorizationUrl it returned
          ▼
-POPUP  github.com/login/oauth/authorize?…&state=<nonce>.<hmac>
-         │ user approves
+POPUP  code.factorialhr.com/platform/api/oauth/authorize?state=…
+         │ the platform mints PKCE and redirects to the provider
          ▼
-CALLBACK  github-oauth-callback (public GET webhook)
-         │ verifies state · exchanges code · stores token server-side
+       github.com/login/oauth/authorize?…  → user approves
+         │ provider redirects to the ONE registered URI,
+         │ code.factorialhr.com/platform/api/oauth/callback
+         ▼
+CALLBACK  the platform verifies and spends the state, then invokes
+          github-oauth-callback with code · codeVerifier · redirectUri · data
+         │ exchanges code · stores token server-side
          │ 302 → https://code.factorialhr.com/sdk/oauth-callback.html?status=success&value=<login>
          ▼
 FORM   onComplete: "reload" → pre-render runs again → "Connected as <login>"
@@ -31,36 +44,29 @@ Workspace layout:
 
 ```
 processes/star-repository/            # the form + the work; verifies the connection
-processes/star-repository-prerender/  # authorize URL, signed state, connected state
-processes/github-oauth-callback/      # public GET webhook: code → token → 302
+processes/star-repository-prerender/  # starts the flow, reports the connected state
+processes/github-oauth-callback/      # code → token → 302; no endpoint of its own
 ```
 
 Team variables (`variables.env`; see `fcode-cli`): `GITHUB_CLIENT_ID`,
-`GITHUB_CLIENT_SECRET` (sensitive), `OAUTH_STATE_SECRET` (sensitive, 32+ random
-chars), `OAUTH_REDIRECT_URI` (the callback webhook URL, registered verbatim with
-the provider: `https://code.factorialhr.com/platform/api/<team-slug>/webhooks/github-oauth-callback`).
+`GITHUB_CLIENT_SECRET` (sensitive). That is all — there is no state secret and
+no redirect URI to configure, because neither is yours any more.
 
 ## Triggers — `metadata.json`
 
-The callback must be public: the provider redirects a browser to it, and a
-redirect carries no header, so the process authenticates the request with the
-signed `state` instead. Writing `"authMode": "NONE"` explicitly is the
-documented way (`fcode-cli`).
+The completion process is invoked by the platform, not called over HTTP, so it
+declares **no webhook**. Nothing is exposed and there is nothing to
+authenticate.
 
 ```json
 // processes/github-oauth-callback/metadata.json
 { "name": "GitHub OAuth callback", "tags": ["github", "oauth"],
-  "webhook": { "enabled": true, "authMode": "NONE" }, "form": { "enabled": false } }
+  "form": { "enabled": false } }
 ```
 
 ```json
 // processes/star-repository-prerender/metadata.json — not a form itself
 { "name": "Star repository (pre-render)", "tags": ["github", "oauth"], "form": { "enabled": false } }
-```
-
-```json
-// processes/star-repository/metadata.json
-{ "name": "Star repository", "tags": ["github"], "form": { "enabled": true } }
 ```
 
 ## The form — `processes/star-repository/parametersSchema.json`
@@ -76,7 +82,7 @@ fallbacks when the pre-render does not run. The `authorizationUrl` **must** be a
   "type": "object",
   "preRenderProcess": "star-repository-prerender",
   "variables": {
-    "githubAuthorizeUrl": "https://github.com/login/oauth/authorize",
+    "authorizeUrl": "",
     "githubAccountDefault": "",
     "connectedLabel": "Connected",
     "intro": "Connect your GitHub account, then pick a repository."
@@ -90,7 +96,7 @@ fallbacks when the pre-render does not run. The `authorizationUrl` **must** be a
       "ui": {
         "ui:widget": "oauth",
         "ui:options": {
-          "authorizationUrl": { "$ref": "#/variables/githubAuthorizeUrl" },
+          "authorizationUrl": { "$ref": "#/variables/authorizeUrl" },
           "connectLabel": "Connect GitHub",
           "connectedLabel": { "$ref": "#/variables/connectedLabel" },
           "onComplete": "reload"
@@ -113,40 +119,37 @@ cannot be submitted before connecting. After a `reload`, the pre-render fills
 its `default` with the login, which is what renders the button as
 "Connected as …".
 
-## Pre-render — mint the `state`, build the URL, report the state
+The fallback for `authorizeUrl` is `""` on purpose: an invalid URL renders the
+button disabled, which is the right outcome if the pre-render ever fails.
+
+## Pre-render — start the flow, report the connected state
 
 ```javascript
 // processes/star-repository-prerender/index.js
-const crypto = require("crypto");
-
 const CONNECTION_KEY = "github.connection";
-const STATE_TTL_SECONDS = 600;
-
-const sign = (nonce) =>
-  crypto.createHmac("sha256", fcode.env.OAUTH_STATE_SECRET).update(nonce).digest("hex");
 
 async function main() {
-  // Single-use, short-lived: the callback deletes it, the TTL expires it.
-  const nonce = crypto.randomUUID();
-  await fcode.datastore.set(`oauth.state:${nonce}`, "pending");
-  await fcode.datastore.expire(`oauth.state:${nonce}`, STATE_TTL_SECONDS);
-
-  const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
-  authorizeUrl.searchParams.set("client_id", fcode.env.GITHUB_CLIENT_ID);
-  authorizeUrl.searchParams.set("redirect_uri", fcode.env.OAUTH_REDIRECT_URI);
-  authorizeUrl.searchParams.set("scope", "read:user public_repo");
-  authorizeUrl.searchParams.set("state", `${nonce}.${sign(nonce)}`);
-
-  // Default missing state, never throw: a pre-render failure makes the form unopenable.
   const connection = JSON.parse((await fcode.datastore.get(CONNECTION_KEY)) || "null");
+
+  // Started on every render: a flow is single-use and expires on its own, so an
+  // abandoned one costs nothing. Started even when already connected, so the user can
+  // re-authorize from the same form.
+  const flow = await fcode.oauth.start({
+    authorizeUrl: "https://github.com/login/oauth/authorize",
+    clientId: fcode.env.GITHUB_CLIENT_ID,
+    scope: ["public_repo"],
+    onComplete: "github-oauth-callback",
+    // Carried back to the callback untouched. Identifiers only — never a secret.
+    data: { startedBy: fcode.context.parameters?.userId ?? null },
+  });
 
   return {
     variables: {
-      githubAuthorizeUrl: authorizeUrl.toString(),
-      githubAccountDefault: connection ? connection.login : "",
+      authorizeUrl: flow.authorizationUrl,
+      githubAccountDefault: connection?.login ?? "",
       connectedLabel: connection ? `Connected as ${connection.login}` : "Connected",
       intro: connection
-        ? `GitHub is connected as **${connection.login}** (since ${connection.connectedAt}).`
+        ? `Connected as **${connection.login}**. Pick a repository to star.`
         : "Connect your GitHub account, then pick a repository.",
     },
   };
@@ -155,86 +158,71 @@ async function main() {
 module.exports = { main };
 ```
 
-Only the login is reported back — the token stays server-side (pre-fill
-contract in `fcode-forms`, `references/advanced.md`).
+`fcode.oauth` is backed by the workspace's meta token, like `fcode.schedule` and
+`fcode.storage`, so it is **unavailable under a local `fcode run`** — exercise
+the flow on the platform, from an installed app.
 
-## Callback webhook — verify, exchange, store, redirect
+## Completion — exchange, store, redirect
 
 ```javascript
 // processes/github-oauth-callback/index.js
-const crypto = require("crypto");
-
 const CONNECTION_KEY = "github.connection";
+const SDK_CALLBACK = "https://code.factorialhr.com/sdk/oauth-callback.html";
 
-const donePage = (params) =>
-  `https://code.factorialhr.com/sdk/oauth-callback.html?${new URLSearchParams(params)}`;
-const redirect = (params) => ({ status: 302, headers: { Location: donePage(params) } });
-
-// Signature check (constant-time) + single use: the nonce must still be in the datastore.
-const verifyState = async (state) => {
-  const [nonce, signature] = String(state || "").split(".");
-  if (!nonce || !signature) return false;
-  const expected = crypto
-    .createHmac("sha256", fcode.env.OAUTH_STATE_SECRET).update(nonce).digest("hex");
-  const a = Buffer.from(signature, "utf8");
-  const b = Buffer.from(expected, "utf8");
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
-  if (!(await fcode.datastore.get(`oauth.state:${nonce}`))) return false;
-  await fcode.datastore.del(`oauth.state:${nonce}`);
-  return true;
-};
+const sdkRedirect = (params) => ({
+  status: 302,
+  headers: { Location: `${SDK_CALLBACK}?${new URLSearchParams(params)}` },
+});
 
 async function main() {
-  // GET query parameters arrive as ordinary parameters.
-  const { code, state, error, error_description } = fcode.context.parameters;
+  const { code, codeVerifier, redirectUri, state, error } = fcode.context.parameters;
 
-  if (error) return redirect({ status: "error", message: error_description || error });
-  if (!(await verifyState(state))) {
-    return redirect({ status: "error", message: "The authorization request expired. Try again." });
+  // Echoed so the SDK page can bind the outcome to the popup the form opened.
+  const echo = state ? { state } : {};
+
+  if (error) {
+    return sdkRedirect({ status: "error", message: "GitHub authorization was refused.", ...echo });
   }
 
-  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+  const token = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({
       client_id: fcode.env.GITHUB_CLIENT_ID,
       client_secret: fcode.env.GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri: fcode.env.OAUTH_REDIRECT_URI,
+      // The provider compares this byte for byte against the authorization request,
+      // and only the platform knows what it sent.
+      redirect_uri: redirectUri,
+      code_verifier: codeVerifier,
     }),
-  });
-  const token = await tokenResponse.json();
+  }).then((r) => r.json());
+
   if (!token.access_token) {
-    return redirect({ status: "error", message: token.error_description || "Token exchange failed." });
+    return sdkRedirect({ status: "error", message: "GitHub did not return a token.", ...echo });
   }
 
-  const user = await (await fetch("https://api.github.com/user", {
+  const user = await fetch("https://api.github.com/user", {
     headers: { Authorization: `Bearer ${token.access_token}`, "User-Agent": "fcode-app" },
-  })).json();
+  }).then((r) => r.json());
 
-  // The token never reaches the browser: a (sensitive by default) team variable
-  // for the secret, the datastore for the public part the form displays.
-  await fcode.variables.set("GITHUB_ACCESS_TOKEN", token.access_token);
+  // The token never reaches the browser: a sensitive variable or the datastore.
+  await fcode.variables.set("GITHUB_ACCESS_TOKEN", token.access_token, { sensitive: true });
   await fcode.datastore.set(
     CONNECTION_KEY,
-    JSON.stringify({ login: user.login, id: user.id, connectedAt: new Date().toISOString() })
+    JSON.stringify({ login: user.login, connectedAt: Date.now() })
   );
 
-  // `value` is an opaque handle the form can show and submit — never the token.
-  return redirect({ status: "success", value: user.login });
+  // An opaque handle, never a token: it reaches the browser and travels in the submission.
+  return sdkRedirect({ status: "success", value: user.login, ...echo });
 }
 
 module.exports = { main };
 ```
 
-Every exit is a redirect to the callback page: with `status=error` the page
-posts the `message`, which the form shows under the button, and the form reloads
-its definition (in every `onComplete` mode) so this pre-render mints a fresh
-nonce — necessary here, since `verifyState` deletes the nonce on first use and
-the old URL is spent. The user retries with the new URL, typed values intact.
-A thrown error would leave the popup on a platform error page instead. Note the
-early `if (error)` return runs before `verifyState`: when the provider itself
-denies, the nonce stays in the datastore until its TTL, which is harmless.
+Whatever this returns becomes the response the popup follows, so every exit must
+be one of these redirects — an HTML page or a traceback would strand the popup
+instead.
 
 ## The form process — verify, then do the work
 
@@ -274,39 +262,38 @@ module.exports = { main };
 
 ## Adapting to another provider — checklist
 
-1. Swap the two provider URLs (authorize, token) and the user-info call; keep
-   `redirect_uri` exactly as registered with the provider (`OAUTH_REDIRECT_URI`).
-   Providers that allow only one fixed redirect URL cannot carry per-customer
-   routing in the URL — one possible workaround is to put that info inside the
-   `state` (identifiers only, never secrets); another is to keep it server-side
-   in the datastore record behind the nonce.
-2. Keep the `state` discipline: random nonce, HMAC with a dedicated secret,
-   datastore TTL, deleted on first use, constant-time comparison. Without it the
-   public webhook is an open door.
-3. Store the token in a sensitive variable or the datastore with the encrypted
+1. Swap the two provider URLs (authorize, token) and the user-info call. There
+   is no `redirect_uri` to configure: register
+   `https://code.factorialhr.com/platform/api/oauth/callback` with the provider
+   and the platform replays that exact value into the token exchange.
+2. Pass provider-specific authorization parameters as `extraParams` (a `nonce`,
+   an `audience`, a tenant). They cannot override the parameters the protocol
+   depends on.
+3. **PKCE is on by default.** Pass `pkce: false` only for a provider that
+   cannot cope with it. The verifier never travels through the browser and
+   never reaches your code except in the callback's parameters.
+4. Put routing and identifiers in `data` — a company id, a legal entity, which
+   account is being connected — and **never a secret**: it is stored for the
+   life of the flow. It comes back to the completion process untouched.
+5. Store the token in a sensitive variable or the datastore with the encrypted
    flag (`fcode.datastore.set(key, token, true)`), never in the form value; put a
    handle (login, account id, connection id) in `value`.
-4. Pick `onComplete`: `reload` when the connected state should change the form
+6. Pick `onComplete`: `reload` when the connected state should change the form
    (as here); `submit` when connecting is the last thing the form does;
    `none` when the user still has fields to fill.
-5. Verify the connection server-side in every process that trusts it — the
+7. Verify the connection server-side in every process that trusts it — the
    field value is what the browser said, not what the callback stored.
-6. For a marketplace app, store the connection per installation workspace (the
+8. For a marketplace app, store the connection per installation workspace (the
    `deploy-` workspace's own variables and datastore) and remember the form
    itself is public — the process authorizes the caller; add the connection's
    teardown to the uninstall process (see `references/custom-app-linear.md`).
-7. Check whether the provider requires **PKCE** (GitHub doesn't; many do). If
-   so, the pre-render generates the verifier, stores it in the record behind
-   the nonce and puts the challenge in the authorization URL; the callback
-   sends the verifier with the token exchange. It never travels through the
-   browser.
-8. Providers whose access tokens expire return a `refresh_token` — and many
+9. Providers whose access tokens expire return a `refresh_token` — and many
    rotate it: persist the returned token set on every refresh before using the
    new access token.
-9. For more than one connection per workspace, key the stored record (and
-   token) per connection — an account id, a tenant id — instead of a single
-   `CONNECTION_KEY`.
-10. The connect field doesn't need a form of its own: it can sit directly in
+10. For more than one connection per workspace, key the stored record (and
+    token) per connection — an account id, a tenant id — instead of a single
+    `CONNECTION_KEY`.
+11. The connect field doesn't need a form of its own: it can sit directly in
     an install or settings form, or live in a dedicated connect process
     reached with `nextProcessId` (or opened directly as a user form) when
     other steps must run first.
