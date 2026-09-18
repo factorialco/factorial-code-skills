@@ -339,7 +339,8 @@ as everywhere; `markdown.before/after` for longer copy).
    (`"webhook": { "enabled": true, "authMode": "NONE" }` — a browser redirect
    carries no header, so the process verifies the signed `state` it minted
    instead; field reference in `fcode-cli`). It exchanges the `code`, stores
-   the tokens server-side (a sensitive variable, the datastore) and ends by
+   the tokens server-side (a sensitive variable, or the datastore with the
+   encrypted flag — see `fcode-javascript` / `fcode-python`) and ends by
    redirecting the popup to the SDK's callback page:
 
    ```js

@@ -283,8 +283,9 @@ module.exports = { main };
 2. Keep the `state` discipline: random nonce, HMAC with a dedicated secret,
    datastore TTL, deleted on first use, constant-time comparison. Without it the
    public webhook is an open door.
-3. Store the token in a sensitive variable or the datastore, never in the form
-   value; put a handle (login, account id, connection id) in `value`.
+3. Store the token in a sensitive variable or the datastore with the encrypted
+   flag (`fcode.datastore.set(key, token, true)`), never in the form value; put a
+   handle (login, account id, connection id) in `value`.
 4. Pick `onComplete`: `reload` when the connected state should change the form
    (as here); `submit` when connecting is the last thing the form does;
    `none` when the user still has fields to fill.

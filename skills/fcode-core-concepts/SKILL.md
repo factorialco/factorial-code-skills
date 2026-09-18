@@ -47,7 +47,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Workspace version** | One tag (e.g. `v1.0.0`) published on every process and module the team owns | Published from the web UI; retrying the same tag is safe |
 | **Version alias** | Movable pointer to a version | `stable` always exists — pin consumers to it; moving it is rollout/rollback |
 | **Variables** | Configuration & secrets | Env vars; inherited from parent workspaces; never hardcode secrets |
-| **Datastore** | Persistent key-value store | **Strings and numbers only** |
+| **Datastore** | Persistent key-value store | **Strings and numbers only**; a value can be encrypted at rest on request |
 | **Storage** | File storage | Binary files, documents, large payloads |
 | **Locales** | Per-language translation files (`i18n/<locale>.yaml`) | Resolved by `fcode.i18n`; inherited key by key from parents — see `fcode-i18n` |
 | **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
@@ -181,7 +181,11 @@ helpers. See `fcode-javascript` / `fcode-python`.
 ### Datastore vs Storage
 
 - **Datastore** — persistent key-value state across runs (last-run timestamps,
-  cursors, dedup IDs, small caches). Strings/numbers only.
+  cursors, dedup IDs, small caches). Strings/numbers only. A value can be
+  encrypted at rest with a key owned by the workspace by passing `true` as the
+  third argument of `set`; reading it back is transparent. That is where a
+  secret the process itself must persist between runs (an OAuth token it
+  obtained) belongs — see `fcode-javascript` / `fcode-python`.
 - **Storage** — files that don't belong in datastore (reports, exports, images,
   PDFs, data extracts).
 
@@ -266,6 +270,7 @@ process labels (used e.g. for MCP-tool exposure, see `fcode-agent`).
 |---|---|
 | Config that rarely changes; secrets/credentials | **Variables** |
 | State that changes between runs; cached API responses | **Datastore** |
+| A secret the process obtains and must keep between runs (OAuth tokens) | **Datastore**, `set(key, value, true)` |
 | Binary files / large exports | **Storage** |
 
 ## Naming conventions

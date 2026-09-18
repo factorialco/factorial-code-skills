@@ -34,6 +34,9 @@ Guidelines for writing JavaScript that runs on Factorial Code. Runtime is
   runtime. See `fcode-i18n`.
 - **Datastore stores only strings/numbers** — `JSON.stringify` objects before
   `set`, parse after `get`.
+- **Encrypt secrets you keep in the datastore** — pass `true` as the third
+  argument of `set` (`fcode.datastore.set(key, token, true)`); `get` decrypts
+  transparently. Plain `set` stores the value in clear.
 - Use `async/await` for all async work; wrap the main flow in `try/catch`, log
   the caught error with context via `fcode-logs` (see Logging), and throw
   actionable errors. Use `const`/`let`, never `var`.
@@ -124,6 +127,11 @@ await fcode.datastore.set("key", "value");
 await fcode.datastore.set("key", JSON.stringify({ name: "John", age: 30 }));
 const value = await fcode.datastore.get("key");
 await fcode.datastore.del("key");
+// Encrypted at rest with a key owned by the workspace — for tokens, credentials,
+// personal data. The third argument must be a boolean; get() is transparent.
+// Keys (entry names) are never encrypted.
+await fcode.datastore.set("oauth.token", accessToken, true);
+const token = await fcode.datastore.get("oauth.token");
 
 // Storage (files)
 const fs = require("node:fs");
