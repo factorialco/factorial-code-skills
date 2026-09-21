@@ -306,7 +306,7 @@ submitted. Declare a `string` or `boolean` property with `"ui:widget": "oauth"`
   "ui": {
     "ui:widget": "oauth",
     "ui:options": {
-      "authorizationUrl": { "$ref": "#/variables/githubAuthorizeUrl" },
+      "authorizationUrl": { "$ref": "#/variables/authorizeUrl" },
       "connectLabel": "Connect GitHub",
       "connectedLabel": { "$ref": "#/variables/connectedLabel" },
       "onComplete": "reload"
@@ -322,7 +322,7 @@ as everywhere; `markdown.before/after` for longer copy).
 
 | `ui:options` | Default | Purpose |
 |---|---|---|
-| `authorizationUrl` | — | The provider's authorization URL, `client_id`, `redirect_uri`, `scope` and `state` included. Required; an invalid URL disables the button with a console warning |
+| `authorizationUrl` | — | The platform authorization URL returned by `fcode.oauth.start()`. Required; an invalid URL disables the button with a console warning |
 | `connectLabel` / `connectedLabel` / `pendingLabel` | `Connect` / `Connected` / `Waiting for authorization…` | Button text before, after and during the flow |
 | `onComplete` | `none` | What the form does once connected (below) |
 | `popup` | `{ "width": 600, "height": 700 }` | Popup size, centred on the page |
@@ -362,11 +362,13 @@ as everywhere; `markdown.before/after` for longer copy).
    redirecting the popup to the SDK's callback page:
 
    ```js
+   const { state } = fcode.context.parameters;
    return {
      status: 302,
      headers: {
        Location: "https://code.factorialhr.com/sdk/oauth-callback.html"
-         + "?status=success&value=" + encodeURIComponent(login),
+         + "?status=success&value=" + encodeURIComponent(login)
+         + "&state=" + encodeURIComponent(state),
      },
    };
    ```
@@ -374,8 +376,15 @@ as everywhere; `markdown.before/after` for longer copy).
    That page tells the form how it went — the form only trusts a message from
    the very window it opened — then closes itself. Query parameters: `status`
    (`success`; anything else counts as an error), `value` (becomes the field
-   value), `message` (shown under the button on error), plus any extra
-   parameter an `object` field should receive.
+   value), `state` (**required**, echoed from the callback parameters), `message`
+   (shown under the button on error), plus any extra parameter an `object` field
+   should receive.
+
+   Echo `state` on **every** exit, the error ones included. It is what binds the
+   outcome to the popup the form opened, and a completion that omits it is
+   discarded when it arrives over the fallback channel — the COOP-severed case
+   `onComplete: "reload"` exists to recover. The flow then ends as cancelled even
+   though the token exchange succeeded and the token was stored.
 3. **`value` is an opaque handle** (an account login, a connection id) — never
    a token: it reaches the browser and travels in the submission. The connected
    state is a signal for the user, not a proof: the process receiving the

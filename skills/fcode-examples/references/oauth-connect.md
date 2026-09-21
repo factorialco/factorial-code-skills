@@ -50,7 +50,14 @@ processes/github-oauth-callback/      # code → token → 302; no endpoint of i
 
 Team variables (`variables.env`; see `fcode-cli`): `GITHUB_CLIENT_ID`,
 `GITHUB_CLIENT_SECRET` (sensitive). That is all — there is no state secret and
-no redirect URI to configure, because neither is yours any more.
+no redirect URI of your own, because neither is yours any more.
+
+One thing still has to be set on the provider: the GitHub OAuth App's
+**Authorization callback URL** must be
+`https://code.factorialhr.com/platform/api/oauth/callback`, the platform's
+single registered URI. GitHub matches the `redirect_uri` against it, so an
+empty or stale value fails with `redirect_uri_mismatch` before the popup ever
+reaches the platform.
 
 ## Triggers — `metadata.json`
 
@@ -119,8 +126,11 @@ cannot be submitted before connecting. After a `reload`, the pre-render fills
 its `default` with the login, which is what renders the button as
 "Connected as …".
 
-The fallback for `authorizeUrl` is `""` on purpose: an invalid URL renders the
-button disabled, which is the right outcome if the pre-render ever fails.
+The fallback for `authorizeUrl` is `""` on purpose, and the pre-render below
+catches its own errors to reach it: an invalid URL renders the button disabled,
+which is the right outcome when the flow cannot be started. It only works
+because the pre-render returns — an error thrown out of it is answered with a
+502 and the form is never served at all.
 
 ## Pre-render — start the flow, report the connected state
 
@@ -131,21 +141,30 @@ const CONNECTION_KEY = "github.connection";
 async function main() {
   const connection = JSON.parse((await fcode.datastore.get(CONNECTION_KEY)) || "null");
 
-  // Started on every render: a flow is single-use and expires on its own, so an
-  // abandoned one costs nothing. Started even when already connected, so the user can
-  // re-authorize from the same form.
-  const flow = await fcode.oauth.start({
-    authorizeUrl: "https://github.com/login/oauth/authorize",
-    clientId: fcode.env.GITHUB_CLIENT_ID,
-    scope: ["public_repo"],
-    onComplete: "github-oauth-callback",
-    // Carried back to the callback untouched. Identifiers only — never a secret.
-    data: { startedBy: fcode.context.parameters?.userId ?? null },
-  });
+  // Never throw: a pre-render that fails makes the form unopenable (the platform
+  // answers the form request with a 502), so a transient API error would cost the
+  // customer the whole settings page rather than just the button.
+  let authorizeUrl = "";
+  try {
+    // Started on every render: a flow is single-use and expires on its own, so an
+    // abandoned one costs nothing. Started even when already connected, so the user can
+    // re-authorize from the same form.
+    const flow = await fcode.oauth.start({
+      authorizeUrl: "https://github.com/login/oauth/authorize",
+      clientId: fcode.env.GITHUB_CLIENT_ID,
+      scope: ["public_repo"],
+      onComplete: "github-oauth-callback",
+      // Carried back to the callback untouched. Identifiers only — never a secret.
+      data: { startedBy: fcode.context.parameters?.userId ?? null },
+    });
+    authorizeUrl = flow.authorizationUrl;
+  } catch (error) {
+    console.error(`Could not start the GitHub OAuth flow: ${error.message}`);
+  }
 
   return {
     variables: {
-      authorizeUrl: flow.authorizationUrl,
+      authorizeUrl,
       githubAccountDefault: connection?.login ?? "",
       connectedLabel: connection ? `Connected as ${connection.login}` : "Connected",
       intro: connection
