@@ -143,8 +143,10 @@ root set to a process slug/id. When the form is served the API runs that process
 `{ variables: { ... } }`. Form query-string params arrive as
 `fcode.context.parameters`. Since it runs before any user input, it can't use
 data derived from user-submitted secrets — that still needs a multi-step form.
-It is also where an OAuth connect field's `authorizationUrl` and its signed
-`state` are minted (see `SKILL.md` "Connect an external account").
+It is also where an OAuth connect field's `authorizationUrl` comes from: the
+pre-render calls `fcode.oauth.start()` and injects the `authorizationUrl` it
+returns. The platform mints the `state` and the PKCE pair, so never build
+either by hand (see `SKILL.md` "Connect an external account").
 The form is only served once the pre-render finishes, so set `loadingContent`
 (above).
 

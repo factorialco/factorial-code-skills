@@ -41,8 +41,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Activating webhook / form triggers in `metadata.json`, and protecting the webhook (`webhook.authMode` + the workspace `webhookAuth`, marketplace `appRole`) | integration-acme, custom-app-linear |
 | Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
-| OAuth connect button in a form (`ui:widget: "oauth"`): pre-render mints the `state` + authorize URL, public callback webhook exchanges the code and 302s to the SDK callback page, `onComplete: "reload"` renders the connected state | oauth-connect |
-| Verifying a signed, single-use `state` on a public (`authMode: NONE`) webhook | oauth-connect |
+| OAuth connect button in a form (`ui:widget: "oauth"`): pre-render calls `fcode.oauth.start()`, the platform runs both redirect legs and invokes the completion process, which exchanges the code and 302s to the SDK callback page; `onComplete: "reload"` renders the connected state | oauth-connect |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
 | Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |

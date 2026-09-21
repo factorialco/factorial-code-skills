@@ -37,7 +37,7 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   never rendered. Client-side behaviour lives in the embedding page.
 - **Never put secrets in embed code or `options`** — they run in the browser.
 - **Connecting a third-party account (Slack, GitHub, …) is a schema feature** —
-  `"ui:widget": "oauth"` plus a public callback webhook that redirects to the
+  `"ui:widget": "oauth"` plus an `fcode.oauth` flow whose completion redirects to the
   SDK's callback page. Never ask users to paste an API token into a form when
   the vendor offers OAuth. See "Connect an external account".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
@@ -306,7 +306,7 @@ submitted. Declare a `string` or `boolean` property with `"ui:widget": "oauth"`
   "ui": {
     "ui:widget": "oauth",
     "ui:options": {
-      "authorizationUrl": { "$ref": "#/variables/githubAuthorizeUrl" },
+      "authorizationUrl": { "$ref": "#/variables/authorizeUrl" },
       "connectLabel": "Connect GitHub",
       "connectedLabel": { "$ref": "#/variables/connectedLabel" },
       "onComplete": "reload"
@@ -322,7 +322,7 @@ as everywhere; `markdown.before/after` for longer copy).
 
 | `ui:options` | Default | Purpose |
 |---|---|---|
-| `authorizationUrl` | — | The provider's authorization URL, `client_id`, `redirect_uri`, `scope` and `state` included. Required; an invalid URL disables the button with a console warning |
+| `authorizationUrl` | — | The platform authorization URL returned by `fcode.oauth.start()`. Required; an invalid URL disables the button with a console warning |
 | `connectLabel` / `connectedLabel` / `pendingLabel` | `Connect` / `Connected` / `Waiting for authorization…` | Button text before, after and during the flow |
 | `onComplete` | `none` | What the form does once connected (below) |
 | `popup` | `{ "width": 600, "height": 700 }` | Popup size, centred on the page |
@@ -330,25 +330,45 @@ as everywhere; `markdown.before/after` for longer copy).
 
 **The three rules that make it work:**
 
-1. **`authorizationUrl` comes from a `preRenderProcess`** (it carries a
-   per-render signed `state`) and is injected with
-   `{"$ref": "#/variables/…"}` — a plain `{{mustache}}` token is HTML-escaped
-   (`/` → `&#x2F;`, `&` → `&amp;`) and the SDK refuses the URL. Pre-render
-   contract in `references/advanced.md`.
-2. **The provider's `redirect_uri` is a public GET webhook process**
-   (`"webhook": { "enabled": true, "authMode": "NONE" }` — a browser redirect
-   carries no header, so the process verifies the signed `state` it minted
-   instead; field reference in `fcode-cli`). It exchanges the `code`, stores
+1. **`authorizationUrl` comes from `fcode.oauth.start()`**, called in a
+   `preRenderProcess`, and is injected with `{"$ref": "#/variables/…"}` — a
+   plain `{{mustache}}` token is HTML-escaped (`/` → `&#x2F;`, `&` → `&amp;`)
+   and the SDK refuses the URL. Pre-render contract in `references/advanced.md`.
+
+   ```js
+   const flow = await fcode.oauth.start({
+     authorizeUrl: "https://github.com/login/oauth/authorize",
+     clientId: fcode.env.GITHUB_CLIENT_ID,
+     scope: ["public_repo"],
+     onComplete: "github-oauth-callback",
+     data: { companyId },
+   });
+   return { variables: { authorizeUrl: flow.authorizationUrl } };
+   ```
+
+   Never build the authorization URL, the `state` or a PKCE pair by hand. The
+   platform holds all three, plus the one `redirect_uri` registered with the
+   provider — which is the only way this can work at all, since providers
+   require a pre-registered URI and every install is its own `deploy-`
+   workspace.
+2. **The completion process needs no webhook.** The platform invokes
+   `onComplete` itself once it has verified and spent the state, so there is no
+   endpoint to expose and nothing to authenticate. It arrives with `code`,
+   `codeVerifier`, `redirectUri` (replay it in the token exchange — providers
+   compare it byte for byte), `data` and `state`, or with `error` /
+   `errorDescription` when the provider refused. It exchanges the code, stores
    the tokens server-side (a sensitive variable, or the datastore with the
    encrypted flag — see `fcode-javascript` / `fcode-python`) and ends by
    redirecting the popup to the SDK's callback page:
 
    ```js
+   const { state } = fcode.context.parameters;
    return {
      status: 302,
      headers: {
        Location: "https://code.factorialhr.com/sdk/oauth-callback.html"
-         + "?status=success&value=" + encodeURIComponent(login),
+         + "?status=success&value=" + encodeURIComponent(login)
+         + "&state=" + encodeURIComponent(state),
      },
    };
    ```
@@ -356,8 +376,15 @@ as everywhere; `markdown.before/after` for longer copy).
    That page tells the form how it went — the form only trusts a message from
    the very window it opened — then closes itself. Query parameters: `status`
    (`success`; anything else counts as an error), `value` (becomes the field
-   value), `message` (shown under the button on error), plus any extra
-   parameter an `object` field should receive.
+   value), `state` (**required**, echoed from the callback parameters), `message`
+   (shown under the button on error), plus any extra parameter an `object` field
+   should receive.
+
+   Echo `state` on **every** exit, the error ones included. It is what binds the
+   outcome to the popup the form opened, and a completion that omits it is
+   discarded when it arrives over the fallback channel — the COOP-severed case
+   `onComplete: "reload"` exists to recover. The flow then ends as cancelled even
+   though the token exchange succeeded and the token was stored.
 3. **`value` is an opaque handle** (an account login, a connection id) — never
    a token: it reaches the browser and travels in the submission. The connected
    state is a signal for the user, not a proof: the process receiving the
@@ -406,7 +433,7 @@ the flow ends as cancelled and `onComplete: "reload"` is the recovery path.
 Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.3.0 (f0 control:
 `@factorialco/rjsf-f0` ≥ 2.3.0).
 
-A complete sample — pre-render minting the `state`, callback webhook, the form
+A complete sample — pre-render starting the flow, the completion process, the form
 process verifying the connection — is in `fcode-examples`
 (`references/oauth-connect.md`).
 
