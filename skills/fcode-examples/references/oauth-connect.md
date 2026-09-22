@@ -34,7 +34,7 @@ POPUP  code.factorialhr.com/platform/api/oauth/authorize?state=…
 CALLBACK  the platform verifies and spends the state, then invokes
           github-oauth-callback with code · codeVerifier · redirectUri · data
          │ exchanges code · stores token server-side
-         │ 302 → https://code.factorialhr.com/sdk/oauth-callback.html?status=success&value=<login>
+         │ 302 → https://code.factorialhr.com/sdk/oauth-callback.html?status=success&value=<login>&locale=<locale>
          ▼
 FORM   onComplete: "reload" → pre-render runs again → "Connected as <login>"
        submit → star-repository verifies the connection, then calls GitHub
@@ -181,6 +181,12 @@ module.exports = { main };
 `fcode.storage`, so it is **unavailable under a local `fcode run`** — exercise
 the flow on the platform, from an installed app.
 
+The flow also records the locale this pre-render is running in — the executor
+fills `fcode.oauth.start`'s `locale` in for you — and the platform invokes
+`onComplete` with it. So the completion process below translates with
+`fcode.i18n` in the customer's language without being told which one, even
+though nothing in a provider's redirect mentions a locale. See `fcode-i18n`.
+
 ## Completion — exchange, store, redirect
 
 ```javascript
@@ -188,9 +194,17 @@ the flow on the platform, from an installed app.
 const CONNECTION_KEY = "github.connection";
 const SDK_CALLBACK = "https://code.factorialhr.com/sdk/oauth-callback.html";
 
+// `locale` is added here rather than at every call site, so no exit can forget it. The page
+// renders its own heading and hint from it; `fcode.i18n.locale` is the locale of the execution
+// that called `fcode.oauth.start`, which the flow carried over to this one.
 const sdkRedirect = (params) => ({
   status: 302,
-  headers: { Location: `${SDK_CALLBACK}?${new URLSearchParams(params)}` },
+  headers: {
+    Location: `${SDK_CALLBACK}?${new URLSearchParams({
+      ...params,
+      ...(fcode.i18n.locale ? { locale: fcode.i18n.locale } : {}),
+    })}`,
+  },
 });
 
 async function main() {

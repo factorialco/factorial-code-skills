@@ -21,7 +21,11 @@ embedding in `fcode-forms`.
   when `fcode.i18n(` is statically detected in the source, so
   `const t = fcode.i18n; t("k")` throws **"i18n is disabled"** at runtime.
   Always call it literally, with the key as a hardcoded string (same class of
-  rule as `fcode.import` module names).
+  rule as `fcode.import` module names). The same detection governs
+  `fcode.i18n.locale`: a process that only *reads* it and never calls
+  `fcode.i18n(...)` is shipped no payload, so it reads `undefined` / `None`.
+  Detection is aggregated over the process **and the modules it imports**, so
+  one real call anywhere in that set is enough.
 - **The helper never fails.** A key with no translation anywhere resolves to
   **the key itself** — a raw `greetings.hello` in output means a missing
   translation, never a broken run. A placeholder you pass no argument for is
@@ -172,12 +176,22 @@ validation messages when `locale` isn't one it ships.)
 | Run now | Locale selector in the run dialog |
 | Schedule | Locale selector when creating or editing the schedule |
 | Rerun | Reuses the original execution's stored locale |
+| OAuth completion | The locale of the execution that called `fcode.oauth.start` — filled in for you |
 | Per call | `locale` in the helper's options — that lookup only, value may be dynamic |
 
 A malformed locale on the public endpoints is a `400`; an unknown-but-valid
 one merely falls back. The chosen locale is stored on the execution, which is
 why a rerun reproduces the original run's language even if the workspace's
 default has moved since.
+
+An **OAuth completion process** is the one case with no request of its own to
+read a locale from: the platform invokes it from a provider's redirect, which
+mentions no language. So `fcode.oauth.start` records the locale of the execution
+that called it — the form's pre-render, which does know — and the completion runs
+in that. Nothing to pass; see `fcode-javascript` / `fcode-python`. Carry it one
+step further by appending `&locale=` + `fcode.i18n.locale` to the redirect that
+ends the flow, or the SDK callback page heads the popup in the browser's language
+while your `message` beside it is already translated (`fcode-forms`).
 
 When nothing names a locale, the workspace's **primary locale** is used —
 `primaryLocale` in `settings.json` (set it under Settings → Details, or edit the

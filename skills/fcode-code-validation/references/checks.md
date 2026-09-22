@@ -83,6 +83,7 @@ not a coverage issue.
 | I18N-04 | Dynamic parts use `%{placeholders}` — never concatenated translated fragments; form-token args are a flat object of scalars | W | `fcode-i18n` §Internationalizing existing code, §Gotchas |
 | I18N-05 | Logs, developer-facing errors, datastore keys, variable names, and slugs are NOT translated | S | `fcode-i18n` §Internationalizing existing code |
 | I18N-06 | Keys named `<process-slug>.<area>.<name>` with shared strings under `common.*` | S | `fcode-i18n` §Internationalizing existing code |
+| I18N-07 | When locales exist: a process redirecting to `oauth-callback.html` sends `locale` (from `fcode.i18n.locale`) on **every** exit — without it the popup's own heading falls back to the browser's language beside an already-translated `message` | W | `fcode-forms` §Connect an external account, `fcode-i18n` §How the execution locale is chosen |
 
 ## SEC — security & secrets
 
