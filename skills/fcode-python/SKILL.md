@@ -202,6 +202,7 @@ flow = fcode.oauth.start(
     data={"companyId": company_id},    # carried back untouched; never a secret
     extra_params={"nonce": nonce},     # optional, provider-specific
     pkce=True,                         # default
+    # locale="de",                     # optional -- defaults to this execution's locale
 )
 flow.authorization_url  # hand this to the form's oauth widget
 ```
@@ -210,6 +211,15 @@ flow.authorization_url  # hand this to the form's oauth widget
 `state` in `fcode.context.parameters` (or `error` / `errorDescription` when the
 provider refused). Replay `redirectUri` in the token exchange — providers compare
 it byte for byte. See `fcode-examples` `references/oauth-connect.md`.
+
+**`on_complete` runs in the locale this call was made in.** It is invoked by the
+platform, not by a browser, so there is no request it could read a locale from —
+the flow carries the one the executor filled in here, which is the pre-render's
+own. A form rendered in German therefore completes in German with nothing to
+configure, and `locale` is only worth passing to override that. Pass it on to the
+SDK callback page too (`&locale=` + `fcode.i18n.locale`), or that page's own
+headings fall back to the browser's language while your `message` beside them is
+already translated. See `fcode-i18n`.
 
 `fcode.variables.set/delete` only persist server-side; they are not reflected in
 `fcode.env` within the same run (`fcode.env` is a snapshot taken at start).

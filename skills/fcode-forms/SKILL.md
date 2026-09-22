@@ -368,7 +368,10 @@ as everywhere; `markdown.before/after` for longer copy).
      headers: {
        Location: "https://code.factorialhr.com/sdk/oauth-callback.html"
          + "?status=success&value=" + encodeURIComponent(login)
-         + "&state=" + encodeURIComponent(state),
+         + "&state=" + encodeURIComponent(state)
+         // The page renders its own headings from this. The flow carried the locale
+         // of the form that started it, so this process already runs in it.
+         + (fcode.i18n.locale ? "&locale=" + encodeURIComponent(fcode.i18n.locale) : ""),
      },
    };
    ```
@@ -377,8 +380,16 @@ as everywhere; `markdown.before/after` for longer copy).
    the very window it opened — then closes itself. Query parameters: `status`
    (`success`; anything else counts as an error), `value` (becomes the field
    value), `state` (**required**, echoed from the callback parameters), `message`
-   (shown under the button on error), plus any extra parameter an `object` field
-   should receive.
+   (shown under the button on error), `locale` (the language the page renders its
+   own heading and hint in), plus any extra parameter an `object` field should
+   receive.
+
+   Send `locale` whenever the app has locales. The page's own text is translated
+   from a dictionary compiled into it; without the parameter it falls back to the
+   browser's language and then English, which reads badly next to a `message`
+   your process already translated. `fcode.i18n.locale` is the right value: the
+   flow carries the locale of the form render that started it, so the completion
+   process is already running in the customer's language (see `fcode-i18n`).
 
    Echo `state` on **every** exit, the error ones included. It is what binds the
    outcome to the popup the form opened, and a completion that omits it is
