@@ -1,6 +1,6 @@
 ---
 name: fcode-ui-triggers
-description: Surface a Factorial Code process as a button inside the Factorial product UI — the `uiTrigger` block in a process's metadata.json (location id, label, icon, awaitResult), what the process receives when a user clicks, the `{ data }` / `{ errors }` result envelope for synchronous triggers, form-backed triggers, i18n labels, the icon allowlist, and how Factorial's `FactorialCodeTrigger` component renders them. Use when an app process should appear as an action button on a Factorial page, or when wiring a "Triggered from Factorial UI" trigger.
+description: Surface a Factorial Code process as a button inside the Factorial product UI — the `factorial.uiTrigger` settings in a process's metadata.json (location id, label, icon; `awaitResult` at the block's top level) and the legacy `uiTrigger` block they replace, what the process receives when a user clicks, the `{ data }` / `{ errors }` result envelope for synchronous triggers, form-backed triggers, i18n labels, the icon allowlist, and how Factorial's `FactorialCodeTrigger` component renders them. Use when an app process should appear as an action button on a Factorial page, or when wiring the button entry point of a Factorial Action ("Trigger from Factorial" in the console).
 license: MIT
 metadata:
   category: factorial-code
@@ -12,8 +12,11 @@ A UI trigger exposes a marketplace app's process as a **button inside
 Factorial** (a page header, an actions dropdown, …). Factorial pages declare
 *locations*; an installed app's process claims a location, and Factorial renders
 one button per claiming process. Clicking it runs the process — or opens its
-form. It sits next to the webhook and form triggers in the process's
-`metadata.json` (field reference in `fcode-cli`).
+form. It is one entry point of a **Factorial Action**: its settings live in the
+`factorial.uiTrigger` sub-block of the process's `metadata.json`, with
+`awaitResult` at the top level of the `factorial` block (the whole block, the
+legacy mirror and the Factorial One / backend entry points are in
+`fcode-factorial-actions`; field reference in `fcode-cli`).
 
 ## Gotchas
 
@@ -30,18 +33,28 @@ form. It sits next to the webhook and form triggers in the process's
   are forwarded to the process, which keys of a synchronous result reach the
   page, and whether the location is `single` (one installed app at a time).
   Ask for those three things along with the id.
-- **`awaitResult` is off by default: fire-and-forget.** The click queues an
-  execution and the user sees "action started"; the return value is never shown.
-  Turn it on only for fast work (< 50 s) whose outcome the user must see.
+- **`awaitResult` lives on the `factorial` block and defaults to `true`
+  (synchronous).** The legacy `uiTrigger.awaitResult` defaulted to
+  fire-and-forget, and the mirror copies the new value over it — so a button
+  moved into `factorial` runs synchronously unless you write
+  `"awaitResult": false`. Keep it `true` only for fast work (< 50 s) whose
+  outcome the user must see; with `false` the click queues an execution, the
+  user sees "action started" and the return value is never shown.
 - **A form-enabled process opens its form instead of running.** With
-  `"form": { "enabled": true }` the button opens the form in a dialog inside
-  Factorial and `awaitResult` is ignored (the console hides the switch).
+  `factorial.form.enabled` (or the legacy `form.enabled`) on, the button opens
+  the form in a dialog inside Factorial and `awaitResult` is ignored.
 - **Trigger-opened forms are not authenticated.** The dialog sends no Factorial
   user token, and forms carry no access restriction of their own — a form behind
   a trigger is public like any other (see `fcode-forms`).
-- **Never authorize on `company_id` / `triggered_from_location` in a form.**
-  On the *execute* path they are injected server-side and trustworthy; on the
-  *form* path they arrive as pre-filled, client-editable fields.
+- **Never authorize on `company_id` / `triggered_from_location` / `access_id`
+  in a form.** On the *execute* path they are injected server-side and
+  trustworthy; on the *form* path they arrive as pre-filled, client-editable
+  fields.
+- **Who may click is decided by Factorial, not by the block — for now.** Today
+  Factorial authorizes a click with a policy-scoped read of the location's
+  resource. `factorial.requiredPolicies` (`fcode-factorial-actions`) is stored
+  already and replaces the location's policies once the trusted invocation
+  path lands; fill it in now.
 - **Uncaught errors show a generic message.** A throw / crash reaches the user as
   "The action could not be completed" with no detail. Return `{ errors: [...] }`
   for anything the user should read.
@@ -50,33 +63,40 @@ form. It sits next to the webhook and form triggers in the process's
 
 ## Declare a trigger
 
-In `processes/<slug>/metadata.json`, then `fcode push` (or the **Triggered from
-Factorial UI** section of the process page in the console):
+In `processes/<slug>/metadata.json`, then `fcode push` (or the **Trigger from
+Factorial** section of the process page in the console):
 
 ```json
 {
   "name": "Sync report",
   "tags": ["acme"],
-  "uiTrigger": {
+  "factorial": {
     "enabled": true,
-    "locationId": "compensations.cycle.header",
-    "label": "Sync to Acme",
-    "icon": "Refresh",
-    "awaitResult": true
+    "uiTrigger": {
+      "enabled": true,
+      "locationId": "compensations.cycle.header",
+      "label": "Sync to Acme",
+      "icon": "Refresh"
+    }
   }
 }
 ```
 
 | Field | Meaning |
 |---|---|
-| `enabled` | Turns the trigger on. `locationId` is required when `true` |
-| `locationId` | The Factorial location the button renders at, as given by the page's owning team |
-| `label` | Button text. Plain text, or `fcode.i18n("key")` tokens (below) |
-| `icon` | One of the allowlisted names (below); omit for a text-only button |
-| `awaitResult` | `true` runs the process synchronously and shows its outcome; `false`/omitted is fire-and-forget |
+| `factorial.enabled` | Master switch of the whole action; the button needs it on |
+| `factorial.awaitResult` | Defaults to `true`: run synchronously and show the outcome. Write `false` for fire-and-forget |
+| `uiTrigger.enabled` | Turns the button on. `locationId` is required when `true` |
+| `uiTrigger.locationId` | The Factorial location the button renders at, as given by the page's owning team |
+| `uiTrigger.label` | Button text. Plain text, or `fcode.i18n("key")` tokens (below) — the only i18n field of the block |
+| `uiTrigger.icon` | One of the allowlisted names (below); omit for a text-only button |
 
-`fcode pull` writes `"uiTrigger": { "enabled": false }` for every process; the
-other keys only appear when set, and `awaitResult` only when `true`.
+The legacy top-level `uiTrigger` block (`enabled`, `locationId`, `label`,
+`icon`, `awaitResult`) still round-trips and is kept mirrored with
+`factorial.uiTrigger` — an old file keeps working, and `fcode pull` still
+writes `"uiTrigger": { "enabled": false }` on every process. Write `factorial`
+in new work; when both are present `fcode push` sends `factorial` (mirror rules
+in `fcode-factorial-actions`).
 
 An app may declare several triggers at one location — each renders its own
 button — but a location marked `single` in Factorial admits **one installed
@@ -91,15 +111,17 @@ The click runs the process with `fcode.context.parameters` set to:
   page shows (`cycle_id`), exactly the keys the location allowlists;
 - `company_id` — the Factorial company whose user clicked (trusted: injected
   under a shared secret, overwriting anything the browser sent);
-- `triggered_from_location` — the location id (trusted, same way).
+- `triggered_from_location` — the location id (trusted, same way);
+- `access_id` — the Factorial access (the clicking user's membership in that
+  company) as a string (trusted, same way).
 
 A context-less location (a header button with no record in scope) forwards no
-params at all — only the two trusted keys. The clicking user's locale is passed
+params at all — only the three trusted keys. The clicking user's locale is passed
 as the execution locale, so `fcode.i18n` in the process speaks their language
 (`fcode-i18n`).
 
 ```javascript
-const { company_id, triggered_from_location, cycle_id } = fcode.context.parameters;
+const { company_id, access_id, triggered_from_location, cycle_id } = fcode.context.parameters;
 if (!cycle_id) throw new Error("cycle_id is required");
 ```
 
@@ -138,7 +160,8 @@ synchronous trigger (see `fcode-javascript` / `fcode-python`).
 
 Enable the form as usual (`fcode-forms`) and the button opens it in a dialog
 inside Factorial, rendered with the f0 theme, pre-filled with the forwarded
-params plus `company_id` and `triggered_from_location` as default values.
+params plus `company_id`, `triggered_from_location` and `access_id` as default
+values.
 Declare those keys in `parametersSchema.json` (a `hidden` widget) if the process
 needs them — and remember they are client-editable there. The submission result
 follows the form conventions (`message`, `formErrors`, `nextProcessId`, …); a
@@ -148,8 +171,11 @@ trigger's.
 ```json
 {
   "name": "Export cycle",
-  "form": { "enabled": true },
-  "uiTrigger": { "enabled": true, "locationId": "compensations.cycle.header", "label": "Export…", "icon": "Download" }
+  "factorial": {
+    "enabled": true,
+    "form": { "enabled": true },
+    "uiTrigger": { "enabled": true, "locationId": "compensations.cycle.header", "label": "Export…", "icon": "Download" }
+  }
 }
 ```
 
@@ -164,7 +190,10 @@ the primary-locale fallback and never a blank label (model, files and syntax in
 `fcode-i18n`):
 
 ```json
-"uiTrigger": { "enabled": true, "locationId": "calendar.header.admin", "label": "fcode.i18n(\"acme.sync.button\")" }
+"factorial": {
+  "enabled": true,
+  "uiTrigger": { "enabled": true, "locationId": "calendar.header.admin", "label": "fcode.i18n(\"acme.sync.button\")" }
+}
 ```
 
 ## Icons
@@ -206,8 +235,9 @@ contract from the team that owns the page.
 
 1. Location id, forwarded params, `result_keys` and `single`-ness confirmed with
    the owning Factorial team.
-2. `awaitResult` on only for fast, user-visible outcomes; the process returns
-   `{ data }` / `{ errors }`.
+2. `factorial.awaitResult` decided explicitly — `true` (the default) only for
+   fast, user-visible outcomes, and the process returns `{ data }` /
+   `{ errors }`; `false` otherwise.
 3. A form-backed trigger's form is public and declares the pre-filled keys it
    reads.
 4. Tested from a dev installation in Factorial, then promoted to `prod-` and
