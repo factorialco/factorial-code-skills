@@ -151,8 +151,11 @@ What to tell users:
   needs the owning Factorial team to add one — escalate as a product request.
 - Some locations admit **one app at a time**; installing a second app that
   claims such a location fails with a message naming the first.
-- Configuration lives on the process page (**Triggered from Factorial UI**) or
-  in `metadata.json`; the developer-facing rules are in `fcode-ui-triggers`.
+- Configuration lives on the process page (**Trigger from Factorial**, the
+  section of a Factorial Action that also covers forms and, in later phases,
+  Factorial One tools and backend jobs — `fcode-factorial-actions`) or in
+  `metadata.json`; the developer-facing rules for the button are in
+  `fcode-ui-triggers`.
 
 ## Routing — where deep questions live
 
@@ -163,7 +166,8 @@ What to tell users:
 | Writing process/module code | `fcode-javascript` / `fcode-python` — docs: `/docs/processes/` |
 | Input-parameter schemas (forms definition) | `fcode-json-schema` |
 | Embedding forms on webpages, themes, pre-fill | `fcode-forms` — docs: `/docs/forms/` |
-| Buttons inside Factorial (`uiTrigger`, locations, result envelope) | `fcode-ui-triggers` |
+| Exposing a process to Factorial (`factorial` block, Factorial One tool contract, lifecycle slugs) | `fcode-factorial-actions` — docs: `/docs/factorial-actions/` |
+| Buttons inside Factorial (`factorial.uiTrigger`, locations, result envelope) | `fcode-ui-triggers` |
 | Recommended agent working method, MCP tools | `fcode-agent` — docs: `/docs/mcp-server/` |
 | Worked examples (integration, install/uninstall lifecycle) | `fcode-examples` |
 | Executions, schedules, webhooks at runtime | docs: `/docs/executions/` |

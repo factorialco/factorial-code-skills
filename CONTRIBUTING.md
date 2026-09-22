@@ -16,6 +16,7 @@ repeat the explanation across skills.
 | Language usage: runtime helpers, code snippets, logging, dependencies, return values | `fcode-javascript` / `fcode-python` |
 | `parametersSchema.json` field types, widgets, validation | `fcode-json-schema` |
 | Form embedding, themes, public-form consequences, pre-render / pre-fill contract, multi-step | `fcode-forms` |
+| Factorial Actions: the `factorial` block field by field (master switch, `awaitResult`, `requiredPolicies`, entry-point sub-blocks), the Factorial One `agentTool` contract and how to write it, reserved lifecycle slugs and `lifecycleRole`, the legacy `form` / `uiTrigger` mirror rules, what is live per phase | `fcode-factorial-actions` |
 | UI trigger buttons inside Factorial: location contract, what the process receives, the `{ data }` / `{ errors }` envelope, form-backed triggers, icon allowlist | `fcode-ui-triggers` |
 | Locales & translations: locale files and inheritance, the `fcode.i18n` helper, form-schema i18n tokens, execution-locale selection, locale versioning, `i18n:*` commands | `fcode-i18n` |
 | Agent working method, MCP tools | `fcode-agent` |
