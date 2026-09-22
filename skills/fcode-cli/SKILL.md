@@ -1,6 +1,6 @@
 ---
 name: fcode-cli
-description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, cloning every App of a development team, inspecting or resolving differences between local and cloud, or configuring a process's webhook, form, UI trigger, or version settings.
+description: Use the Factorial Code CLI (fcode) for local development and cloud sync — the pull → add → run → push flow, the local webhook/forms server, workspace versions and aliases, and the workspace config files (metadata.json, settings.json, variables). Use when running fcode commands, testing a process locally, syncing to the cloud, cloning every App of a development team, inspecting or resolving differences between local and cloud, or configuring a process's webhook, Factorial Action (the `factorial` block — form, UI trigger, agent tool, backend), or version settings.
 license: MIT
 metadata:
   category: factorial-code
@@ -346,8 +346,10 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
-| `form` | object, optional | Form settings: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` marks the process's role in a marketplace app: `INSTALL`, `SETTINGS`, `USER_FACING_FORM`, or `UNINSTALL`. Every enabled form is public — there is no access restriction to configure |
-| `uiTrigger` | object, optional | Button inside the Factorial UI (see `fcode-ui-triggers`): `enabled` (boolean); `locationId` (string, required when enabled, ≤ 200 chars) names the Factorial location; `label` (string, may carry `fcode.i18n("key")` tokens); `icon` (string, allowlisted name); `awaitResult` (boolean) runs the process synchronously and shows its result instead of fire-and-forget |
+| `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
+| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`) is going away in favour of the reserved lifecycle slugs. Every enabled form is public — there is no access restriction to configure |
+| `uiTrigger` | object, optional | **Legacy**, mirrored with `factorial.uiTrigger` (see `fcode-ui-triggers`): `enabled`, `locationId`, `label`, `icon`, and `awaitResult` (now `factorial.awaitResult`) |
+| `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the reserved slugs `install`, `settings`, `uninstall`, `sync`, reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
 
 ```json
 {
@@ -367,11 +369,42 @@ A webhook that inherits the workspace configuration carries
 `"webhook": { "enabled": true, "authMode": "TEAM" }`, and a public one only
 `"webhook": { "enabled": true }`.
 
+A process exposed to Factorial carries the `factorial` block; the legacy `form`
+and `uiTrigger` keys may still be present and are kept mirrored with it:
+
+```json
+{
+  "name": "Approve pending time off",
+  "tags": ["timeoff"],
+  "factorial": {
+    "enabled": true,
+    "awaitResult": false,
+    "requiredPolicies": [["company.manage_timeoff"], ["company.admin"]],
+    "uiTrigger": { "enabled": true, "locationId": "calendar.header.admin", "label": "fcode.i18n(\"acme.approve.button\")", "icon": "Bell" },
+    "form": { "enabled": true },
+    "agentTool": {
+      "enabled": true,
+      "description": "Approves every time-off request still pending for a team.",
+      "effect": "WRITE",
+      "whenToUse": "The user asks to approve the pending time-off requests of a team.",
+      "whenNotToUse": ["The user wants to approve a single, named request."],
+      "preconditions": ["The team has at least one pending request."],
+      "doesNotDo": ["It does not notify the employees whose requests were approved."]
+    },
+    "backend": { "enabled": true }
+  }
+}
+```
+
+The install form of a marketplace app is simply the process with the reserved
+slug `install` (the platform derives `lifecycleRole` from it), with its form
+switched on:
+
 ```json
 {
   "name": "Connect your account",
   "tags": ["setup"],
-  "form": { "enabled": true, "appRole": "INSTALL" }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
@@ -399,10 +432,23 @@ Notes:
   write `"authMode": "NONE"` **explicitly** — omitting the field leaves the
   stored mode untouched, and sending `auth` without `authMode: CUSTOM` is
   rejected.
-- Omit `form.appRole` unless the process belongs to a marketplace app.
-- **`fcode pull` writes `"uiTrigger": { "enabled": false }` on every process**;
-  `locationId`, `label` and `icon` appear only when set, and `awaitResult` only
-  when `true`. Enabling a trigger without a `locationId` is rejected on push.
+- Do not add `form.appRole` to new processes — it is legacy; use the reserved
+  lifecycle slugs instead.
+- **The `factorial` block omits its defaults too**: `awaitResult` when `true`,
+  `requiredPolicies` when empty, `form.public` when `false`, the `agentTool`
+  texts when unset and its lists when empty, and any sub-block whose `enabled`
+  is `false`. A process not exposed to Factorial has no `factorial` key at all;
+  a Factorial One tool with no contract yet is just
+  `"factorial": { "enabled": true, "agentTool": { "enabled": true } }`.
+  Enabling `factorial.uiTrigger` without a `locationId` is rejected on push.
+- **When a file carries both `factorial` and the legacy `form` / `uiTrigger`
+  keys, `fcode push` sends `factorial`** and the platform mirrors it into the
+  legacy blocks (rules in `fcode-factorial-actions`). `factorial.title` /
+  `factorial.description` from an early draft of the block are ignored on push
+  and dropped on pull.
+- **`fcode pull` still writes `"uiTrigger": { "enabled": false }` on every
+  process** (legacy block); its `locationId`, `label` and `icon` appear only
+  when set, and `awaitResult` only when `true`.
 - If `metadata.json` is missing, `fcode add` scaffolds
   `{ "name": "<slug>", "tags": [] }`; invalid JSON falls back to those
   defaults with a warning.
