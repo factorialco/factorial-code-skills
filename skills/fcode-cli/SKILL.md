@@ -346,8 +346,8 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
-| `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
-| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`) is going away in favour of the reserved lifecycle slugs. Every enabled form is public — there is no access restriction to configure |
+| `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`appTool`, offer the form on the App's own page in Factorial; `public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
+| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`) is going away — three of its values come from the reserved lifecycle slugs, and `USER_FACING_FORM` is now `factorial.form.appTool`. Every enabled form is public — there is no access restriction to configure |
 | `uiTrigger` | object, optional | **Legacy**, mirrored with `factorial.uiTrigger` (see `fcode-ui-triggers`): `enabled`, `locationId`, `label`, `icon`, and `awaitResult` (now `factorial.awaitResult`) |
 | `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the reserved slugs `install`, `settings`, `uninstall`, `sync`, reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
 
@@ -432,10 +432,14 @@ Notes:
   write `"authMode": "NONE"` **explicitly** — omitting the field leaves the
   stored mode untouched, and sending `auth` without `authMode: CUSTOM` is
   rejected.
-- Do not add `form.appRole` to new processes — it is legacy; use the reserved
-  lifecycle slugs instead.
+- Do not add `form.appRole` to new processes — it is legacy. Use the reserved
+  lifecycle slugs for install / settings / uninstall, and
+  `factorial.form.appTool` for a form the App offers on its own page. A file
+  that still carries `appRole: USER_FACING_FORM` keeps its role on push: when
+  `appTool` is absent the CLI derives it from the role, and stops sending that
+  one role from the legacy key.
 - **The `factorial` block omits its defaults too**: `awaitResult` when `true`,
-  `requiredPolicies` when empty, `form.public` when `false`, the `agentTool`
+  `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`, the `agentTool`
   texts when unset and its lists when empty, and any sub-block whose `enabled`
   is `false`. A process not exposed to Factorial has no `factorial` key at all;
   a Factorial One tool with no contract yet is just

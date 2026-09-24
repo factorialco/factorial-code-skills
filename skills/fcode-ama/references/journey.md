@@ -175,17 +175,22 @@ that `deploy-` workspace's Factorial API token, for running processes
 locally in that company's context (goes in `variables.local.env`; handle as
 a secret — see `fcode-cli`) — alongside Re-install / Uninstall.
 
-### appRole forms
+### The app's forms
 
-The marketplace views render the app's forms according to the `appRole` set
-on each process (field reference in `fcode-cli`; embedding in `fcode-forms`):
+The marketplace views render each of the app's forms according to the role the
+platform resolves for it (field reference in `fcode-cli`; embedding in
+`fcode-forms`; the `factorial` block in `fcode-factorial-actions`):
 
-| appRole | Shown |
-|---|---|
-| `INSTALL` | At install time — the installation form |
-| `SETTINGS` | From the installed app — settings, mappings, configuration |
-| `UNINSTALL` | When uninstalling — e.g. to remove webhook subscriptions the app created |
-| `USER_FACING_FORM` | As a marketplace utility the installing company's users run — file uploads, one-off automations |
+| Form | How it is declared | Shown |
+|---|---|---|
+| Install | process slug `install` | At install time — the installation form |
+| Settings | process slug `settings` | From the installed app — settings, mappings, configuration |
+| Uninstall | process slug `uninstall` | When uninstalling — e.g. to remove webhook subscriptions the app created |
+| App tool | `factorial.form.appTool: true` | On the app's own page, for the installing company's users to run — file uploads, one-off automations |
+
+The first three come from the **reserved slugs**. The fourth used to be
+`form.appRole: USER_FACING_FORM`, which the platform keeps mirrored with
+`appTool` — do not set it directly in new work.
 
 Everything exercised here behaves identically in the production marketplace.
 

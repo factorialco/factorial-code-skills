@@ -35,10 +35,11 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   the process behind the form is the only guard (below).
 - **A form opened from inside Factorial is configured in `factorial.form`**, the
   Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
-  and is kept mirrored, but `appRole` is legacy and going away: the install /
-  settings / uninstall forms are now the processes with those **reserved
-  slugs**. `factorial.form.public` (anonymous embed outside Factorial) is
-  deprecated and not enforced yet.
+  and is kept mirrored. Do not reach for `appRole`: the install / settings /
+  uninstall forms are the processes with those **reserved slugs**, and a form
+  offered to users on the App's own page is `factorial.form.appTool`.
+  `factorial.form.public` (anonymous embed outside Factorial) is deprecated and
+  not enforced yet.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.
@@ -78,9 +79,13 @@ top-level `"form": { "enabled": true }` still works and is kept mirrored with
 The **lifecycle forms** of a marketplace app are the processes with the
 **reserved slugs** `install`, `settings` and `uninstall` (`sync` is the fourth
 reserved slug, for the integrations sync process); the platform derives their
-role from the slug. The older `form.appRole` (`INSTALL` | `SETTINGS` |
-`USER_FACING_FORM` | `UNINSTALL`) is legacy and going away — do not add it to
-new processes.
+role from the slug.
+
+A form the App offers its own users, on the App's page in Factorial, is
+`"factorial": { "form": { "enabled": true, "appTool": true } }`. Do not write
+the legacy `form.appRole` in new processes: three of its four values come from
+the reserved slugs, and the fourth, `USER_FACING_FORM`, is what `appTool` sets
+(the platform keeps the two mirrored).
 
 An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the
@@ -93,8 +98,8 @@ Read submitted values in process code like any parameters:
 
 There is no access restriction on forms: whoever knows the team and process
 slugs can read the form schema and submit it, from anywhere. Forms opened from
-inside Factorial are no exception — the marketplace `INSTALL` / `SETTINGS` /
-`USER_FACING_FORM` / `UNINSTALL` screens and the UI-trigger dialog
+inside Factorial are no exception — the install / settings / uninstall screens,
+the forms an App offers on its own page, and the UI-trigger dialog
 (`fcode-ui-triggers`) send no user identity the process can trust. Authenticated
 forms opened from Factorial come with a later Factorial Actions phase; until
 then `factorial.form.public` only *records* which forms need anonymous access

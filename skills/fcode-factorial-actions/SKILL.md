@@ -31,7 +31,7 @@ that in mind.
 | The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | Factorial **invoking** actions through the new trusted path (enforcing `requiredPolicies`, running `backend` jobs, authenticating forms opened from Factorial) |
 | The legacy `form` and `uiTrigger` blocks kept **mirrored** with `factorial`, so the button and the form keep working through them | **Factorial One tools**: the assistant reading the `agentTool` contract and calling the process |
 | `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | The **dashboard actions API** Factorial will use to list and run a workspace's actions |
-| `lifecycleRole` derived from the reserved slugs and tagged in the console | Enforcing `form.public`; removing `form.appRole` |
+| `lifecycleRole` derived from the reserved slugs and tagged in the console | Enforcing `form.public`; retiring what is left of `form.appRole` |
 
 So today: `uiTrigger` and `form` do something (through the mirror), while
 `agentTool`, `backend`, `requiredPolicies` and `form.public` are **stored,
@@ -62,8 +62,8 @@ not enforced**. Fill them in now so the action is ready when each path lands.
   `uninstall`, `sync` mean something to Factorial regardless of the block. Do
   not give an ordinary action one of them.
 - **Omit the defaults.** `fcode pull` leaves out `awaitResult` when `true`,
-  `requiredPolicies` when empty, `form.public` when `false`, unset `agentTool`
-  texts and empty lists, and any sub-block whose `enabled` is `false`. A process
+  `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`,
+  unset `agentTool` texts and empty lists, and any sub-block whose `enabled` is `false`. A process
   not exposed to Factorial has no `factorial` key at all. A partial update
   leaves the unnamed fields unchanged.
 - **Legacy `form` / `uiTrigger` keys still round-trip.** When a file carries
@@ -79,7 +79,7 @@ not enforced**. Fill them in now so the action is ready when each path lands.
     "awaitResult": false,
     "requiredPolicies": [["company.manage_timeoff"], ["company.admin"]],
     "uiTrigger": { "enabled": true, "locationId": "calendar.header.admin", "label": "fcode.i18n(\"acme.approve.button\")", "icon": "Bell" },
-    "form": { "enabled": true, "public": false },
+    "form": { "enabled": true, "public": false, "appTool": true },
     "agentTool": { "enabled": true, "description": "…", "effect": "WRITE" },
     "backend": { "enabled": true }
   }
@@ -96,6 +96,7 @@ not enforced**. Fill them in now so the action is ready when each path lands.
 | `uiTrigger.label` | string | Button text. **The only i18n field**: plain text or `fcode.i18n("key")` tokens |
 | `uiTrigger.icon` | string | Allowlisted icon name (`fcode-ui-triggers`); omit for a text-only button |
 | `form.enabled` | boolean | Expose the parameters as a form (`fcode-forms`). Same switch and same quota as the Forms flag |
+| `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. This is the block's name for the legacy `form.appRole: USER_FACING_FORM`, which it is kept mirrored with |
 | `form.public` | boolean, `false` | **Deprecated.** Declares the form may *also* be embedded anonymously outside Factorial, as the legacy embed does. Stored, not enforced yet; set it only on forms that genuinely need anonymous access |
 | `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section) |
 | `backend.enabled` | boolean | Let Factorial backend jobs run the process with no user in front of it |
@@ -175,12 +176,21 @@ trigger** button (`uiTrigger`). Both stay for now and the platform keeps them
 | `uiTrigger.locationId`, `uiTrigger.icon`, `uiTrigger.label` | the same keys of `uiTrigger` |
 | `awaitResult` | `uiTrigger.awaitResult` |
 | `enabled && form.enabled` | `form.enabled` |
+| `form.appTool` | `form.appRole` = `USER_FACING_FORM` |
 
 Writing the legacy blocks mirrors the same fields back, and `factorial.enabled`
-turns on as soon as any entry point is enabled. `form.appRole` is not part of
-the new block, is left untouched, and goes away with the lifecycle slugs taking
-over. **Prefer `factorial`**: write it in new processes, and when touching an
-old `metadata.json`, move the settings into it rather than editing `uiTrigger`.
+turns on as soon as any entry point is enabled.
+
+`form.appRole` is the one legacy field the block **partly** owns. Of its four
+values, `INSTALL` / `SETTINGS` / `UNINSTALL` come from the reserved slugs and
+are left untouched, while `USER_FACING_FORM` is `form.appTool` — turning the
+flag on claims that value, turning it off releases it only if it was held, and
+a write that says nothing about `appTool` leaves the role alone. So a file
+written before the flag existed keeps its role on push: the CLI reads
+`appRole` and sends the flag to match.
+
+**Prefer `factorial`**: write it in new processes, and when touching an old
+`metadata.json`, move the settings into it rather than editing `uiTrigger`.
 
 ## Worked example — SILTRA FIE import (dry run + apply)
 
