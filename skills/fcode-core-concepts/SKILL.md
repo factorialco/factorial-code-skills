@@ -302,7 +302,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┣ 📜 index.js          #   or main.py — the process entry file
 ┃   ┣ 📜 parametersSchema.json   # input parameter schema (the form)
 ┃   ┣ 📜 parameters.json   #   default test parameters for `fcode run`
-┃   ┣ 📜 metadata.json     #   name, description, tags, webhook/form/UI trigger settings + auth
+┃   ┣ 📜 metadata.json     #   name, description, tags, webhook + the `factorial` action block
 ┃   ┣ 📜 README.md
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
@@ -335,12 +335,18 @@ Processes and modules also carry `versions/<tag>/` subfolders (e.g.
 versioning section above. `dependencies/package.json` holds only the inner
 `dependencies` object (e.g. `{ "axios": "^1.6.0" }`).
 
-`metadata.json` is where a process's webhook trigger, form settings
-(`enabled` and a marketplace `appRole`) and UI trigger (a button
-inside Factorial, see `fcode-ui-triggers`) are configured — edit it and
-`fcode push`. A webhook is public (`authMode: NONE`), inherits the workspace
-`webhookAuth` from `settings.json` (`TEAM`), or carries its own header and team
-variable (`CUSTOM`). Full field reference in `fcode-cli`.
+`metadata.json` is where a process's webhook trigger and its **Factorial
+Action** are configured — edit it and `fcode push`. A webhook is public
+(`authMode: NONE`), inherits the workspace `webhookAuth` from `settings.json`
+(`TEAM`), or carries its own header and team variable (`CUSTOM`). The
+`factorial` block says how Factorial reaches the process: a master switch,
+whether Factorial waits for the result, the policies a user needs, and one
+sub-block per entry point — a button in the Factorial UI (`fcode-ui-triggers`),
+a form (`fcode-forms`), a Factorial One tool with its contract, a backend job
+(`fcode-factorial-actions`). The older `form` and `uiTrigger` keys are legacy
+and kept mirrored with it. Four process slugs are reserved for the app
+lifecycle — `install`, `settings`, `uninstall`, `sync`. Full field reference in
+`fcode-cli`.
 
 ## General rules
 

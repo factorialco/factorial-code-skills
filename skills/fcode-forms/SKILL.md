@@ -26,12 +26,20 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   immediately. Details below.
 - **An unknown version or alias doesn't fail the form** — it silently runs the
   current version (see "Pin the form to a version").
-- **The `Forms` flag must be enabled** — on the process Dashboard, or via
-  `"form": { "enabled": true }` in the process's `metadata.json` + `fcode push`
+- **The `Forms` flag must be enabled** — in the **Trigger from Factorial**
+  section of the process Dashboard, or via `factorial.form.enabled` (legacy:
+  `"form": { "enabled": true }`) in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
 - **Every form is public** — anyone who knows the team and process slugs can
   read the schema and submit it. There is no access restriction to switch on, so
   the process behind the form is the only guard (below).
+- **A form opened from inside Factorial is configured in `factorial.form`**, the
+  Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
+  and is kept mirrored. Do not reach for `appRole`: the install / settings /
+  uninstall forms are the processes with those **reserved slugs**, and a form
+  offered to users on the App's own page is `factorial.form.appTool`.
+  `factorial.form.public` (anonymous embed outside Factorial) is deprecated and
+  not enforced yet.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.
@@ -50,22 +58,36 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 ## Enable a form
 
 1. Create the process and define its input parameters (these become the fields).
-2. Enable the `Forms` flag — either on the process Dashboard, or from the CLI
-   workspace in `processes/<slug>/metadata.json`, then `fcode push`:
+2. Enable the `Forms` flag — either in the **Trigger from Factorial** section of
+   the process Dashboard, or from the CLI workspace in
+   `processes/<slug>/metadata.json`, then `fcode push`:
 
 ```json
 {
   "name": "Contact request",
   "tags": [],
-  "form": { "enabled": true }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
-For marketplace app processes, `form` also takes an optional
-`"appRole"` (`INSTALL` | `SETTINGS` | `USER_FACING_FORM` | `UNINSTALL`) marking
-the process's role in the app. Field reference in `fcode-cli`.
+The form is one entry point of a **Factorial Action** — the same `factorial`
+block also holds the button, the Factorial One tool and the backend job
+(`fcode-factorial-actions`, field reference in `fcode-cli`). The legacy
+top-level `"form": { "enabled": true }` still works and is kept mirrored with
+`factorial.form.enabled`; prefer `factorial` in new work.
 
-An `INSTALL` or `SETTINGS` form is re-opened after the app is configured, so it
+The **lifecycle forms** of a marketplace app are the processes with the
+**reserved slugs** `install`, `settings` and `uninstall` (`sync` is the fourth
+reserved slug, for the integrations sync process); the platform derives their
+role from the slug.
+
+A form the App offers its own users, on the App's page in Factorial, is
+`"factorial": { "form": { "enabled": true, "appTool": true } }`. Do not write
+the legacy `form.appRole` in new processes: three of its four values come from
+the reserved slugs, and the fourth, `USER_FACING_FORM`, is what `appTool` sets
+(the platform keeps the two mirrored).
+
+An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the
 `preRenderProcess` pattern for that is in `references/advanced.md`.
 
@@ -76,15 +98,18 @@ Read submitted values in process code like any parameters:
 
 There is no access restriction on forms: whoever knows the team and process
 slugs can read the form schema and submit it, from anywhere. Forms opened from
-inside Factorial are no exception — the marketplace `INSTALL` / `SETTINGS` /
-`USER_FACING_FORM` / `UNINSTALL` screens and the UI-trigger dialog
-(`fcode-ui-triggers`) send no user identity the process can trust.
+inside Factorial are no exception — the install / settings / uninstall screens,
+the forms an App offers on its own page, and the UI-trigger dialog
+(`fcode-ui-triggers`) send no user identity the process can trust. Authenticated
+forms opened from Factorial come with a later Factorial Actions phase; until
+then `factorial.form.public` only *records* which forms need anonymous access
+(`fcode-factorial-actions`).
 
 So the process behind the form is the only guard:
 
 - **Treat every submitted parameter as caller-controlled** — including the ones
-  an embedding page pre-filled (`company_id`, `triggered_from_location`). Never
-  authorize on them.
+  an embedding page pre-filled (`company_id`, `triggered_from_location`,
+  `access_id`). Never authorize on them.
 - **Return nothing the caller shouldn't already have** — the result of a
   submission, and a `preRenderProcess`'s `variables`, reach whoever opened the
   URL.

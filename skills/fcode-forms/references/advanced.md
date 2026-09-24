@@ -152,7 +152,7 @@ The form is only served once the pre-render finishes, so set `loadingContent`
 
 ### Pre-filling current values (install & settings forms)
 
-An `INSTALL` or `SETTINGS` form re-opened later should **show what is configured
+An `install` or `settings` form (the reserved lifecycle slugs) re-opened later should **show what is configured
 now**, not an empty form. Since the schema is static and the embed lives inside
 Factorial (so you can't set `defaultValues` on it), the pre-render process is
 the place: read the current state from team variables and the datastore, and
