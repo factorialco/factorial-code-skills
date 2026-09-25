@@ -91,7 +91,7 @@ every workspace. It reads the `LOG_LEVEL` team variable
 for debug/info, stderr for warn/error), so call sites read like a plain `print`:
 
 ```python
-log = fcode.import_module("fcode-logs")
+log = fcode.import_module("fcode-logs")  # import once; reuse `log` everywhere, including `except`
 
 log.info("sync started", process_slug)  # stdout when LOG_LEVEL ≤ info
 log.debug(request_payload)               # stdout only when LOG_LEVEL=debug

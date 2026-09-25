@@ -92,7 +92,7 @@ every workspace. It reads the `LOG_LEVEL` team variable
 `console.*`, so call sites read like bare `console` calls:
 
 ```javascript
-const log = fcode.import("fcode-logs");
+const log = fcode.import("fcode-logs"); // import once; reuse `log` everywhere, including `catch`
 
 log.info("sync started", { processSlug }); // console.log  when LOG_LEVEL ≤ info
 log.debug({ requestPayload });              // console.debug only when LOG_LEVEL=debug
