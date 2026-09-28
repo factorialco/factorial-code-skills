@@ -144,6 +144,7 @@ and not so much that production output floods.
 | LOG-01 | Logging goes through the shared `fcode-logs` module (`LOG_LEVEL`-gated), not bare `console.*` / `print` | W | `fcode-javascript`/`fcode-python` §Logging |
 | LOG-02 | Coverage: start/end of the main flow, every external call, and major decisions at `info`; every `catch` logs the error with context (operation, inputs) before re-throwing | W | `fcode-javascript`/`fcode-python` §Logging |
 | LOG-03 | No flooding: payload/state dumps sit at `debug`, not `info`; no per-item `info` logs inside large loops (aggregate counts at `info` instead) | S | `fcode-javascript`/`fcode-python` §Logging |
+| LOG-04 | `fcode-logs` is imported once per file and that `log` is reused everywhere, `catch`/`except` included — no second import | S | `fcode-javascript`/`fcode-python` §Logging |
 
 ## LIFE — install/uninstall hygiene
 
