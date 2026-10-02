@@ -21,21 +21,23 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 `factorial` key of `processes/<slug>/metadata.json` (round-tripped by
 `fcode pull` / `fcode push`, field reference in `fcode-cli`).
 
-## What is live today (phase 1) and what is not
+## What is live today and what is not
 
-Phase 1 ships the **settings block only**. Read the rest of this skill with
-that in mind.
-
-| Available now | Coming in later phases |
+| Available now | Still to come |
 |---|---|
-| The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | Factorial **invoking** actions through the new trusted path (enforcing `requiredPolicies`, running `backend` jobs, authenticating forms opened from Factorial) |
-| The legacy `form` and `uiTrigger` blocks kept **mirrored** with `factorial`, so the button and the form keep working through them | **Factorial One tools**: the assistant reading the `agentTool` contract and calling the process |
-| `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | The **dashboard actions API** Factorial will use to list and run a workspace's actions |
-| `lifecycleRole` derived from the reserved slugs and tagged in the console | Enforcing `form.public`; retiring what is left of `form.appRole` |
+| The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | **Factorial One tools**: the assistant reading the `agentTool` contract and calling the process |
+| The **Actions API** Factorial invokes through: list a company's actions, read an action's form schema, invoke it, issue upload grants, and list an app's declared actions before it is installed | Enforcing `form.public`; retiring what is left of `form.appRole` |
+| **`requiredPolicies` enforced** on every invocation, before anything runs | |
+| **`uiTrigger`**: the button lists and runs over this contract, addressed by an opaque `action_id` — no process slug reaches the browser | |
+| **`form`**: a form opened from Factorial submits through Factorial's backend, which carries the user's identity and injects the trusted context | |
+| **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path | |
+| `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | |
+| `lifecycleRole` derived from the reserved slugs and tagged in the console | |
 
-So today: `uiTrigger` and `form` do something (through the mirror), while
-`agentTool`, `backend`, `requiredPolicies` and `form.public` are **stored,
-not enforced**. Fill them in now so the action is ready when each path lands.
+So today `uiTrigger`, `form`, `requiredPolicies` and `awaitResult` all do
+something. `agentTool` and `backend` are stored and reachable, but no assistant
+reads a tool contract yet — fill them in now so the action is ready when it
+does.
 
 ## Gotchas
 
@@ -47,10 +49,17 @@ not enforced**. Fill them in now so the action is ready when each path lands.
   `uiTrigger.awaitResult`, so a button moved to the `factorial` block **becomes
   synchronous** unless you write `"awaitResult": false`. Keep synchronous
   actions under the ~50 s budget (`fcode-ui-triggers`).
-- **`requiredPolicies` are free text and unchecked.** A key Factorial does not
-  recognise is never granted, so the whole AND-group containing it fails — it
-  can never *open* an action, only close one. Take keys from Factorial's policy
-  catalogue; prefer several small alternatives over one long group.
+- **`requiredPolicies` are enforced, but the keys are free text.** Factorial
+  checks them before it runs anything. It does not check that a key *exists*: one
+  it does not recognise is simply never granted, so the whole AND-group
+  containing it fails — a typo can only close an action, never open one. Take
+  keys from Factorial's policy catalogue; prefer several small alternatives over
+  one long group.
+- **No policies means open.** An empty list, or no list at all, lets anyone who
+  can reach the entry point run the action — the entry point's own gate (a
+  button's location permissions, an installed app) is all that remains. An empty
+  *group* inside a non-empty list is dropped rather than treated as "allow all",
+  so `[["a"], []]` still requires `a`.
 - **Only `uiTrigger.label` is translatable.** It is the one text users see, so
   it takes `fcode.i18n("key")` tokens (`fcode-i18n`). The `agentTool` texts are
   for the model — plain text, one language, never shown to users. The process's
@@ -89,7 +98,7 @@ not enforced**. Fill them in now so the action is ready when each path lands.
 | Field | Type / default | Meaning |
 |---|---|---|
 | `enabled` | boolean, `false` | Master switch for every entry point below |
-| `awaitResult` | boolean, `true` | `true`: Factorial waits and receives the `{ data }` / `{ errors }` envelope (`fcode-ui-triggers`). `false`: Factorial only learns the execution **started**; the process reports back itself (FactorialClient, notification). Use `false` for imports and bulk work |
+| `awaitResult` | boolean, `true` | `true`: Factorial waits and receives the process's return value **unchanged** (`fcode-ui-triggers`). `false`: Factorial only learns the execution **started**; the process reports back itself (FactorialClient, notification). Use `false` for imports and bulk work |
 | `requiredPolicies` | `string[][]`, `[]` | **OR of AND-groups** of Factorial policy keys the user must hold: `[["a","b"],["c"]]` reads *(a and b) or c*. Empty = anyone who reaches the entry point. Console: one alternative per line, commas between the keys of a group |
 | `uiTrigger.enabled` | boolean | Render the action as a button inside Factorial |
 | `uiTrigger.locationId` | string | Factorial UI location the button renders at (e.g. `calendar.header.admin`). **Required while enabled**, ≤ 200 chars, given by the Factorial team owning the page — see `fcode-ui-triggers` for the location contract |
@@ -268,8 +277,9 @@ an `fcode.storage://…` reference — `fcode-forms`).
 
 1. `factorial.enabled` on, and only the entry points you mean to expose enabled.
 2. `awaitResult` decided explicitly: `false` for anything slow; a synchronous
-   action returns `{ data }` / `{ errors }`.
-3. `requiredPolicies` keys copied from Factorial's catalogue, not guessed.
+   action returns a shape the entry point it runs under can read.
+3. `requiredPolicies` keys copied from Factorial's catalogue, not guessed — or
+   deliberately empty, which leaves the action open to anyone who reaches it.
 4. `agentTool`: `effect` set, `whenNotToUse` names the neighbour tools, dry runs
    point at their real process with `simulatesFor`.
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
