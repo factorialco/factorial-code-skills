@@ -1,6 +1,6 @@
 ---
 name: fcode-ui-triggers
-description: Surface a Factorial Code process as a button inside the Factorial product UI — the `factorial.uiTrigger` settings in a process's metadata.json (location id, label, icon; `awaitResult` at the block's top level) and the legacy `uiTrigger` block they replace, what the process receives when a user clicks, the `{ data }` / `{ errors }` result envelope for synchronous triggers, form-backed triggers, i18n labels, the icon allowlist, and how Factorial's `FactorialCodeTrigger` component renders them. Use when an app process should appear as an action button on a Factorial page, or when wiring the button entry point of a Factorial Action ("Trigger from Factorial" in the console).
+description: Surface a Factorial Code process as a button inside the Factorial product UI — the `factorial.uiTrigger` settings in a process's metadata.json (location id, label, icon; `awaitResult` at the block's top level) and the legacy `uiTrigger` block they replace, what the process receives when a user clicks, what a synchronous trigger returns, form-backed triggers and their file uploads, i18n labels, the icon allowlist, and how Factorial's `FactorialCodeTrigger` component renders them. Use when an app process should appear as an action button on a Factorial page, or when wiring the button entry point of a Factorial Action ("Trigger from Factorial" in the console).
 license: MIT
 metadata:
   category: factorial-code
@@ -43,18 +43,21 @@ legacy mirror and the Factorial One / backend entry points are in
 - **A form-enabled process opens its form instead of running.** With
   `factorial.form.enabled` (or the legacy `form.enabled`) on, the button opens
   the form in a dialog inside Factorial and `awaitResult` is ignored.
-- **Trigger-opened forms are not authenticated.** The dialog sends no Factorial
-  user token, and forms carry no access restriction of their own — a form behind
-  a trigger is public like any other (see `fcode-forms`).
-- **Never authorize on `company_id` / `triggered_from_location` / `access_id`
-  in a form.** On the *execute* path they are injected server-side and
-  trustworthy; on the *form* path they arrive as pre-filled, client-editable
-  fields.
-- **Who may click is decided by Factorial, not by the block — for now.** Today
-  Factorial authorizes a click with a policy-scoped read of the location's
-  resource. `factorial.requiredPolicies` (`fcode-factorial-actions`) is stored
-  already and replaces the location's policies once the trusted invocation
-  path lands; fill it in now.
+- **A trigger-opened form goes through Factorial, not straight to the
+  platform.** The dialog reads the schema and submits it through Factorial's own
+  backend, which carries the clicking user's identity. The form's own
+  `authMode` still governs anyone reaching it by its public URL (`fcode-forms`);
+  it does not govern the dialog.
+- **`company_id`, `triggered_from_location` and `access_id` are trustworthy on
+  both paths.** Factorial injects them server-side on every invocation, form or
+  not, and the location's forwarded params overwrite whatever the browser sent.
+  Authorizing on them is safe. (This was not true of the old form path, which
+  passed them as client-editable pre-filled fields.)
+- **Who may click is decided by `requiredPolicies`, and it is enforced.**
+  Factorial checks `factorial.requiredPolicies`
+  (`fcode-factorial-actions`) against the clicking user before it runs anything,
+  on top of a policy-scoped read of the location's resource. An action with no
+  policies listed is open to anyone who can reach the button.
 - **Uncaught errors show a generic message.** A throw / crash reaches the user as
   "The action could not be completed" with no detail. Return `{ errors: [...] }`
   for anything the user should read.
@@ -127,30 +130,29 @@ if (!cycle_id) throw new Error("cycle_id is required");
 
 ## Return a result (synchronous triggers)
 
-With `awaitResult: true` Factorial waits for the execution and reads the return
-value as an envelope:
+With `awaitResult: true` Factorial waits for the execution and hands the page
+**whatever you returned, unchanged**. There is no envelope to wrap it in, and
+nothing is filtered out on the way.
 
 ```javascript
-// Success — `data` is shown to the page. Only the keys the location allowlists
-// (`result_keys`) get through; anything else is dropped before reaching the browser.
-return { data: { synced: 42, report_url: "https://acme.example/reports/7" } };
-
-// Controlled error — the messages render to the user, as plain text.
-return {
-  errors: [{ code: "missing_mapping", message: "Map the 'Bonus' concept in Acme first." }],
-};
+// Success — the whole object reaches the page's onSuccess handler.
+return { synced: 42, report_url: "https://acme.example/reports/7" };
 ```
 
-- `{ data }` → a success toast; the (filtered) `data` reaches the page's
-  `onSuccess` handler. Return `{ data: {} }` when there is nothing to hand back.
-- `{ errors: [{ code, message }] }` → the user reads your messages. Both fields
-  must be strings; entries missing either are ignored. Use it for every
-  expected failure (bad configuration, vendor rejection, nothing to do).
-- Anything else (no envelope, a bare `{ message }`) still counts as **success**
-  with an empty result — the execution finished.
-- A throw, a platform `4xx`, or exceeding the synchronous budget (about 50 s;
-  the execution may still finish in the background) → a generic error the user
-  can't act on.
+- **A success status is always a success**, whatever the body says. Returning an
+  object with an `errors` key in it does not make it a failure.
+- **Signal an expected failure with an error status**, not with the body. Throw
+  `fcode.error(...)`, or return an error status from an HTTP-shaped process; the
+  body travels intact so the page can read your message.
+- A throw with no message, or exceeding the synchronous budget (about 50 s; the
+  execution may still finish in the background) → a generic error the user can't
+  act on.
+
+Matching what the entry point expects is the process author's job: a form reads
+its own conventions (`message`, `formErrors`, `nextProcessId`) while a plain
+button just shows a toast, so a process exposed as both does not get one
+portable result shape. `result_keys` on the location is informational — it
+describes what the page intends to read, and nothing filters by it.
 
 With `awaitResult` off the return value is only visible in the execution log;
 long work belongs there, or behind `fcode.processes.run(...)` from a quick
@@ -160,13 +162,15 @@ synchronous trigger (see `fcode-javascript` / `fcode-python`).
 
 Enable the form as usual (`fcode-forms`) and the button opens it in a dialog
 inside Factorial, rendered with the f0 theme, pre-filled with the forwarded
-params plus `company_id`, `triggered_from_location` and `access_id` as default
-values.
-Declare those keys in `parametersSchema.json` (a `hidden` widget) if the process
-needs them — and remember they are client-editable there. The submission result
-follows the form conventions (`message`, `formErrors`, `nextProcessId`, …); a
-`{ data }` envelope in the final step is handed to the page like a synchronous
-trigger's.
+params. Whether a click opens the dialog or runs the process comes from the
+action's entry points: declaring both `form` and `uiTrigger` opens the form,
+`uiTrigger` alone runs it.
+
+The submission goes through Factorial's backend, which injects `company_id`,
+`triggered_from_location` and `access_id` server-side — declare them in
+`parametersSchema.json` (a `hidden` widget) if the process reads them. The
+result follows the form conventions (`message`, `formErrors`, `nextProcessId`,
+…); a multistep form follows each step's `nextProcessId` inside the same dialog.
 
 ```json
 {
@@ -179,8 +183,30 @@ trigger's.
 }
 ```
 
-The form is public and the dialog carries no user identity, so authorize inside
-the process, never on the forwarded params — see the gotchas above.
+### Files in a trigger form
+
+A file field works, and the file does not travel through Factorial. Declare the
+parameter with `x-fcode-file` listing the extensions it takes:
+
+```json
+"msj_file": {
+  "title": "FIE file",
+  "type": "string",
+  "x-fcode-file": { "accept": [".msj"] },
+  "ui": { "ui:widget": "file", "ui:options": { "accept": ".msj" } }
+}
+```
+
+On submit, Factorial asks the platform for an upload grant per file, PUTs the
+file straight to Factorial Code storage, and sends the resulting
+`fcode.storage://` path as the parameter value. The process reads it as it would
+any stored file (`fcode-javascript` / `fcode-python`).
+
+- The grant is issued **at submit, not with the schema** — the platform checks
+  the real file name against `accept` and signs its content type, and neither is
+  known before the user picks a file. A name outside `accept` is refused there.
+- Uploaded files are **removed once they are 48 hours old**. Copy anything the
+  process needs for longer elsewhere in storage.
 
 ## Labels and i18n
 
@@ -222,23 +248,27 @@ The Factorial side is generic — no per-app code. In the `factorial` monolith:
   underlying hooks (`useFactorialCodeTriggers` for the listing,
   `useFactorialCodeTriggerActivation` for the click) are exported for
   data-driven hosts such as dropdown menus.
-- Activation goes through `FactorialCode::Interactors::ActivateUiTrigger`
-  (authorizes with a policy-scoped read of the location's `resource`, forwards
-  only `forward_params`, filters `data` to `result_keys`) and is proxied to the
-  Factorial Code dashboard, which resolves the trigger live and runs the
-  process. Everything is gated by the Factorial Code feature flag.
+- Clicks go through `FactorialCode::Interactors::InvokeAction`: it checks the
+  action's `requiredPolicies` (`RequiredPoliciesAuthorization`, an OR of AND
+  groups) and a policy-scoped read of the location's `resource`, forwards only
+  `forward_params`, injects `company_id` / `access_id` /
+  `triggered_from_location` over anything the browser sent, and returns the
+  process's answer unchanged. The SPA addresses an action by its opaque
+  `action_id`; no process slug reaches the browser. Everything is gated by the
+  Factorial Code feature flag.
 
 App developers don't touch any of this; they need the location's id and
 contract from the team that owns the page.
 
 ## Checklist before shipping
 
-1. Location id, forwarded params, `result_keys` and `single`-ness confirmed with
-   the owning Factorial team.
+1. Location id, forwarded params and `single`-ness confirmed with the owning
+   Factorial team.
 2. `factorial.awaitResult` decided explicitly — `true` (the default) only for
-   fast, user-visible outcomes, and the process returns `{ data }` /
-   `{ errors }`; `false` otherwise.
-3. A form-backed trigger's form is public and declares the pre-filled keys it
-   reads.
-4. Tested from a dev installation in Factorial, then promoted to `prod-` and
+   fast, user-visible outcomes; `false` otherwise.
+3. `factorial.requiredPolicies` filled in, or deliberately left empty because
+   the button is open to anyone who can reach it.
+4. A form-backed trigger declares the pre-filled keys it reads, and any file
+   parameter carries `x-fcode-file`.
+5. Tested from a dev installation in Factorial, then promoted to `prod-` and
    released so the deploy workspaces pick it up (`fcode-release`, `fcode-ama`).
