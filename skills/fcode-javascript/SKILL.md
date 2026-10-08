@@ -104,7 +104,8 @@ log.error("sync failed", err.message);       // console.error — always emitted
 `info`; payloads at `debug`; always log inside `catch` with context before
 re-throwing) is in `fcode-core-concepts` §General rules. Set `LOG_LEVEL=debug`
 in a local or dev workspace to trace a full run; production stays at `info`.
-Never log secrets.
+Never log secrets. Each execution keeps at most 500 log lines / 500 KB — later entries
+are dropped (`fcode-core-concepts` › Plans & limits).
 
 ## Dependencies
 
@@ -259,3 +260,6 @@ return { transient: true, data: sensitiveData };
 // Returned unchanged to the page; signal a failure with an error, not in the body.
 return { synced: 42 };
 ```
+
+The return value is capped at 500 KB — larger results fail the execution; put them
+in storage and return a reference (`fcode-core-concepts` › Plans & limits).
