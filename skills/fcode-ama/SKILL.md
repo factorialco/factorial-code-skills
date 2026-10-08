@@ -189,4 +189,5 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
 | Promote a release to production | A Factorial admin of the owning team does it themselves (the App detail page's "How to promote" dialog has the commands); everyone else's route is an operator — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
+| Need a higher limit (execution time, concurrency, datastore, rate, …) | Every workspace is on the same fixed plan — there is no self-service upgrade. Ask us: internal Factorial users in Slack `#factorial-code-users`, others through their Factorial contact. Current values: `fcode-core-concepts` › Plans & limits |
 | Anything not covered | Internal Factorial users: Slack `#factorial-code-users`. Others: the in-platform request flows above |

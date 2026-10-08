@@ -24,7 +24,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | Skill | What it covers |
 |-------|----------------|
 | [`fcode-ama`](skills/fcode-ama) | The platform user journey and support: access requests, teams, app creation, OAuth setup, demo companies, the Test marketplace, releases, publication, escalation paths. |
-| [`fcode-core-concepts`](skills/fcode-core-concepts) | Platform architecture: processes, modules, execution context, variables, datastore, storage, workspace layout. Start here. |
+| [`fcode-core-concepts`](skills/fcode-core-concepts) | Platform architecture: processes, modules, execution context, variables, datastore, storage, plans & limits, workspace layout. Start here. |
 | [`fcode-javascript`](skills/fcode-javascript) | Writing JavaScript (Node.js v22) processes and modules. |
 | [`fcode-python`](skills/fcode-python) | Writing Python 3.13 processes and modules. |
 | [`fcode-json-schema`](skills/fcode-json-schema) | Authoring `parametersSchema.json` input-parameter schemas. |

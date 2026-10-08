@@ -492,8 +492,9 @@ const stream = await fcode.storage.download(
 );
 ```
 
-Uploaded files count toward storage limits — delete them at the end of the
-process if only needed transiently.
+Uploaded files count toward storage limits (1,000 files, 50 MB each —
+`fcode-core-concepts` › Plans & limits) — delete them at the end of the process
+if only needed transiently.
 
 ## Advanced
 

@@ -37,6 +37,9 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Never hardcode or log secrets.** Use variables/env vars; mask or omit
   secrets from logs.
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
+- **Limits are fixed per workspace** — 12 h per execution, 50 concurrent
+  executions, 50 req/s, 500 KB return value, 50 KB per datastore entry. Raising
+  one means asking us, not changing a plan. See Plans & limits.
 
 ## Key concepts
 
@@ -253,6 +256,32 @@ Versions are published and aliases linked from the web UI (team settings →
 
 A **version tag** (`v1.0.0`) is unrelated to `metadata.json` `tags` — those are
 process labels (used e.g. for MCP-tool exposure, see `fcode-agent`).
+
+### Plans & limits
+
+Every workspace runs on the **same fixed plan**, so the limits below apply
+everywhere — there is no plan to pick and no self-service upgrade. Design the
+app to fit them. If a real need doesn't fit, ask us to raise that limit for the
+workspace (internal Factorial users: Slack `#factorial-code-users`; others:
+see `fcode-ama` › Escalation) — never work around a limit, e.g. by splitting
+one job across many executions or chaining datastore keys to dodge a cap.
+
+| Limit | Value | When exceeded |
+|---|---|---|
+| Time per execution | 12 hours | The execution is terminated |
+| Concurrent executions per workspace | 50 | New executions are queued |
+| Queued executions per workspace | 1,000 | New executions are rejected |
+| Requests to webhooks | 50 req/s per workspace | HTTP 429 with `Retry-After` |
+| Requests to forms and OAuth endpoints | 50 req/s per process and caller | HTTP 429 with `Retry-After` |
+| Input parameters — text | 500 KB | HTTP 413, execution not created |
+| Input parameters — files | 15 MB in total | HTTP 413, execution not created |
+| Return value | 500 KB | The execution fails — put large results in storage and return a reference |
+| Execution log | 500 lines and 500 KB | Further log entries are dropped |
+| Datastore entries | 20,000 per workspace | Writes fail (HTTP 403) |
+| Datastore entry size | 50 KB | The write fails (HTTP 413) |
+| Storage files | 1,000 files, 50 MB each | The upload fails |
+| Emails per execution | 3 (see Sending email) | Further sends throw |
+| Processes, forms, dependencies, executions per day/month | Unlimited | — |
 
 ## Decision guidelines
 
