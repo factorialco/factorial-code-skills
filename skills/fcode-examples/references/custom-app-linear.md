@@ -58,7 +58,7 @@ app's `INSTALL` role; the runtime push process is webhook-only:
 ```
 
 Both setup forms are opened from inside Factorial, but that doesn't protect
-them: every form is public, so each of these processes authorizes the caller
+them: a submission's parameters are caller-controlled, so each of these processes authorizes the caller
 itself and never trusts a submitted `company_id` (see `fcode-forms`).
 
 `processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
