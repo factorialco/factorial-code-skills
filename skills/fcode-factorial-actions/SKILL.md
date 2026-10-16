@@ -30,7 +30,7 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 | **`requiredPolicies` enforced** on every invocation, before anything runs | |
 | **`uiTrigger`**: the button lists and runs over this contract, addressed by an opaque `action_id` — no process slug reaches the browser | |
 | **`form`**: a form opened from Factorial submits through Factorial's backend, which carries the user's identity and injects the trusted context | |
-| **Every form requires Factorial authentication.** `form.public` is kept only as a rollback switch; no form is reachable without a Factorial identity | |
+| **A form requires Factorial authentication unless `form.public` releases it**, which is the switch for the auth mode the form endpoints check | |
 | **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path | |
 | `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | |
 | `lifecycleRole` derived from the process's `form.appRole`, or from the reserved slug when it declares none, and tagged in the console | |
@@ -107,7 +107,7 @@ does.
 | `uiTrigger.icon` | string | Allowlisted icon name (`fcode-ui-triggers`); omit for a text-only button |
 | `form.enabled` | boolean | Expose the parameters as a form (`fcode-forms`). Same switch and same quota as the Forms flag |
 | `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. This is the block's name for the legacy `form.appRole: USER_FACING_FORM`, which it is kept mirrored with |
-| `form.public` | boolean, `false` | **Deprecated and no longer honoured.** It declared that the form may *also* be embedded anonymously outside Factorial; every form now requires a Factorial identity. The field is kept only as a rollback switch and will be removed — do not set it |
+| `form.public` | boolean, `false` | Releases the form to anyone holding its link, with no Factorial account. It is the switch for the legacy `form.authMode`, which the form endpoints enforce, and the two are kept mirrored: on writes `NONE`, off writes `FACTORIAL`. Leave it off unless the form is meant for people outside Factorial; nothing authenticates a caller once it is on |
 | `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section) |
 | `backend.enabled` | boolean | Let Factorial backend jobs run the process with no user in front of it |
 

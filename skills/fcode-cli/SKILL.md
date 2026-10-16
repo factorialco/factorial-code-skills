@@ -347,7 +347,7 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
 | `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`appTool`, offer the form on the App's own page in Factorial; `public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
-| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`): `USER_FACING_FORM` is now `factorial.form.appTool`, while the three lifecycle values have no equivalent in the block and stay here (the reserved lifecycle slugs are the alternative, not a replacement — see `fcode-factorial-actions`). Every form requires a Factorial identity |
+| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`): `USER_FACING_FORM` is now `factorial.form.appTool`, while the three lifecycle values have no equivalent in the block and stay here (the reserved lifecycle slugs are the alternative, not a replacement — see `fcode-factorial-actions`); `authMode` (`FACTORIAL`, `NONE`) decides whether a caller needs a Factorial account, and `factorial.form.public` is the switch for it |
 | `uiTrigger` | object, optional | **Legacy**, mirrored with `factorial.uiTrigger` (see `fcode-ui-triggers`): `enabled`, `locationId`, `label`, `icon`, and `awaitResult` (now `factorial.awaitResult`) |
 | `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the process's `form.appRole`, or from the reserved slugs `install`, `settings`, `uninstall`, `sync` when it declares none; reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
 
@@ -446,6 +446,12 @@ Notes:
   a Factorial One tool with no contract yet is just
   `"factorial": { "enabled": true, "agentTool": { "enabled": true } }`.
   Enabling `factorial.uiTrigger` without a `locationId` is rejected on push.
+- **A push decides whether the form is public, every time.** A file with a
+  `factorial` block always sends `form.public`, and the platform writes the auth
+  mode from it. So a form released to the public in the console goes back to
+  requiring a Factorial account on the next push from a file that does not say
+  `"public": true`. Run `fcode pull` first, or set the flag in the file and keep
+  it there.
 - **When a file carries both `factorial` and the legacy `form` / `uiTrigger`
   keys, `fcode push` sends `factorial`** and the platform mirrors it into the
   legacy blocks (rules in `fcode-factorial-actions`). `factorial.title` /
