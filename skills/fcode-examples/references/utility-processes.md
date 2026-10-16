@@ -12,7 +12,7 @@ fcode Storage → create a signed download URL → email the link with
 
 Inputs (form): `start_date`, `end_date` (YYYY-MM-DD), `recipient_email` —
 accepted only when it belongs to an employee of the company, because every
-form is public and `fcode.sendMail` must never mail a caller-chosen address
+a form's parameters are caller-controlled and `fcode.sendMail` must never mail a caller-chosen address
 (`fcode-core-concepts` §Sending email).
 
 ```javascript

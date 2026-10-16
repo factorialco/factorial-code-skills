@@ -30,16 +30,19 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   section of the process Dashboard, or via `factorial.form.enabled` (legacy:
   `"form": { "enabled": true }`) in the process's `metadata.json` + `fcode push`
   — or the embed won't render.
-- **Every form is public** — anyone who knows the team and process slugs can
-  read the schema and submit it. There is no access restriction to switch on, so
-  the process behind the form is the only guard (below).
+- **A form requires a Factorial identity unless you release it.** By default a
+  form is reached through Factorial, which authenticates the person and injects
+  the trusted context, and an anonymous visitor with the team and process slugs
+  cannot read the schema or submit it. `factorial.form.public` opts out of that
+  for the forms that genuinely need it. Either way the process behind the form is
+  the guard for *what* the caller may do (below).
 - **A form opened from inside Factorial is configured in `factorial.form`**, the
   Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
-  and is kept mirrored. Do not reach for `appRole`: the install / settings /
-  uninstall forms are the processes with those **reserved slugs**, and a form
-  offered to users on the App's own page is `factorial.form.appTool`.
-  `factorial.form.public` (anonymous embed outside Factorial) is deprecated and
-  not enforced yet.
+  and is kept mirrored. A form offered to users on the App's own page is
+  `factorial.form.appTool`; the install / settings / uninstall forms are named
+  by `form.appRole`, or by the **reserved slugs** when a process declares no
+  role (`fcode-factorial-actions`). `factorial.form.public` releases the form to
+  anyone holding its link, for a form meant for people outside Factorial.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
   never rendered. Client-side behaviour lives in the embedding page.
@@ -82,10 +85,13 @@ reserved slug, for the integrations sync process); the platform derives their
 role from the slug.
 
 A form the App offers its own users, on the App's page in Factorial, is
-`"factorial": { "form": { "enabled": true, "appTool": true } }`. Do not write
-the legacy `form.appRole` in new processes: three of its four values come from
-the reserved slugs, and the fourth, `USER_FACING_FORM`, is what `appTool` sets
-(the platform keeps the two mirrored).
+`"factorial": { "form": { "enabled": true, "appTool": true } }`. Never write
+`form.appRole: USER_FACING_FORM` in a new process — that is exactly what
+`appTool` sets, and the platform keeps the two mirrored. The other three values
+are a different matter: the block has no switch for them, so an install,
+settings or uninstall form is named either by `form.appRole` or by carrying the
+reserved slug. Prefer the slug in a new process; `fcode-factorial-actions` has
+the rule and what it takes to adopt one in an App that already ships.
 
 An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the
@@ -94,18 +100,23 @@ should show the **current** values rather than an empty form — the
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
 
-## Every form is public
+## What a form may trust
 
-There is no access restriction on forms: whoever knows the team and process
-slugs can read the form schema and submit it, from anywhere. Forms opened from
-inside Factorial are no exception — the install / settings / uninstall screens,
-the forms an App offers on its own page, and the UI-trigger dialog
-(`fcode-ui-triggers`) send no user identity the process can trust. Authenticated
-forms opened from Factorial come with a later Factorial Actions phase; until
-then `factorial.form.public` only *records* which forms need anonymous access
-(`fcode-factorial-actions`).
+A form is reached through Factorial, which authenticates the person opening it:
+the install / settings / uninstall screens, the forms an App offers on its own
+page and the UI-trigger dialog (`fcode-ui-triggers`) all submit through
+Factorial's backend, and `requiredPolicies` is enforced before anything runs
+(`fcode-factorial-actions`). An anonymous visitor holding the team and process
+slugs reaches nothing.
 
-So the process behind the form is the only guard:
+Unless the form sets `factorial.form.public`. That flag releases it to anyone
+with the link, and then nothing has authenticated the caller at all: the
+`company_id` and `access_id` such a submission carries are whatever the page
+sent. Turn it on only for a form meant for people outside Factorial, and treat
+everything below as the only protection it has.
+
+That settles *who* is calling. It settles nothing about *what* they submitted,
+so the process behind the form is still the guard:
 
 - **Treat every submitted parameter as caller-controlled** — including the ones
   an embedding page pre-filled (`company_id`, `triggered_from_location`,

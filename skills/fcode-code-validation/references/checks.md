@@ -56,9 +56,9 @@ own rules and note the mix in the report header.
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|
-| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` appRole (on a clash the first slug alphabetically wins, silently) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
+| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` lifecycle role, counting both `form.appRole` and the reserved slugs (on a clash the first slug alphabetically wins, and the catalogue reports a `duplicate_role_warnings` entry) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
 | FORM-02 | A stored secret is never echoed back to a form — pre-render reports only *whether* it is set, blank submit keeps the value; escalation: echoing the value is **B**, marking the secret field `required` (locking users out of partial edits) is **W** | B/W | `fcode-forms` references/advanced.md §Pre-filling current values |
-| FORM-03 | Every form is public: a process behind a form authorizes the caller itself and never trusts caller-supplied identity (`company_id`, `triggered_from_location`) — a form that hands back company data or writes on the strength of those params is **B**; a submission result or pre-render `variables` node exposing more than the caller should see is **W** | B/W | `fcode-forms` §Every form is public |
+| FORM-03 | A process behind a form authorizes the caller itself and never trusts caller-supplied identity (`company_id`, `triggered_from_location`) — a form that hands back company data or writes on the strength of those params is **B**; a submission result or pre-render `variables` node exposing more than the caller should see is **W** | B/W | `fcode-forms` §What a form may trust |
 | FORM-04 | No secrets in embed code, embed `options`, or the schema — they all reach the browser | B | `fcode-forms` §Gotchas |
 | FORM-05 | `SETTINGS` (and re-openable `INSTALL`) forms pre-fill current values via `preRenderProcess` + `#/variables/<name>` refs, reading through `fcode.env`, not an empty form | W | `fcode-forms` references/advanced.md §Pre-filling current values |
 | FORM-06 | Work behind a form finishes well inside the ~1-minute request timeout, or goes async (`async: true` / `fcode.processes.run` + quick ack) | W | `fcode-forms` §Keep it fast, or go async |
