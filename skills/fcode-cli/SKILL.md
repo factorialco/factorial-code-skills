@@ -656,6 +656,10 @@ without the value ever appearing in the conversation.
   workspace's token with **Copy FACTORIAL_TOKEN** in the "…"
   menu on the Test marketplace app page — same file, same
   handling.
+- **`FACTORIAL_BASE_URL`** follows the same rule: populated remotely, set by
+  hand in `variables.local.env` for local runs (the Factorial API host the
+  token belongs to). Code that has no default host — the inbound sync helper,
+  see `fcode-inbound-sync` — fails locally without it.
 - Once obtained, never echo secret values back in output or logs.
 
 ## Examples

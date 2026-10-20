@@ -39,6 +39,7 @@ workspace, overwriting any previous run.
 | I18N — internationalization | 0 | 1 | 0 |
 | SEC — security & secrets | 1 | 0 | 0 |
 | MAIL — email delivery | 0 | 0 | 0 |
+| SYNC — inbound sync tracking | N/A — no inbound import | | |
 | REUSE — base-app reuse | 0 | 0 | 1 |
 | LOG — logging | 0 | 1 | 0 |
 | LIFE — install/uninstall hygiene | N/A — no lifecycle | | |
@@ -74,6 +75,7 @@ workspace, overwriting any previous run.
 - I18N: 01, 03–06
 - SEC: 02–09
 - MAIL: 01–04
+- SYNC: N/A — no inbound import
 - REUSE: 01–05
 - LOG: 01, 03
 - LIFE: N/A — no lifecycle

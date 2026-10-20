@@ -18,7 +18,9 @@ instead — see the routing table in `SKILL.md`.
 - **"Should I enable the integrations framework?"** Only when the app pushes
   a supported capability to an external system and needs each sync's outcome
   surfaced in Factorial — the decision rule is stage 2 in `journey.md`; probe
-  the use case before the user checks it.
+  the use case before the user checks it. An app that imports data **into**
+  Factorial never needs it: it stays a Standard app and tracks its imports
+  with `fcode.inboundSync` / `fcode.inbound_sync` (see `fcode-inbound-sync`).
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the App settings' OAuth tab and the setup steps reappear.
