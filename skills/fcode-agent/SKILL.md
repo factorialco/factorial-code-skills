@@ -84,6 +84,8 @@ an MCP tool: (1) create a process implementing the logic, (2) define its input
 parameters via `parametersSchema.json` (they become the tool's parameters),
 (3) **tag** the process (e.g. `mcp-tool`). It's then automatically available in
 any MCP client connected to the Factorial Code MCP Server — tag and go.
+This is for developers' MCP clients; Factorial One does not use it and reaches
+processes as Factorial Actions instead (`fcode-factorial-actions`).
 
 ## Available MCP tools
 
