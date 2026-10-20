@@ -54,6 +54,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Storage** | File storage | Binary files, documents, large payloads |
 | **Locales** | Per-language translation files (`i18n/<locale>.yaml`) | Resolved by `fcode.i18n`; inherited key by key from parents — see `fcode-i18n` |
 | **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
+| **Inbound sync tracking** | Per-item results of an import into Factorial, shown to the customer | `fcode.inboundSync` / `inbound_sync`; declare the plan before reporting — see `fcode-inbound-sync` |
 
 ### Processes
 

@@ -92,6 +92,6 @@ cited on the catalog row — read the owner when a finding needs context.
 
 ## Check categories
 
-`STRUCT` · `LANG` · `FORM` · `I18N` · `SEC` · `MAIL` · `REUSE` · `LOG` ·
-`LIFE` · `REL` — the full catalog, with per-check severities and owner
+`STRUCT` · `LANG` · `FORM` · `I18N` · `SEC` · `MAIL` · `SYNC` · `REUSE` ·
+`LOG` · `LIFE` · `REL` — the full catalog, with per-check severities and owner
 citations, is in `references/checks.md`.

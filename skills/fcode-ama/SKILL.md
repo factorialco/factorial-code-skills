@@ -171,7 +171,8 @@ What to tell users:
 | Recommended agent working method, MCP tools | `fcode-agent` — docs: `/docs/mcp-server/` |
 | Worked examples (integration, install/uninstall lifecycle) | `fcode-examples` |
 | Executions, schedules, webhooks at runtime | docs: `/docs/executions/` |
-| Integrations framework | docs: `/docs/building-apps/integrations-framework/` |
+| Integrations framework (outbound) | docs: `/docs/building-apps/integrations-framework/` |
+| Inbound imports: reporting per-item results to Factorial (`fcode.inboundSync`) | `fcode-inbound-sync` — docs: `/docs/building-apps/inbound-sync/` |
 | OAuth & API tokens | docs: `/docs/building-apps/oauth/` |
 | Workspace hierarchy | docs: `/docs/building-apps/workspaces/` |
 | Roles & permissions: who can read/write/promote per workspace | `references/journey.md` §8 — docs: `/docs/building-apps/permissions/` |

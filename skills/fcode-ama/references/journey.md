@@ -45,9 +45,14 @@ signing in. The creation flow asks for:
    templates (the generic `OutboundSync` orchestrator), so the developer
    implements only the mapping. Platform docs:
    `/docs/building-apps/integrations-framework/`; full specification:
-   `https://apidoc.factorialhr.com/docs/integrations-framework`. A standard
-   app is free-form: forms, scheduled jobs, webhooks, reports, syncs of any
-   other shape.
+   `https://apidoc.factorialhr.com/docs/integrations-framework`. The
+   framework type is **outbound only** — when it is picked, the wizard shows
+   an "Only for outbound integrations" callout. An app that brings data
+   **into** Factorial keeps **Standard app** and reports each import's
+   per-item results with the inbound sync tracking helper (`fcode-inbound-sync`;
+   docs: `/docs/building-apps/inbound-sync/`), which needs no opt-in. A
+   standard app is free-form: forms, scheduled jobs, webhooks, reports,
+   imports, syncs of any other shape.
 
 App lifecycle: `active → published → suspended → archived` (`published` is a
 side effect of the first deployed release, never set by hand; suspended and
