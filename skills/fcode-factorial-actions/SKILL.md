@@ -1,6 +1,6 @@
 ---
 name: fcode-factorial-actions
-description: Expose a Factorial Code process to Factorial as a Factorial Action — the `factorial` block in a process's metadata.json (master switch, awaitResult, requiredPolicies, and the uiTrigger / form / agentTool / backend entry points), the Factorial One tool contract (description, effect, whenToUse, whenNotToUse, preconditions, doesNotDo, degradation, simulatesFor), the reserved lifecycle slugs, the parameters schema as the contract with Factorial, and how the legacy `form` / `uiTrigger` blocks are kept mirrored. Use when configuring how Factorial reaches a process, writing an agent tool contract, or filling the "Trigger from Factorial" section of a process.
+description: Expose a Factorial Code process to Factorial as a Factorial Action — the `factorial` block in a process's metadata.json (master switch, awaitResult, requiredPolicies, and the uiTrigger / form / agentTool / backend entry points), the Factorial One tool contract (description, effect, whenToUse, whenNotToUse, preconditions, doesNotDo, degradation, simulatesFor), the reserved lifecycle slugs, the parameters schema as the contract with Factorial, how the legacy `form` / `uiTrigger` blocks are kept mirrored, and how an App reaches Factorial One and Factorial's backend (the Actions API, One's generic tools, what the backend calls). Use when asked what an App exposes to One or to Factorial's backend, configuring how Factorial reaches a process, writing an agent tool contract, or filling the "Trigger from Factorial" section of a process.
 license: MIT
 metadata:
   category: factorial-code
@@ -21,11 +21,62 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 `factorial` key of `processes/<slug>/metadata.json` (round-tripped by
 `fcode pull` / `fcode push`, field reference in `fcode-cli`).
 
+## How an App reaches Factorial One and the Factorial backend
+
+Two Factorial words first. **One** (Factorial One) is the AI copilot inside
+Factorial. **The Factorial backend** is Factorial's main application server.
+Neither is part of Factorial Code: both reach an installed App through its
+actions.
+
+**The Factorial backend is the only caller.** Every entry point goes through
+it: the button, the form, One and backend jobs. The backend's `factorial_code`
+component lists a company's actions and invokes them over the
+platform's **Actions API** with a service token. Before listing or running an
+action it checks two things. The company must have installed the App, and the
+user must hold the `requiredPolicies`. Actions are addressed by an opaque
+`act_…` id; the process slug never leaves the platform. Factorial's frontend
+and One reach the same operations through the backend's GraphQL:
+`factorialCode.actionsConnection`, `readOneFactorialcodeActionSchema`,
+`issueFactorialcodeActionUploadGrant` and
+`invokeFactorialcodeActionInvocation`. Each call names its entry point:
+`ui_trigger`, `form`, `agent_tool` or `backend`.
+
+**What One sees.** One does not get one tool per process, and it does not use
+MCP. It has four generic tools: list the company's Apps, list an App's actions
+for the `agent_tool` entry point, read an action's parameters schema, and run
+it. So a process is "exposed to One" when `factorial.enabled` and
+`agentTool.enabled` are on. The `agentTool` contract (below) is what One reads
+to choose the action, and the parameters schema is what it fills in. One asks
+the user to approve every run except a `READ` one. It waits for the result when
+`awaitResult` is `true`, and otherwise only learns the run started. These tools
+are built but not released yet (see the next section).
+
+**What the Factorial backend exposes to an App, and what it calls on its own.**
+
+- An App calls Factorial through the **Public API**, with its OAuth token and
+  scopes (`FACTORIAL_TOKEN`, `fcode-core-concepts`). This is the only way an
+  App reads or writes Factorial data.
+- Buttons appear at **UI locations** the backend declares, such as
+  `calendar.header.admin` (`fcode-ui-triggers`). A form opened from Factorial
+  submits through the same invoke call.
+- **Lifecycle**: the backend installs and uninstalls Apps for a company and
+  notifies the `sync` process of an integrations-framework App.
+- **`backend` jobs**: the backend accepts and lists the entry point, but
+  nothing in it runs one yet.
+- **No domain events**: nothing in Factorial triggers a process when its data
+  changes. Use a schedule, or a Public API webhook received by a process
+  webhook.
+
+**Not the same thing: the Factorial Code MCP server.** A process tagged
+`mcp-tool` becomes a tool for MCP clients that connect to Factorial Code with a
+developer's credentials, such as Claude Code (`fcode-agent`). That is a
+developer surface, and One does not use it.
+
 ## What is live today and what is not
 
 | Available now | Still to come |
 |---|---|
-| The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | **Factorial One tools**: the assistant reading the `agentTool` contract and calling the process |
+| The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | **Factorial One tools**: One reading the `agentTool` contract and running the action. The Factorial backend side is live; One's side is built and not released |
 | The **Actions API** Factorial invokes through: list a company's actions, read an action's form schema, invoke it, issue upload grants, and list an app's declared actions before it is installed | |
 | **`requiredPolicies` enforced** on every invocation, before anything runs | |
 | **`uiTrigger`**: the button lists and runs over this contract, addressed by an opaque `action_id` — no process slug reaches the browser | |
@@ -36,9 +87,10 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 | `lifecycleRole` derived from the process's `form.appRole`, or from the reserved slug when it declares none, and tagged in the console | |
 
 So today `uiTrigger`, `form`, `requiredPolicies` and `awaitResult` all do
-something. `agentTool` and `backend` are stored and reachable, but no assistant
-reads a tool contract yet — fill them in now so the action is ready when it
-does.
+something. `agentTool` and `backend` are stored, listed and invocable through
+the Factorial backend, but no released One reads a tool contract yet and
+nothing in the backend runs a `backend` job. Fill them in now so the action is ready when
+they do.
 
 ## Gotchas
 
