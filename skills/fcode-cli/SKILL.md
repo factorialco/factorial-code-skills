@@ -659,9 +659,9 @@ without the value ever appearing in the conversation.
 - **`FACTORIAL_BASE_URL`** (the Factorial API host the token belongs to) is set
   by hand in `variables.local.env` for local runs. Remotely, Factorial Code
   populates it only for development installations: in production it may be
-  missing, so an App that needs it defines it in its own variables (for example
-  `FACTORIAL_BASE_URL=https://api.factorialhr.com/` in
-  `deploy/prod/variables.env`). Code that has no default host — the inbound
+  missing, so an App that needs it defines it in its own `variables.env` (for
+  example `FACTORIAL_BASE_URL=https://api.factorialhr.com/`, as the DATEV app
+  does). Code that has no default host — the inbound
   sync helper, see `fcode-inbound-sync` — fails without it.
 - Once obtained, never echo secret values back in output or logs.
 

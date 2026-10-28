@@ -63,12 +63,10 @@ later (the helper's default).
 - **Every reported item needs an explicit `status`.** `syncableId` is sent on
   `success` only; `errorMessages` on `failed` / `invalid` only — and Factorial
   should show those messages to the customer, so write them for an end user.
-- **`FACTORIAL_BASE_URL` may be missing in production.** Factorial Code sets it
-  on the `deploy-` team only for development installations; without it
-  `startRun` raises a "not configured" `InboundSyncError`. Define it in the
-  App's own variables (for example
-  `FACTORIAL_BASE_URL=https://api.factorialhr.com/` in
-  `deploy/prod/variables.env`), or build the helper with the host as below.
+- **`FACTORIAL_BASE_URL` may be missing in production**, and then `startRun`
+  raises a "not configured" `InboundSyncError`. Define it in the App's variables
+  (see `fcode-cli` §Getting secret values for local runs) or build the helper
+  with the host (next gotcha).
 - **Use the helper on `fcode`, don't build `FcodeInboundSync` yourself** inside
   a process: the runtime one already has the installation's credentials and the
   token refresh wired in. The exceptions are a different API version, which the
