@@ -121,14 +121,12 @@ through `fcode.env`) — never repeated across processes.
    - **cancel**: every open item fails with `run_cancelled` and your reason
      (blank → default; over 200 characters → cut and suffixed ` […]`).
 
-A run may mix syncable types: an item's own `syncableType` / `syncable_type`
-overrides the handle's, rows are keyed by (syncable type, external identifier),
-and each write goes out as one request per type. The plan rule covers every
-type at once — **declare the items of every type before reporting any
-outcome**, never "declare and report type A, then declare and report type B":
-Factorial derives the run's status from its rows after every write, so a run
-whose declared items all have a final status closes before type B is declared.
-Declaring a reported item again, or reporting it `running`, reopens it.
+**Use one syncable type per run** — the handle's. That is the usual flow and
+the recommended one. Factorial does accept a run mixing types (an item's own
+`syncableType` / `syncable_type` overrides the handle's, and each write goes
+out as one request per type), but don't reach for it without a reason; if you
+do, the plan rule above still applies to the whole run. Declaring a reported
+item again, or reporting it `running`, reopens it.
 
 ```javascript
 // JavaScript
