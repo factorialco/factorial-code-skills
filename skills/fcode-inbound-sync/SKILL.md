@@ -273,7 +273,10 @@ fcode.inbound_sync.finish_run(handle)
 ```
 
 Declare in the launcher, not the worker, and let one process (or a final step)
-finish the run — the two rules are in Gotchas.
+finish the run — the two rules are in Gotchas. Check `handle.unsent` right after
+`declarePlan`: if it grew, part of the plan never reached Factorial and the run
+would close early once the first outcomes land, so cancel it instead of handing
+off.
 
 ### Aborting stale runs on uninstall
 
