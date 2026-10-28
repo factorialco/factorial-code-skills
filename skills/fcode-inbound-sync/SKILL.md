@@ -1,6 +1,6 @@
 ---
 name: fcode-inbound-sync
-description: Track an import into Factorial as an inbound sync run with the fcode.inboundSync / fcode.inbound_sync helper — start a run, declare the plan, report each item's outcome, finish or cancel, hand a run to a worker process, abort stale runs on uninstall, and what raises versus what is best effort. Use when a Factorial Code (fcode) process brings data from an external system into Factorial and the per-item result should show up in Factorial.
+description: Track a process that imports data into Factorial as an inbound sync run, so the customer sees each item's result. Use when a Factorial Code (fcode) process brings records from an external system into Factorial.
 license: MIT
 metadata:
   category: factorial-code
