@@ -114,9 +114,13 @@ doesn't match the token's is refused). `companyId` / `integrationUuid` are a
 several companies.
 
 `abortOpenRunsForIntegration` and `listRunsForIntegration` do take the uuid as
-an argument. It's fixed per integration, so keep it in one place — a constant
-in a shared module or a team variable (for example `INTEGRATION_UUID`, read
-through `fcode.env`) — never repeated across processes.
+an argument. **Suggestion:** take it from a run you opened —
+`handle.integrationUuid` / `handle.integration_uuid`, as Factorial returned it —
+and store it (for example in the datastore). Runs open under the integration
+that owns the OAuth credential, which can differ from an integration uuid the
+App knows. A constant or team variable (for example `INTEGRATION_UUID`, read
+through `fcode.env`) also works, kept in one place, as long as it is the uuid
+the runs actually use.
 
 ## The run lifecycle
 
