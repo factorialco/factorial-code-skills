@@ -103,8 +103,9 @@ automations).
 > not installed" error, or the run opens as `errored`.
 
 `startRun` doesn't need the integration: Factorial infers the company and the
-marketplace integration from the installation's OAuth token (a uuid that
-doesn't match the token's is refused). `companyId` / `integrationUuid` are a
+marketplace integration from the installation's OAuth token. A uuid that
+isn't the credential's is refused with a **403** `InboundSyncApiError` — not
+the 422 of the other refusals. `companyId` / `integrationUuid` are a
 **fallback** for when that inference fails, for example a credential that spans
 several companies.
 
