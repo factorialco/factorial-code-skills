@@ -139,7 +139,8 @@ the recommended one. Factorial does accept a run mixing types (an item's own
 `syncableType` / `syncable_type` overrides the handle's, and each write goes
 out as one request per type), but don't reach for it without a reason; if you
 do, the plan rule above still applies to the whole run. Declaring a reported
-item again, or reporting it `running`, reopens it.
+item again, or reporting it `running`, reopens the item but never the run: a
+finished run keeps its final status, and later writes are only stored.
 
 ```javascript
 // JavaScript
