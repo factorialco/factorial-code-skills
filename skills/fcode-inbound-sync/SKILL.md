@@ -313,9 +313,21 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 | `abortOpenRunsForIntegration` / `abort_open_runs_for_integration` | `InboundSyncApiError` when listing the runs is refused | A run that couldn't be aborted (left out of the result) |
 | `getRun`, `listRunsForIntegration`, `readResults` (and snake_case) | `InboundSyncApiError` | — |
 
-The plain error is `Error` in JavaScript and `ValueError` in Python. Errors
-expose `status` (HTTP) and `key` (a recognised error key), never the response
-body. Import the classes from the SDK (`require("@factorialco/fcode-sdk")` /
+The plain error is `Error` in JavaScript and `ValueError` in Python.
+`InboundSyncApiError` exposes, on `startRun` and read refusals:
+
+- `status` (HTTP) and `key` (a recognised error key, often `null`/`None` for a
+  non-English company);
+- `detail` — Factorial's refusal message(s), translated and possibly containing
+  request data, joined with `"; "` and capped at 500 characters, or
+  `undefined`/`None` when the answer has none;
+- `code` — the machine code of the first error, from API `2027-01-01` only.
+
+Branch on `status` (and on `code` from `2027-01-01`), never on `detail` text.
+`detail` is for the App to log for support, mainly when `key` is empty: the
+error's message never includes it and the helper never logs it, so whether to
+log or show it is the App's decision. The response body itself is never
+exposed. Import the classes from the SDK (`require("@factorialco/fcode-sdk")` /
 `from fcode_sdk import ...`) to catch them.
 
 **Retries.** Transport errors, 429 and 5xx are retried twice (0.5 s, then 2 s),
