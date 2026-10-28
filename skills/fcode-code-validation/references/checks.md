@@ -129,7 +129,7 @@ external system's behalf.
 | ID | Check | Sev | Owner |
 |---|---|---|---|
 | SYNC-01 | Every run declares its plan (`declarePlan` / `declare_plan`) before any outcome is reported — whichever process reports, the launcher declares first | B | `fcode-inbound-sync` §Gotchas, §Recommended flows |
-| SYNC-02 | A run is started only once the items are known: no path that opens a run and then returns or throws before declaring any item (that run can't be closed and blocks the next import) | W | `fcode-inbound-sync` §Gotchas |
+| SYNC-02 | A run is started only once the items are known: no path that opens a run and then returns or throws before declaring any item (Factorial never closes that run, and it blocks the next import for an hour) | W | `fcode-inbound-sync` §Gotchas |
 | SYNC-03 | `startRun` / `start_run` handles an already-open run with an explicit app decision (tell the user, queue, or abort the old run), not a generic failure — `SyncRunAlreadyRunningError` from API `2027-01-01`, a 422 `InboundSyncApiError` on the default `2026-10-01`; never by matching the (translated) message text | W | `fcode-inbound-sync` §Gotchas |
 | SYNC-04 | When a handle is passed to several workers, exactly one process finishes or cancels the run | W | `fcode-inbound-sync` §Recommended flows |
 | SYNC-05 | The `UNINSTALL` process aborts the integration's open runs (`abortOpenRunsForIntegration` / `abort_open_runs_for_integration`) | W | `fcode-inbound-sync` §Recommended flows |

@@ -30,10 +30,10 @@ later (the helper's default).
   as several requests (per syncable type, in batches of 200). Items reported
   before the rest are declared can close the run early, and later writes land
   on a finished run.
-- **Start a run only once you know what you will import.** A run that never
-  gets an item can't be closed by anyone — `finishRun` / `cancelRun` on an empty
-  handle send nothing and log a warning — and it blocks the next `startRun`
-  until Factorial's reaper closes it, about an hour later.
+- **Start a run only once you know what you will import.** Factorial never
+  closes a run that gets no item, and neither can the App — `finishRun` /
+  `cancelRun` on an empty handle send nothing and log a warning. It stays open
+  and blocks the next `startRun` until an hour after it started.
 - **One open run per company and integration** — sync parameters don't change
   that scope. What to do on a second `startRun` is **the App's decision** (tell
   the user an import is already running, queue it, or abort the old run); the
@@ -302,7 +302,7 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 | Call | Raises | Best effort (logged, counted in `handle.unsent`) |
 |---|---|---|
 | `startRun` / `start_run` | `InboundSyncApiError` for any refusal — including, on `2026-10-01`, a run already open (422); `SyncRunAlreadyRunningError` for a run already open from API `2027-01-01` (409); `InboundSyncError` (no token or base URL, network failure); a plain error for an empty type or a bad sync parameter | — |
-| `declarePlan` / `declare_plan` | Empty list | Any HTTP or network failure |
+| `declarePlan` / `declare_plan` | An empty list, an item without an identifier or a value that isn't an item (never for a status) | Any HTTP or network failure |
 | `reportOutcome`, `finishRun`, `cancelRun` (and snake_case) | Missing or unknown status | Same as `declarePlan` |
 | `abortRun` / `abort_run` | `InboundSyncApiError` on a refused read; `InboundSyncError` when a `running` item stays open | — |
 | `abortOpenRunsForIntegration` / `abort_open_runs_for_integration` | `InboundSyncApiError` when listing the runs is refused | A run that couldn't be aborted (left out of the result) |
@@ -315,9 +315,9 @@ body. Import the classes from the SDK (`require("@factorialco/fcode-sdk")` /
 
 **Retries.** Transport errors, 429 and 5xx are retried twice (0.5 s, then 2 s),
 and a 401 once after refreshing the token; each request times out after 20 s.
-**Opening a run is never retried** — a retry after a timeout could be refused
-by the run the first attempt opened — so a failed `startRun` is the user's to
-retry.
+**Opening a run doesn't retry transport errors or 5xx** — a retry could be
+refused by the run the first attempt opened — so a failed `startRun` is the
+user's to retry. It still retries a 429 and refreshes a 401.
 
 ## Reading a run back
 
