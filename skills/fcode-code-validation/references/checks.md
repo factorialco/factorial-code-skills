@@ -128,12 +128,12 @@ external system's behalf.
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|
-| SYNC-01 | Every run declares its plan (`declarePlan` / `declare_plan`) before any outcome is reported — whichever process reports, the launcher declares first | B | `fcode-inbound-sync` §Gotchas, §Handing a run to a worker process |
+| SYNC-01 | Every run declares its plan (`declarePlan` / `declare_plan`) before any outcome is reported — whichever process reports, the launcher declares first | B | `fcode-inbound-sync` §Gotchas, §Recommended flows |
 | SYNC-02 | A run is started only once the items are known: no path that opens a run and then returns or throws before declaring any item (that run can't be closed and blocks the next import) | W | `fcode-inbound-sync` §Gotchas |
-| SYNC-03 | `startRun` / `start_run` handles `SyncRunAlreadyRunningError` with an explicit app decision (tell the user, queue, or abort the old run), not a generic failure | W | `fcode-inbound-sync` §Gotchas |
-| SYNC-04 | When a handle is passed to several workers, exactly one process finishes or cancels the run | W | `fcode-inbound-sync` §Handing a run to a worker process |
-| SYNC-05 | The `UNINSTALL` process aborts the integration's open runs (`abortOpenRunsForIntegration` / `abort_open_runs_for_integration`) | W | `fcode-inbound-sync` §Aborting stale runs on uninstall |
-| SYNC-06 | Tracking uses the runtime helper on `fcode` — not a hand-built `FcodeInboundSync` or raw HTTP calls to the sync-run endpoints; the integration uuid comes from one team variable or constant; `errorMessages` are written for the customer and logs carry counts and run ids, never item identifiers | S | `fcode-inbound-sync` §Gotchas, §The integration uuid |
+| SYNC-03 | `startRun` / `start_run` handles an already-open run with an explicit app decision (tell the user, queue, or abort the old run), not a generic failure — `SyncRunAlreadyRunningError` from API `2027-01-01`, a 422 `InboundSyncApiError` on the default `2026-10-01`; never by matching the (translated) message text | W | `fcode-inbound-sync` §Gotchas |
+| SYNC-04 | When a handle is passed to several workers, exactly one process finishes or cancels the run | W | `fcode-inbound-sync` §Recommended flows |
+| SYNC-05 | The `UNINSTALL` process aborts the integration's open runs (`abortOpenRunsForIntegration` / `abort_open_runs_for_integration`) | W | `fcode-inbound-sync` §Recommended flows |
+| SYNC-06 | Tracking uses the runtime helper on `fcode` — not a hand-built `FcodeInboundSync` or raw HTTP calls to the sync-run endpoints; the integration uuid is not passed to `startRun` (Factorial infers it from the token) unless as a fallback, and for the abort/list calls comes from one constant or team variable; `errorMessages` are written for the customer and logs carry counts and run ids, never item identifiers | S | `fcode-inbound-sync` §Gotchas, §The integration uuid |
 | SYNC-07 | An app that imports records into Factorial reports the per-item results through inbound sync tracking (static approximation; note uncertainty) | S | `fcode-inbound-sync` §When to use it |
 
 ## REUSE — base-app reuse
