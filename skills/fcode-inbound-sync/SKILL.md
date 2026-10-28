@@ -305,18 +305,19 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 
 | Call | Raises | Best effort (logged, counted in `handle.unsent`) |
 |---|---|---|
-| `startRun` / `start_run` | `InboundSyncApiError` for any refusal; `SyncRunAlreadyRunningError` for a run already open, from API `2027-01-01` only (see Gotchas); `InboundSyncError` (no token or base URL, network failure); a plain error for an empty type or a bad sync parameter | — |
+| `startRun` / `start_run` | `InboundSyncApiError` for any refusal; `SyncRunAlreadyRunningError` for a run already open, from API `2027-01-01` only (see Gotchas); `InboundSyncError` (no token or base URL, network failure); `InboundSyncApiError` with `key` `missing_run_id` when a 2xx answer has no run id; a plain error for an empty type or a bad sync parameter | — |
 | `declarePlan` / `declare_plan` | An empty list, an item without an identifier or a value that isn't an item (never for a status) | Any HTTP or network failure |
-| `reportOutcome`, `finishRun`, `cancelRun` (and snake_case) | Missing or unknown status | Same as `declarePlan` |
+| `reportOutcome` / `report_outcome` | An item without an identifier, or a missing or unknown status | Same as `declarePlan` |
+| `finishRun`, `cancelRun` (and snake_case) | — | Same as `declarePlan` |
 | `abortRun` / `abort_run` | `InboundSyncApiError` on a refused read; `InboundSyncError` when a `running` item stays open | — |
 | `abortOpenRunsForIntegration` / `abort_open_runs_for_integration` | `InboundSyncApiError` when listing the runs is refused | A run that couldn't be aborted (left out of the result) |
-| `getRun`, `listRunsForIntegration`, `readResults` (and snake_case) | `InboundSyncApiError` | — |
+| `getRun`, `listRunsForIntegration`, `readResults` (and snake_case) | `InboundSyncError` when the helper has no token or base URL; `InboundSyncApiError` on a refusal, or with `status` 0 (and no `key`) when no answer came | — |
 
 The plain error is `Error` in JavaScript and `ValueError` in Python.
 `InboundSyncApiError` exposes, on `startRun` and read refusals:
 
-- `status` (HTTP) and `key` (a recognised error key, often `null`/`None` for a
-  non-English company);
+- `status` (HTTP) and `key` (a recognised error key, often `undefined`/`None`
+  for a non-English company);
 - `detail` — Factorial's refusal message(s), translated and possibly containing
   request data, joined with `"; "` and capped at 500 characters, or
   `undefined`/`None` when the answer has none;
