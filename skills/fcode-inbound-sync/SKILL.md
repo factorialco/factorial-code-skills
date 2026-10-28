@@ -13,9 +13,10 @@ reports each import as a **sync run**: one run per import, one **item** (row)
 per imported record, so Factorial can show the customer which items succeeded
 and which failed. The helper wraps Factorial's inbound integrations API and is on
 `fcode` in every process: `fcode.inboundSync` (JavaScript),
-`fcode.inbound_sync` (Python). Nothing to inherit or configure — it is built
-from the installation's `FACTORIAL_TOKEN` / `FACTORIAL_BASE_URL` (see
-`fcode-cli` for those variables) and refreshes an expired token itself.
+`fcode.inbound_sync` (Python). Nothing to inherit — it is built from the
+installation's `FACTORIAL_TOKEN` / `FACTORIAL_BASE_URL` (see `fcode-cli` for
+those variables) and refreshes an expired token itself. `FACTORIAL_BASE_URL` may
+be missing in production — see Gotchas.
 
 API data model: `https://apidoc.factorialhr.com/docs/inbound-integrations`.
 Platform docs: `/docs/building-apps/inbound-sync/` on
@@ -63,10 +64,18 @@ later (the helper's default).
 - **Every reported item needs an explicit `status`.** `syncableId` is sent on
   `success` only; `errorMessages` on `failed` / `invalid` only — and Factorial
   should show those messages to the customer, so write them for an end user.
+- **`FACTORIAL_BASE_URL` may be missing in production.** Factorial Code sets it
+  on the `deploy-` team only for development installations; without it
+  `startRun` raises a "not configured" `InboundSyncError`. Define it in the
+  App's own variables (for example
+  `FACTORIAL_BASE_URL=https://api.factorialhr.com/` in
+  `deploy/prod/variables.env`), or build the helper with the host as below.
 - **Use the helper on `fcode`, don't build `FcodeInboundSync` yourself** inside
   a process: the runtime one already has the installation's credentials and the
-  token refresh wired in. The one exception is a different API version, which
-  the runtime helper can't take. Then wire the same credentials in yourself:
+  token refresh wired in. The exceptions are a different API version, which the
+  runtime helper can't take, and a missing `FACTORIAL_BASE_URL` (pass
+  `baseUrl: "https://api.factorialhr.com"` / `base_url=...` instead of the
+  variable). Then wire the same credentials in yourself:
   `new FcodeInboundSync({ token: fcode.env.FACTORIAL_TOKEN, baseUrl:
   fcode.env.FACTORIAL_BASE_URL, refreshToken: async () => (await
   fcode.refreshFactorialToken()).token, apiVersion })` — Python:
