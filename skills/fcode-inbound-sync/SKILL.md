@@ -324,6 +324,9 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 | `getRun`, `listRunsForIntegration`, `readResults` (and snake_case) | `InboundSyncError` when the helper has no token or base URL; `InboundSyncApiError` on a refusal, or with `status` 0 (and no `key`) when no answer came | — |
 
 The plain error is `Error` in JavaScript and `ValueError` in Python.
+`SyncRunAlreadyRunningError` extends `InboundSyncError`, **not**
+`InboundSyncApiError`: it has no `status`, `key`, `detail` or `code`, so catch
+it before `InboundSyncError` and don't read `.status` on it.
 `InboundSyncApiError` exposes, on `startRun` and read refusals:
 
 - `status` (HTTP) and `key` (a recognised error key, often `undefined`/`None`
