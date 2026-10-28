@@ -182,8 +182,10 @@ fcode.inbound_sync.report_outcome(handle, [
 fcode.inbound_sync.finish_run(handle)
 ```
 
-Python items may also be `dict`s or plain identifier strings; JavaScript items
-are `{ externalIdentifier, status?, syncableId?, errorMessages?, syncableType? }`.
+`declarePlan` / `declare_plan` takes plain identifier strings or items. Reported
+items need a status: `SyncableItem`s or `dict`s in Python (a string raises
+`ValueError`), `{ externalIdentifier, status, syncableId?, errorMessages?,
+syncableType? }` in JavaScript.
 
 ### Sync parameters
 
