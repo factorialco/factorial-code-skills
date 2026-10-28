@@ -121,7 +121,7 @@ the Blocker and state what evidence would clear it. Mark the category
 
 ## SYNC — inbound sync tracking
 
-Applies to apps that import data into Factorial. Rows 01–06 apply when the
+Applies to apps that import data into Factorial. Rows 01–08 apply when the
 code calls `fcode.inboundSync` / `fcode.inbound_sync`; mark the category
 "N/A — no inbound import" when the app writes nothing into Factorial on an
 external system's behalf.
@@ -133,8 +133,10 @@ external system's behalf.
 | SYNC-03 | A refused `startRun` / `start_run` leads to an explicit app decision (tell the user, queue, or abort the old run), not a generic failure — either the run is opened on API `2027-01-01` and `SyncRunAlreadyRunningError` is caught, or, on the default `2026-10-01` where an open run is a 422 like any other refusal, any refusal on opening is treated as "try again later"; never by matching the message or `detail` text | W | `fcode-inbound-sync` §Gotchas |
 | SYNC-04 | When a handle is passed to several workers, exactly one process finishes or cancels the run | W | `fcode-inbound-sync` §Gotchas |
 | SYNC-05 | The `UNINSTALL` process aborts the integration's open runs (`abortOpenRunsForIntegration` / `abort_open_runs_for_integration`) | W | `fcode-inbound-sync` §Recommended flows |
-| SYNC-06 | Tracking uses the runtime helper on `fcode` — not a hand-built `FcodeInboundSync` (unless it needs another API version or a host `FACTORIAL_BASE_URL` doesn't provide) or raw HTTP calls to the sync-run endpoints; the integration uuid is not passed to `startRun` (Factorial infers it from the token) unless as a fallback, and for the abort/list calls comes from one place — ideally the uuid a run opened under (`handle.integrationUuid` / `handle.integration_uuid`), stored, or one constant or team variable matching it; `errorMessages` are written for the customer and logs carry counts and run ids, never item identifiers | S | `fcode-inbound-sync` §Gotchas, §The integration uuid |
-| SYNC-07 | An app that imports records into Factorial reports the per-item results through inbound sync tracking (static approximation; note uncertainty) | S | `fcode-inbound-sync` §When to use it |
+| SYNC-06 | Tracking uses the runtime helper on `fcode` — not a hand-built `FcodeInboundSync` (unless it needs another API version or a host `FACTORIAL_BASE_URL` doesn't provide) or raw HTTP calls to the sync-run endpoints | S | `fcode-inbound-sync` §Gotchas |
+| SYNC-07 | The integration uuid is not passed to `startRun` except as a fallback (Factorial infers it from the token), and for the abort/list calls comes from one place — ideally the uuid a run opened under (`handle.integrationUuid` / `handle.integration_uuid`), stored, or one constant or team variable matching it | S | `fcode-inbound-sync` §The integration uuid |
+| SYNC-08 | `errorMessages` / `error_messages` are written for the customer, who should see them in Factorial | S | `fcode-inbound-sync` §Gotchas |
+| SYNC-09 | An app that imports records into Factorial reports the per-item results through inbound sync tracking (static approximation; note uncertainty) | S | `fcode-inbound-sync` §When to use it |
 
 ## REUSE — base-app reuse
 
