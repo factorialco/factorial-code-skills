@@ -103,7 +103,8 @@ automations).
 > **Note for the developer — pass this on, don't act on it.** The integration
 > must be declared in Factorial with the inbound capability, and the company
 > must have installed the App. Otherwise `startRun` fails with an "integration
-> not installed" error, or the run opens as `errored`.
+> not installed" error, or, without the inbound capability, the run opens but
+> Factorial fails it (`errored`) shortly after.
 
 `startRun` doesn't need the integration: Factorial infers the company and the
 marketplace integration from the installation's OAuth token. A uuid that
