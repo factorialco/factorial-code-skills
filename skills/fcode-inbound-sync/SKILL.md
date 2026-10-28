@@ -10,8 +10,8 @@ metadata:
 
 An App that **imports data into Factorial** (an external system → Factorial)
 reports each import as a **sync run**: one run per import, one **item** (row)
-per imported record. Factorial shows the customer which items succeeded and
-which failed. The helper wraps Factorial's inbound integrations API and is on
+per imported record, so Factorial can show the customer which items succeeded
+and which failed. The helper wraps Factorial's inbound integrations API and is on
 `fcode` in every process: `fcode.inboundSync` (JavaScript),
 `fcode.inbound_sync` (Python). Nothing to inherit or configure — it is built
 from the installation's `FACTORIAL_TOKEN` / `FACTORIAL_BASE_URL` (see
@@ -33,10 +33,25 @@ later (the helper's default).
   gets an item can't be closed by anyone — `finishRun` / `cancelRun` on an empty
   handle send nothing and log a warning — and it blocks the next `startRun`
   until Factorial's reaper closes it, about an hour later.
-- **One open run per company and integration.** A second `startRun` raises
-  `SyncRunAlreadyRunningError` (HTTP 409). What to do is **the App's decision**
-  — tell the user an import is already running, queue it, or abort the old run;
-  the helper doesn't guess.
+- **One open run per company and integration** — sync parameters don't change
+  that scope. What to do on a second `startRun` is **the App's decision** (tell
+  the user an import is already running, queue it, or abort the old run); the
+  helper doesn't guess. **How it surfaces depends on the API version:**
+  - on `2026-10-01` — the helper's default, and the only version the runtime
+    `fcode` helper uses — it is an `InboundSyncApiError` with `status` 422, the
+    same status as other refusals (integration not installed, missing company).
+    Its message is translated into the company's language, so never match the
+    text;
+  - from `2027-01-01` Factorial answers 409 and the helper raises
+    `SyncRunAlreadyRunningError`. Getting it today means building your own
+    `FcodeInboundSync` with that `apiVersion` / `api_version` — a beta
+    version; see "Use the helper on `fcode`" below.
+- **Use only syncable types Factorial has registered.** The syncable type
+  (`compensations/compensation`, …) must be one of the public types the
+  monolith's syncable type registry knows; an unknown one is refused. A new
+  kind of record needs its type added in the Factorial monolith first (a value
+  in the public `SyncableItem` type enum plus a registry entry from the owning
+  component) — check the monolith before relying on a new type.
 - **Only one process finishes or cancels a run.** They close the rows *the
   local handle* still sees open, so with several workers sharing copies of a
   handle, one finishing fails items another is still processing.
@@ -47,10 +62,16 @@ later (the helper's default).
   unknown status) *does* throw, before anything is sent.
 - **Every reported item needs an explicit `status`.** `syncableId` is sent on
   `success` only; `errorMessages` on `failed` / `invalid` only — and Factorial
-  shows those messages to the customer, so write them for an end user.
+  should show those messages to the customer, so write them for an end user.
 - **Use the helper on `fcode`, don't build `FcodeInboundSync` yourself** inside
   a process: the runtime one already has the installation's credentials and the
-  token refresh wired in.
+  token refresh wired in. The one exception is a different API version, which
+  the runtime helper can't take. Then wire the same credentials in yourself:
+  `new FcodeInboundSync({ token: fcode.env.FACTORIAL_TOKEN, baseUrl:
+  fcode.env.FACTORIAL_BASE_URL, refreshToken: async () => (await
+  fcode.refreshFactorialToken()).token, apiVersion })` — Python:
+  `FcodeInboundSync(token=..., base_url=..., refresh_token=lambda:
+  fcode.refresh_factorial_token()["token"], api_version=...)`.
 - **No local-only mode.** Without `FACTORIAL_TOKEN` and `FACTORIAL_BASE_URL`,
   `startRun` raises `InboundSyncError` — see Running locally.
 - **Not tied to the "Integrations-framework app" type.** That type is for
@@ -72,18 +93,23 @@ automations).
 
 ## The integration uuid
 
-`startRun` accepts an optional `companyId` and `integrationUuid` (the App's
-marketplace integration uuid), and `abortOpenRunsForIntegration` /
-`listRunsForIntegration` require the uuid. **The App owns that value**: it's
-fixed per integration, so keep it in a team variable (for example
-`INTEGRATION_UUID`, read through `fcode.env`) or as a constant in the code —
-never hardcode it in several processes.
+`startRun` doesn't need the integration: Factorial infers the company and the
+marketplace integration from the installation's OAuth token (a uuid that
+doesn't match the token's is refused). `companyId` / `integrationUuid` are a
+**fallback** for when that inference fails, for example a credential that spans
+several companies.
+
+`abortOpenRunsForIntegration` and `listRunsForIntegration` do take the uuid as
+an argument. It's fixed per integration, so keep it in one place — a constant
+in a shared module or a team variable (for example `INTEGRATION_UUID`, read
+through `fcode.env`) — never repeated across processes.
 
 ## The run lifecycle
 
 1. **Start the run** — opens an empty run and returns a **handle** you pass to
    every later call. The argument is the **syncable type**, the kind of record
-   the run imports (for example `compensations/compensation`).
+   the run imports (for example `compensations/compensation`). Optionally pass
+   the run's **sync parameters** (see below).
 2. **Declare the plan** — every item you are about to import, all as
    `running`, right after starting. Items are external identifiers (strings) or
    item objects.
@@ -95,15 +121,14 @@ never hardcode it in several processes.
    - **cancel**: every open item fails with `run_cancelled` and your reason
      (blank → default; over 200 characters → cut and suffixed ` […]`).
 
-A run may mix syncable types: an item's own `syncableType` overrides the
-handle's, and rows are keyed by (syncable type, external identifier).
-Declaring a reported item again, or reporting it `running`, reopens it.
+Use **one syncable type per run** — the handle's. Factorial derives the run's
+status from its rows after every write, so rows of another type written in a
+later request can land on a run that is already finished. Declaring a reported
+item again, or reporting it `running`, reopens it.
 
 ```javascript
 // JavaScript
-const handle = await fcode.inboundSync.startRun("compensations/compensation", {
-  integrationUuid: fcode.env.INTEGRATION_UUID,
-});
+const handle = await fcode.inboundSync.startRun("compensations/compensation");
 
 await fcode.inboundSync.declarePlan(handle, ["emp-1", "emp-2", "emp-3"]);
 
@@ -122,10 +147,7 @@ await fcode.inboundSync.finishRun(handle);
 # Python
 from fcode_sdk import SyncableItem
 
-handle = fcode.inbound_sync.start_run(
-    "compensations/compensation",
-    integration_uuid=fcode.env.INTEGRATION_UUID,
-)
+handle = fcode.inbound_sync.start_run("compensations/compensation")
 
 fcode.inbound_sync.declare_plan(handle, ["emp-1", "emp-2", "emp-3"])
 
@@ -141,7 +163,35 @@ fcode.inbound_sync.finish_run(handle)
 ```
 
 Python items may also be `dict`s or plain identifier strings; JavaScript items
-are `{ externalIdentifier, status?, syncableId?, errorMessages?, syncableType? }`.
+are `{ externalIdentifier, status?, syncableId?, errorMessages? }`.
+
+### Sync parameters
+
+`startRun` takes the run's sync parameters as a key/value map, stored on the
+run (sent as `sync_parameters`, each value as a string):
+
+```javascript
+const handle = await fcode.inboundSync.startRun("compensations/compensation", {
+  parameters: { payroll_run_id: payrollRunId },
+});
+```
+
+```python
+handle = fcode.inbound_sync.start_run(
+    "compensations/compensation", parameters={"payroll_run_id": payroll_run_id}
+)
+```
+
+- Factorial keeps every key, but only acts on the ones it knows. Today that is
+  **`payroll_run_id`**: it links a payroll-results import to the payroll run it
+  writes into, and when the run finishes Factorial moves that payroll run to
+  review and notifies the customer. It must be the payroll run's integer id.
+- The map must be a `dict` (Python) or plain object (JavaScript). Keys are
+  non-blank strings (trimmed); values are non-blank strings or integers —
+  floats, booleans, `null`/`None` and nested values are refused with a plain
+  error before anything is sent.
+- Parameters don't change the one-open-run scope: two runs with different
+  parameters still block each other.
 
 ## Item statuses
 
@@ -155,7 +205,9 @@ are `{ externalIdentifier, status?, syncableId?, errorMessages?, syncableType? }
 A run's own status is `running`, `succeeded`, `succededwitherrors` (sic) or
 `errored`.
 
-## Handing a run to a worker process
+## Recommended flows
+
+### Handing a run to a worker process
 
 The usual shape: the process behind the form (or schedule) opens the run and
 declares the plan, then hands the work to a worker with
@@ -201,7 +253,7 @@ Declare in the launcher, not the worker: the plan must exist before the first
 outcome, whichever process reports it. If several workers report, only one of
 them (or a final step) finishes the run.
 
-## Aborting stale runs on uninstall
+### Aborting stale runs on uninstall
 
 A run left open blocks the next one until Factorial closes it, an hour after it
 opened. The App's uninstall process (the `uninstall` lifecycle slug — see
@@ -238,7 +290,7 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 
 | Call | Raises | Best effort (logged, counted in `handle.unsent`) |
 |---|---|---|
-| `startRun` / `start_run` | `SyncRunAlreadyRunningError` (409, a run is open); `InboundSyncError` (no token or base URL, network failure); `InboundSyncApiError` (any other refusal: token still rejected after refresh, integration not installed, 5xx); a plain error for an empty type | — |
+| `startRun` / `start_run` | `InboundSyncApiError` for any refusal — including, on `2026-10-01`, a run already open (422); `SyncRunAlreadyRunningError` for a run already open from API `2027-01-01` (409); `InboundSyncError` (no token or base URL, network failure); a plain error for an empty type or a bad sync parameter | — |
 | `declarePlan` / `declare_plan` | Empty list | Any HTTP or network failure |
 | `reportOutcome`, `finishRun`, `cancelRun` (and snake_case) | Missing or unknown status | Same as `declarePlan` |
 | `abortRun` / `abort_run` | `InboundSyncApiError` on a refused read; `InboundSyncError` when a `running` item stays open | — |
