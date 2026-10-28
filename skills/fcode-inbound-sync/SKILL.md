@@ -56,11 +56,10 @@ later (the helper's default).
 - **Only one process finishes or cancels a run.** They close the rows *the
   local handle* still sees open, so with several workers sharing copies of a
   handle, one finishing fails items another is still processing.
-- **Writes after `startRun` never throw.** Declaring, reporting, finishing and
-  cancelling are best effort: a failed batch is logged and counted in
-  `handle.unsent` instead of breaking the import. Check `handle.unsent` at the
-  end if the user should hear about it. Bad input (an empty plan, a missing or
-  unknown status) *does* throw, before anything is sent.
+- **Writes after `startRun` never throw** — a failed batch is counted in
+  `handle.unsent` instead of breaking the import. Check it at the end if the
+  user should hear about it. Bad input still throws; see What raises and what
+  is best effort.
 - **Every reported item needs an explicit `status`.** `syncableId` is sent on
   `success` only; `errorMessages` on `failed` / `invalid` only — and Factorial
   should show those messages to the customer, so write them for an end user.
@@ -81,8 +80,6 @@ later (the helper's default).
   fcode.refreshFactorialToken()).token, apiVersion })` — Python:
   `FcodeInboundSync(token=..., base_url=..., refresh_token=lambda:
   fcode.refresh_factorial_token()["token"], api_version=...)`.
-- **No local-only mode.** Without `FACTORIAL_TOKEN` and `FACTORIAL_BASE_URL`,
-  `startRun` raises `InboundSyncError` — see Running locally.
 - **Not tied to the "Integrations-framework app" type.** That type is for
   outbound connectors Factorial calls; an inbound App is a **Standard app** (see
   `fcode-ama` `references/journey.md` §2).
@@ -129,7 +126,7 @@ the runs actually use.
    the run imports (for example `compensations/compensation`). Optionally pass
    the run's **sync parameters** (see below).
 2. **Declare the plan** — every item you are about to import, all as
-   `running`, right after starting. Items are external identifiers (strings) or
+   `running`, right after starting (see Gotchas for why first). Items are external identifiers (strings) or
    item objects.
 3. **Report outcomes** — each item's final status once your import is done
    with it, as many calls as you like (for example one per batch). **Factorial
@@ -212,8 +209,6 @@ handle = fcode.inbound_sync.start_run(
   non-blank strings (trimmed); values are non-blank strings or integers —
   floats, booleans, `null`/`None` and nested values are refused with a plain
   error before anything is sent.
-- Parameters don't change the one-open-run scope: two runs with different
-  parameters still block each other.
 
 ## Item statuses
 
@@ -271,14 +266,13 @@ fcode.inbound_sync.report_outcome(handle, results)
 fcode.inbound_sync.finish_run(handle)
 ```
 
-Declare in the launcher, not the worker: the plan must exist before the first
-outcome, whichever process reports it. If several workers report, only one of
-them (or a final step) finishes the run.
+Declare in the launcher, not the worker, and let one process (or a final step)
+finish the run — the two rules are in Gotchas.
 
 ### Aborting stale runs on uninstall
 
-A run left open blocks the next one until Factorial closes it, an hour after it
-opened. The App's uninstall process (the `uninstall` lifecycle slug — see
+A run left open keeps blocking the next import (see Gotchas). The App's
+uninstall process (the `uninstall` lifecycle slug — see
 `fcode-factorial-actions`) closes whatever is still open, without a stored
 handle:
 
@@ -312,7 +306,7 @@ aborted = fcode.inbound_sync.abort_open_runs_for_integration(
 
 | Call | Raises | Best effort (logged, counted in `handle.unsent`) |
 |---|---|---|
-| `startRun` / `start_run` | `InboundSyncApiError` for any refusal — including, on `2026-10-01`, a run already open (422); `SyncRunAlreadyRunningError` for a run already open from API `2027-01-01` (409); `InboundSyncError` (no token or base URL, network failure); a plain error for an empty type or a bad sync parameter | — |
+| `startRun` / `start_run` | `InboundSyncApiError` for any refusal; `SyncRunAlreadyRunningError` for a run already open, from API `2027-01-01` only (see Gotchas); `InboundSyncError` (no token or base URL, network failure); a plain error for an empty type or a bad sync parameter | — |
 | `declarePlan` / `declare_plan` | An empty list, an item without an identifier or a value that isn't an item (never for a status) | Any HTTP or network failure |
 | `reportOutcome`, `finishRun`, `cancelRun` (and snake_case) | Missing or unknown status | Same as `declarePlan` |
 | `abortRun` / `abort_run` | `InboundSyncApiError` on a refused read; `InboundSyncError` when a `running` item stays open | — |
@@ -340,8 +334,9 @@ doesn't know is returned as received and logged.
 
 ## Running locally
 
-The helper always talks to a real Factorial API. For `fcode run`, put
+There's no local-only mode: the helper always talks to a real Factorial API,
+and without a token and a host `startRun` raises `InboundSyncError`. For
+`fcode run`, put
 `FACTORIAL_TOKEN` and `FACTORIAL_BASE_URL` in `variables.local.env` (how to get
 the token: `fcode-cli` §Getting secret values for local runs), pointing at a
 Factorial environment you control or at a stub of the endpoints you need.
-Without them, `startRun` raises.
