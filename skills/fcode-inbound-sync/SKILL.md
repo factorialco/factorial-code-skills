@@ -121,10 +121,14 @@ through `fcode.env`) — never repeated across processes.
    - **cancel**: every open item fails with `run_cancelled` and your reason
      (blank → default; over 200 characters → cut and suffixed ` […]`).
 
-Use **one syncable type per run** — the handle's. Factorial derives the run's
-status from its rows after every write, so rows of another type written in a
-later request can land on a run that is already finished. Declaring a reported
-item again, or reporting it `running`, reopens it.
+A run may mix syncable types: an item's own `syncableType` / `syncable_type`
+overrides the handle's, rows are keyed by (syncable type, external identifier),
+and each write goes out as one request per type. The plan rule covers every
+type at once — **declare the items of every type before reporting any
+outcome**, never "declare and report type A, then declare and report type B":
+Factorial derives the run's status from its rows after every write, so a run
+whose declared items all have a final status closes before type B is declared.
+Declaring a reported item again, or reporting it `running`, reopens it.
 
 ```javascript
 // JavaScript
@@ -163,7 +167,7 @@ fcode.inbound_sync.finish_run(handle)
 ```
 
 Python items may also be `dict`s or plain identifier strings; JavaScript items
-are `{ externalIdentifier, status?, syncableId?, errorMessages? }`.
+are `{ externalIdentifier, status?, syncableId?, errorMessages?, syncableType? }`.
 
 ### Sync parameters
 
