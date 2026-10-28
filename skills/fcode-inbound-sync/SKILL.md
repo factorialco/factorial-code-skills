@@ -47,12 +47,13 @@ later (the helper's default).
     `SyncRunAlreadyRunningError`. Getting it today means building your own
     `FcodeInboundSync` with that `apiVersion` / `api_version` — a beta
     version; see "Use the helper on `fcode`" below.
-- **Use only syncable types Factorial has registered.** The syncable type
-  (`compensations/compensation`, …) must be one of the public types the
-  monolith's syncable type registry knows; an unknown one is refused. A new
-  kind of record needs its type added in the Factorial monolith first (a value
-  in the public `SyncableItem` type enum plus a registry entry from the owning
-  component) — check the monolith before relying on a new type.
+- **Use only syncable types Factorial has registered**: today
+  `compensations/compensation`, `expenses/expense`, `finance/vendor`,
+  `finance/financial_document` and the `employee_updates/…` types. An unknown
+  type refuses the whole write (logged), and its items end as `not_reported`.
+  A new kind of record needs its type added in the Factorial monolith first (a
+  value in the public `SyncableItem` type enum plus a registry entry from the
+  owning component) — check the monolith before relying on a new type.
 - **Only one process finishes or cancels a run.** They close the rows *the
   local handle* still sees open, so with several workers sharing copies of a
   handle, one finishing fails items another is still processing.
@@ -61,8 +62,10 @@ later (the helper's default).
   user should hear about it. Bad input still throws; see What raises and what
   is best effort.
 - **Every reported item needs an explicit `status`.** `syncableId` is sent on
-  `success` only; `errorMessages` on `failed` / `invalid` only — and Factorial
-  should show those messages to the customer, so write them for an end user.
+  `success` only, and a record that isn't the company's or of the item's type
+  leaves the item `invalid` with a `syncable_id` error. `errorMessages` go on
+  `failed` / `invalid` only — and Factorial should show those messages to the
+  customer, so write them for an end user.
 - **`FACTORIAL_BASE_URL` may be missing in production**, and then `startRun`
   raises a "not configured" `InboundSyncError`. Define it in the App's variables
   (see `fcode-cli` §Getting secret values for local runs) or build the helper
@@ -142,6 +145,8 @@ out as one request per type), but don't reach for it without a reason; if you
 do, the plan rule above still applies to the whole run. Declaring a reported
 item again, or reporting it `running`, reopens the item but never the run: a
 finished run keeps its final status, and later writes are only stored.
+Duplicate (type, identifier) rows in one call are dropped before sending; the
+last one wins.
 
 ```javascript
 // JavaScript
@@ -209,6 +214,7 @@ handle = fcode.inbound_sync.start_run(
   non-blank strings (trimmed); values are non-blank strings or integers —
   floats, booleans, `null`/`None` and nested values are refused with a plain
   error before anything is sent.
+- `sync_parameters` is a private field, not part of Factorial's published API.
 
 ## Item statuses
 
