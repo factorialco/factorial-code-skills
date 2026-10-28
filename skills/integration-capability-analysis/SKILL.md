@@ -133,7 +133,11 @@ return.
 **Inbound** — the vendor is the source. We **read from the vendor** and write
 into Factorial, so the vendor needs **read** endpoints (`GET`, ideally paginated
 and filterable by modification date) that return what Factorial's write
-endpoints require.
+endpoints require. Each inbound import reports its per-item results to
+Factorial as a sync run
+([inbound integrations](https://apidoc.factorialhr.com/docs/inbound-integrations));
+on Factorial Code that is the `fcode-inbound-sync` helper, so the vendor side
+needs a stable identifier per record to report against.
 
 A rich read API contributes nothing to an outbound capability, and a rich write
 API nothing to an inbound one. That mismatch is the most common way a vendor

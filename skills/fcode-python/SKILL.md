@@ -81,6 +81,9 @@ fcode.processes.run("process-identifier", options)
 greeting = fcode.i18n("greetings.hello", {"name": "Ada"})  # %{name} filled in
 fcode.i18n("greetings.hello", {"name": "Ada"}, {"locale": "es"})  # another locale, this lookup only (value may be dynamic)
 locale = fcode.i18n.locale  # the execution's locale
+
+# Track an import into Factorial as a sync run (see fcode-inbound-sync)
+handle = fcode.inbound_sync.start_run("compensations/compensation")
 ```
 
 ## Logging

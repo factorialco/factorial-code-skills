@@ -119,6 +119,25 @@ the Blocker and state what evidence would clear it. Mark the category
 | MAIL-03 | Mail is transactional — tied to an event in the customer's account; no newsletters, campaigns, external mailing lists, or fan-out (`fcode.processes.run`, schedules, large `to` arrays) that exists to get past the 3-per-execution cap | B | `fcode-core-concepts` §Sending email |
 | MAIL-04 | Content never poses as Factorial system mail (password reset, login alert, billing), as another company, or as a person; the app is named in the subject or heading | B | `fcode-core-concepts` §Sending email |
 
+## SYNC — inbound sync tracking
+
+Applies to apps that import data into Factorial. Rows 01–08 apply when the
+code calls `fcode.inboundSync` / `fcode.inbound_sync`; mark the category
+"N/A — no inbound import" when the app writes nothing into Factorial on an
+external system's behalf.
+
+| ID | Check | Sev | Owner |
+|---|---|---|---|
+| SYNC-01 | Every run declares its plan (`declarePlan` / `declare_plan`) before any outcome is reported — whichever process reports, the launcher declares first | B | `fcode-inbound-sync` §Gotchas, §Recommended flows |
+| SYNC-02 | A run is started only once the items are known: no path that opens a run and then returns or throws before declaring any item (Factorial never closes that run, and it blocks the next import for an hour) | W | `fcode-inbound-sync` §Gotchas |
+| SYNC-03 | An already-running refusal of `startRun` / `start_run` — the 409 `SyncRunAlreadyRunningError` from API `2027-01-01`, or the indistinguishable 422 on `2026-10-01` — leads to an explicit app decision (tell the user, queue, or abort the old run), never detected by message or `detail` text | W | `fcode-inbound-sync` §Gotchas |
+| SYNC-04 | When a handle is passed to several workers, exactly one process finishes or cancels the run | W | `fcode-inbound-sync` §Gotchas |
+| SYNC-05 | The `UNINSTALL` process aborts the integration's open runs (`abortOpenRunsForIntegration` / `abort_open_runs_for_integration`) | W | `fcode-inbound-sync` §Recommended flows |
+| SYNC-06 | Tracking uses the runtime helper on `fcode` — not a hand-built `FcodeInboundSync` (unless it needs another API version or a host `FACTORIAL_BASE_URL` doesn't provide) or raw HTTP calls to the sync-run endpoints | S | `fcode-inbound-sync` §Gotchas |
+| SYNC-07 | The integration uuid is not passed to `startRun` except as a fallback (Factorial infers it from the token), and for the abort/list calls comes from one place — ideally the uuid a run opened under (`handle.integrationUuid` / `handle.integration_uuid`), stored, or one constant or team variable matching it | S | `fcode-inbound-sync` §The integration uuid |
+| SYNC-08 | `errorMessages` / `error_messages` are written for the customer, who should see them in Factorial | S | `fcode-inbound-sync` §Gotchas |
+| SYNC-09 | An app that imports records into Factorial reports the per-item results through inbound sync tracking (static approximation; note uncertainty) | S | `fcode-inbound-sync` §When to use it |
+
 ## REUSE — base-app reuse
 
 Reimplementations of the core base modules block because the platform

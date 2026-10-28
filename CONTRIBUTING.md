@@ -19,6 +19,7 @@ repeat the explanation across skills.
 | Factorial Actions: the `factorial` block field by field (master switch, `awaitResult`, `requiredPolicies`, entry-point sub-blocks), the Factorial One `agentTool` contract and how to write it, reserved lifecycle slugs and `lifecycleRole`, the legacy `form` / `uiTrigger` mirror rules, what is live per phase | `fcode-factorial-actions` |
 | UI trigger buttons inside Factorial: location contract, what the process receives, the `{ data }` / `{ errors }` envelope, form-backed triggers, icon allowlist | `fcode-ui-triggers` |
 | Locales & translations: locale files and inheritance, the `fcode.i18n` helper, form-schema i18n tokens, execution-locale selection, locale versioning, `i18n:*` commands | `fcode-i18n` |
+| Inbound sync tracking: the `fcode.inboundSync` / `fcode.inbound_sync` helper, the run lifecycle and its ordering rules, item statuses, handle hand-off to workers, aborting stale runs, what raises vs. what is best effort, the integration uuid | `fcode-inbound-sync` |
 | Agent working method, MCP tools | `fcode-agent` |
 | Pre-production app validation: the check catalog and its severities (Blocker/Warning/Suggestion), the `APP_VALIDATION_REPORT.md` format, the read-only review procedure and verdict rules — each checked *rule* stays with its owning skill | `fcode-code-validation` |
 | Dev→prod code promotion: the `fcode remote:add` release flow, its validation gate, divergence and confirmation rules | `fcode-release` |

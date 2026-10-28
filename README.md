@@ -33,6 +33,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | [`fcode-forms`](skills/fcode-forms) | Embedding a process's input-parameter form on a webpage. |
 | [`fcode-factorial-actions`](skills/fcode-factorial-actions) | Exposing a process to Factorial as a Factorial Action: the `factorial` metadata block, the Factorial One tool contract, reserved lifecycle slugs, the legacy `form` / `uiTrigger` mirror. |
 | [`fcode-ui-triggers`](skills/fcode-ui-triggers) | Surfacing an app process as a button inside the Factorial UI: `factorial.uiTrigger` settings, the result envelope, form-backed triggers. |
+| [`fcode-inbound-sync`](skills/fcode-inbound-sync) | Tracking an import into Factorial as an inbound sync run with `fcode.inboundSync` / `fcode.inbound_sync`: the run lifecycle, per-item statuses, handing a run to a worker, aborting stale runs on uninstall. |
 | [`fcode-i18n`](skills/fcode-i18n) | Workspace locales and translations: locale files, the `fcode.i18n` helper, translated form schemas, and the `i18n:*` CLI commands. |
 | [`fcode-code-validation`](skills/fcode-code-validation) | Pre-production review of an app: clone the workspace read-only, run the static check catalog, and write `APP_VALIDATION_REPORT.md` with a ✅/❌ promotion verdict. |
 | [`fcode-release`](skills/fcode-release) | Promote an app's code from its `dev-` workspace to its `prod-` workspace via `fcode remote:add`, gated by validation and explicit confirmation. |
