@@ -39,7 +39,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme |
 | Webhook entry point authenticated by the platform, not in process code | integration-acme, custom-app-linear |
 | Activating webhook / form triggers in `metadata.json`, and protecting the webhook (`webhook.authMode` + the workspace `webhookAuth`, marketplace `appRole`) | integration-acme, custom-app-linear |
-| Multi-step setup form (`nextProcessId` chaining) | custom-app-linear |
+| Multi-step setup flow across processes (`process` steps in `ui:steps`), with a second form built from data fetched with the first step's key | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | OAuth connect button in a form (`ui:widget: "oauth"`): pre-render calls `fcode.oauth.start()`, the platform runs both redirect legs and invokes the completion process, which exchanges the code and 302s to the SDK callback page; `onComplete: "reload"` renders the connected state | oauth-connect |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |

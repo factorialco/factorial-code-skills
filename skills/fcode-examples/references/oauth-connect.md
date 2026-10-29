@@ -313,6 +313,7 @@ module.exports = { main };
     token) per connection — an account id, a tenant id — instead of a single
     `CONNECTION_KEY`.
 11. The connect field doesn't need a form of its own: it can sit directly in
-    an install or settings form, or live in a dedicated connect process
-    reached with `nextProcessId` (or opened directly as a user form) when
-    other steps must run first.
+    an install or settings form, or live in a dedicated connect process —
+    a `process` step of the install flow (see `fcode-forms` § Multi-step
+    forms), or opened directly as a user form — when other steps must run
+    first.

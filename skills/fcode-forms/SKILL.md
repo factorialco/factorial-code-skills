@@ -55,6 +55,11 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
   synchronous process fast, or run long work asynchronously (see below).
+- **A fixed wizard across processes is a flow, not a `nextProcessId` chain**:
+  declare every step in the entry form's `ui:steps` (`process` steps take
+  slugs) and return no `nextProcessId` on the default path. The user can go
+  back and re-submit, so every process in a flow must be safe to re-run. See
+  "Multi-step forms".
 - Prefer driving UX from the **process return value** (below); reserve
   `onSuccess`/`onError` for client-only logic.
 
@@ -263,20 +268,25 @@ flow between steps. For passing data, don't block the submit — instead:
 
 - **`preRenderProcess`** computes server-side `variables` before the form
   renders (see `references/advanced.md`).
-- **Chained multi-step forms** carry state forward via `nextProcessId` +
-  `variables` (below). If the steps are only visual — no work between them —
-  use `ui:steps` instead and keep a single process.
+- **Multi-step forms across processes** — a multi-process flow, or
+  `nextProcessId` chaining — carry state forward in `steps` + `variables`
+  (below). If the steps are only visual — no work between them — use
+  `ui:steps` instead and keep a single process.
 
 ## Multi-step forms
 
-Two mechanisms, and picking the right one matters:
+Three mechanisms, and picking the right one matters:
 
 | Mechanism | Processes | Executions | Use when |
 |---|---|---|---|
 | **`ui:steps`** — steps within one form | one | one, after the last step | The split is purely visual; all the logic lives in one process |
-| **`nextProcessId`** — chaining | one per step | one per step | An intermediate step must actually execute something (validate externally, compute `variables` for the next form) |
+| **Multi-process flow** — `process` steps in `ui:steps` | one per form | one per form | An intermediate step must execute something (validate externally, store a credential the next form needs) **and** the steps are known up front |
+| **`nextProcessId`** — chaining | one per form | one per form | Each process decides at run time which form comes next |
 
-They compose: a chained process's form can itself declare `ui:steps`.
+They compose: a flow's entry form splits into `fields` steps, and a chained
+process's form can itself declare `ui:steps`. A wizard whose processes always
+return the same fixed `nextProcessId` is a flow written the hard way — declare
+the flow instead, so the user gets one navigation and can go back.
 
 **When a form grows long — roughly ten fields or more — split it with
 `ui:steps`**, grouping related fields per step with the required ones early.
@@ -312,9 +322,105 @@ parameter exactly as a one-page form would — process code needs no changes.
   `oneOf`/`allOf` compositions are not split into steps. SDK version
   requirements in `references/advanced.md`.
 
+### Multi-process flows (`process` steps)
+
+The entry form's `ui:steps` declares every step of the wizard, including the
+forms other processes serve: a step with `process: "<slug>"` instead of
+`fields` renders that process's whole form. The user sees one navigation for
+the whole flow, and the SDK moves from one process to the next on its own.
+
+Worked example — an install form that takes a third-party API key, then maps
+teams in a second form whose dropdowns are fetched with that key. The entry
+process `vendor-setup` owns the flow:
+
+```json
+{
+  "title": "Connect Vendor",
+  "type": "object",
+  "properties": {
+    "vendor_api_key": { "title": "Vendor API key", "type": "string", "isSensitive": true }
+  },
+  "required": ["vendor_api_key"],
+  "ui": {
+    "ui:steps": {
+      "steps": [
+        { "title": "Connect", "description": "Enter your API key", "fields": ["vendor_api_key"] },
+        { "title": "Map teams", "description": "Map each Vendor team", "process": "vendor-setup-mapping" }
+      ]
+    }
+  }
+}
+```
+
+```js
+// processes/vendor-setup/index.js — runs when "Connect" is submitted
+async function main() {
+  const { vendor_api_key } = fcode.context.parameters;
+  const { VendorClient } = fcode.import("vendor-client");
+  await new VendorClient(vendor_api_key).getTeams(); // throws on a bad key
+  await fcode.variables.set("VENDOR_API_KEY", vendor_api_key); // overwrite: safe to re-run
+  return {}; // no nextProcessId: the flow moves on to "Map teams"
+}
+```
+
+`vendor-setup-mapping`'s schema sets `preRenderProcess`, and that pre-render
+reads `VENDOR_API_KEY` to load the vendor's teams into `#/variables` — it runs
+when the "Map teams" form is served, after the key is stored, which a
+pre-render on the entry form never could. The full app (Linear, mapping
+pre-render, activation, settings, uninstall) is `fcode-examples`
+(`references/custom-app-linear.md`).
+
+The rules:
+
+- **The entry form owns the flow.** Only the first form declares the flow's
+  steps and its `config` (`layout`, `nextLabel`, `backLabel`), which applies
+  throughout. A later form's own `process` steps and `config` are ignored.
+- **A `process` step can have sub-steps.** When that process's own form
+  declares `ui:steps` with two or more `fields` steps, they show one level
+  below the process step in the navigation (`2.1`, `2.2`, …) once the form
+  loads. Until then the process step is a single item. They behave like
+  in-form steps: only the last one submits, running the process once. Without
+  its own `ui:steps`, the process step renders as one page. Use this for a
+  long form served by a later process: the flow keeps one navigation, and the
+  form keeps its steps when it is opened on its own.
+- **`fields` steps first, at least one of them.** They split the entry form
+  and are submitted together to the entry process. A `fields` step after a
+  `process` step is dropped with a console warning; with no `fields` step at
+  all, the whole `ui:steps` is ignored and the form renders as a single page.
+- **`process` takes a slug**, like `nextProcessId`. On the marketplace path
+  the platform rewrites the slugs into its own action ids — never write ids.
+- **No `nextProcessId` on the default path.** After each successful submit the
+  SDK moves to the next declared step. Every submit button but the last is
+  labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
+- **State carries forward as in a chain**: each process receives the earlier
+  forms' data and results in `fcode.context.parameters.steps`, and a returned
+  `variables` node reaches the following forms.
+- **Every process in a flow must be safe to re-run.** The user can go back to
+  any step already reached; it reopens filled with what was submitted (a
+  process step with sub-steps reopens on its last sub-step), and
+  submitting it again re-runs its process and discards every later step's
+  `steps` entries, data and variables. Overwrite variables and datastore keys
+  rather than appending, and look up webhooks or schedules (or the ids you
+  recorded for them) before creating them.
+
+**Overriding the next step.** A process may still return `nextProcessId`:
+
+- naming a **later declared step**, the flow jumps there and the steps in
+  between show as skipped;
+- naming a process the flow **doesn't declare**, the flow resets: its
+  navigation and history go away, and that process's form renders on its own,
+  honouring its own `ui:steps`. `steps` and `variables` still carry forward,
+  and the console warns. Treat this as an exit from the wizard, not a branch
+  inside it.
+
+Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.6.0
+(`references/advanced.md`).
+
 ### Chaining processes (`nextProcessId`)
 
-Each step is its own process. Return the next process's **slug** to advance:
+Each form is its own process, and each process names the next form to show by
+returning its **slug** — use this when the route is decided at run time, not
+for a fixed sequence (declare a flow for that):
 
 ```js
 return { nextProcessId: "collect-shipping-address" };
@@ -326,6 +432,7 @@ slug, so the same chain works in every workspace.
 The SDK then renders the form for `nextProcessId`. Each later step receives all
 previous steps' data and results in `fcode.context.parameters` under a `steps`
 array. Return a `variables` node alongside `nextProcessId` to pass state forward.
+A chain has no shared navigation and no way back: each form replaces the last.
 
 ## Connect an external account (OAuth)
 
