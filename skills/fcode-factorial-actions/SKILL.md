@@ -70,7 +70,8 @@ does.
   (approval + "cannot be undone" warning) until you say `READ` or `WRITE`.
 - **The four lifecycle slugs are reserved.** `install`, `settings`,
   `uninstall`, `sync` mean something to Factorial regardless of the block. Do
-  not give an ordinary action one of them.
+  not give an ordinary action one of them, and do not make a lifecycle form an
+  app tool: `appTool: true` takes its lifecycle role away.
 - **Omit the defaults.** `fcode pull` leaves out `awaitResult` when `true`,
   `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`,
   unset `agentTool` texts and empty lists, and any sub-block whose `enabled` is `false`. A process
@@ -164,28 +165,38 @@ marketplace lifecycle forms; they still take `factorial.form.enabled` like any
 form. The pre-render pattern for re-opened install/settings forms is in
 `fcode-forms`.
 
-What it is derived **from** is the process's declared `form.appRole`, and the
-reserved slug only when it declares none. It has to be this way round: the
-marketplace catalogue has always keyed these forms on `appRole`, and the Apps in
-production name their forms `datev-install`, `net-empregos-install` and so on
-with the right role set throughout. Keying on the slug alone would leave them
-with no install, settings or uninstall form at all — and an installation waiting
-on configuration is offered only its lifecycle forms, so it could not finish
-installing either.
+**Name a lifecycle form by its slug, not by `form.appRole`.** A process called
+`install`, `settings` or `uninstall` is that form; nothing else needs setting.
+`form.appRole: INSTALL` / `SETTINGS` / `UNINSTALL` is legacy. The platform still
+reads it, and reads it **first**, only so the Apps already in production keep
+working: they name their forms `datev-install`, `net-empregos-install` and so on,
+with the role set. Keying on the slug alone would leave them with no lifecycle
+form, and an installation waiting on configuration is offered only its lifecycle
+forms, so it could not finish installing.
 
-**The fallback is permanent.** `appRole` has no deprecation date and there is no
-migration you are required to run. Use a reserved slug in a new process because
-it is the clearer name; a process that declares a role keeps working unchanged.
+- **New process:** use the reserved slug. Do not write `form.appRole`.
+- **Existing App that uses `appRole`:** rename the process to its reserved slug
+  (below) whenever you are already working on the App. Keep `appRole` only when
+  the rename is not possible: the reserved slug is taken by another process, or
+  someone else may still push the workspace from a checkout with the old folder
+  (an external partner, a teammate's branch), since their push recreates the old
+  process.
+- **Never tick `factorial.form.appTool` on a lifecycle form.** `appTool` claims
+  the `USER_FACING_FORM` role, a declared role outranks the slug, and the process
+  quietly stops being the install form. Lifecycle forms keep `appTool: false`.
+  Recent platform versions refuse the push; older ones rewrite the role and the
+  CLI writes it back into `metadata.json` with no warning.
 
-### Adopting a reserved slug in an existing App
+### Renaming a lifecycle process to its reserved slug
 
-Optional, and worth it only for the clearer name. `fcode push` matches local
-processes to remote ones **by slug**, so renaming a process folder renames
-nothing: it creates a second process and leaves the first one in the workspace.
-Retire the old one in the same push.
+`fcode push` matches local processes to remote ones **by slug**, so renaming a
+process folder renames nothing: it creates a second process and leaves the first
+one in the workspace. Retire the old one in the same push.
 
 1. Create a process with the reserved slug, moving the source and the
-   `factorial` block across.
+   `factorial` block across. Leave `form.appRole` out of its `metadata.json`
+   and keep `factorial.form.appTool` `false`. Update any `nextProcessId` that
+   pointed at the old slug.
 2. Set `factorial.form.enabled: false` on the old process **in the same push**.
    Do not leave both enabled: when two processes claim one lifecycle slot the
    winner is the lexicographically-first slug, which is as likely to be the old
@@ -196,7 +207,8 @@ Retire the old one in the same push.
 
 The action id changes, since it is derived from the slug. Nothing persists it,
 so installations and their configuration are untouched; a bookmarked form URL
-stops resolving.
+stops resolving. Delete the old process once the push is live and nobody else
+pushes the workspace from an older checkout.
 
 ## Parameters: the contract with Factorial
 
@@ -233,10 +245,10 @@ existed keeps its role on push: the CLI reads `appRole` and sends the flag to
 match.
 
 `INSTALL` / `SETTINGS` / `UNINSTALL` are the other side of it: the block has no
-switch for them, so they stay in `form.appRole`, and that is what
-`lifecycleRole` reads first. Keep writing them there — a reserved slug is the
-alternative for a process that declares no role at all, not a replacement you
-are expected to move to.
+switch for them because the reserved slug is how a lifecycle form is named.
+`lifecycleRole` still reads them first so legacy Apps keep working, but do not
+write them in new work, and move an existing process off them by renaming it
+(see **Renaming a lifecycle process to its reserved slug**).
 
 **Prefer `factorial`**: write it in new processes, and when touching an old
 `metadata.json`, move the settings into it rather than editing `uiTrigger`.
@@ -324,3 +336,5 @@ an `fcode.storage://…` reference — `fcode-forms`).
    point at their real process with `simulatesFor`.
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
    the schema has titles, descriptions and `required`.
+6. Lifecycle forms carry their reserved slug, no `form.appRole`, and never
+   `factorial.form.appTool: true`.
