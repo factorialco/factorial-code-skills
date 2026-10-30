@@ -39,9 +39,10 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **A form opened from inside Factorial is configured in `factorial.form`**, the
   Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
   and is kept mirrored. A form offered to users on the App's own page is
-  `factorial.form.appTool`; the install / settings / uninstall forms are named
-  by `form.appRole`, or by the **reserved slugs** when a process declares no
-  role (`fcode-factorial-actions`). `factorial.form.public` releases the form to
+  `factorial.form.appTool`; the install / settings / uninstall forms are the
+  processes with the **reserved slugs** `install`, `settings` and `uninstall`
+  (`fcode-factorial-actions`). Legacy Apps name them with `form.appRole`
+  instead; do not copy that. `factorial.form.public` releases the form to
   anyone holding its link, for a form meant for people outside Factorial.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
@@ -87,11 +88,11 @@ role from the slug.
 A form the App offers its own users, on the App's page in Factorial, is
 `"factorial": { "form": { "enabled": true, "appTool": true } }`. Never write
 `form.appRole: USER_FACING_FORM` in a new process — that is exactly what
-`appTool` sets, and the platform keeps the two mirrored. The other three values
-are a different matter: the block has no switch for them, so an install,
-settings or uninstall form is named either by `form.appRole` or by carrying the
-reserved slug. Prefer the slug in a new process; `fcode-factorial-actions` has
-the rule and what it takes to adopt one in an App that already ships.
+`appTool` sets, and the platform keeps the two mirrored. Do not write the other
+three values either: an install, settings or uninstall form is named by its
+reserved slug. `form.appRole: INSTALL` and the like survive only in Apps that
+predate the slugs; `fcode-factorial-actions` has how to rename those processes,
+and why a lifecycle form must never tick `appTool`.
 
 An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the

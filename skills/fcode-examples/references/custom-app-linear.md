@@ -10,14 +10,14 @@ later *uninstalled* without leaving residue.
 
 ```
 SETUP (user-facing forms)
-  linear-setup ──nextProcessId──▶ linear-setup-mapping
-       │                              │ form rendered with data from
-       │ stores LINEAR_API_KEY        │ linear-setup-mapping-prerender
-       ▼                              ▼
+  install ──nextProcessId──▶ settings
+     │                            │ form rendered with data from
+     │ stores LINEAR_API_KEY      │ settings-prerender
+     ▼                            ▼
                             stores mapping, creates webhook + schedule,
                             records their ids in the datastore
 
-SETTINGS (linear-setup-mapping re-opened after install)
+SETTINGS (the settings form re-opened after install)
   its pre-render reads variables + datastore so the form shows the current
   configuration; a credential is reported as set, never echoed back
 
@@ -26,34 +26,35 @@ RUNTIME
   linear-projects-poll  ◀── hourly schedule (created at setup)
 
 TEARDOWN
-  linear-uninstall — deletes webhook, schedule, variable, datastore keys
+  uninstall — deletes webhook, schedule, variable, datastore keys
 ```
 
 Workspace layout:
 
 ```
-processes/linear-setup/                    # step 1: validate + store API key
-processes/linear-setup-mapping/            # step 2: map teams, activate
-processes/linear-setup-mapping-prerender/  # renders step 2's dropdowns + current values
-processes/linear-users-push/               # webhook: Factorial employee → Linear user
-processes/linear-projects-poll/            # schedule: Linear projects → Factorial
-processes/linear-uninstall/                # teardown
-modules/linear-client/                     # vendor API client (wraps @linear/sdk)
+processes/install/              # step 1: validate + store API key
+processes/settings/             # step 2: map teams, activate
+processes/settings-prerender/   # renders step 2's dropdowns + current values
+processes/linear-users-push/    # webhook: Factorial employee → Linear user
+processes/linear-projects-poll/ # schedule: Linear projects → Factorial
+processes/uninstall/            # teardown
+modules/linear-client/          # vendor API client (wraps @linear/sdk)
 ```
 
 ## Triggers per process — `metadata.json`
 
 Each process declares how it's invoked in its `metadata.json` (full field
-reference in `fcode-cli`). The setup entry point is a form and carries the
-app's `INSTALL` role; the runtime push process is webhook-only:
+reference in `fcode-cli`). The setup entry point is a form, and its reserved
+slug `install` is what makes it the app's install form; the runtime push process
+is webhook-only:
 
-`processes/linear-setup/metadata.json` — the app's install form:
+`processes/install/metadata.json` — the app's install form:
 
 ```json
 {
   "name": "Connect Linear",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "INSTALL" }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
@@ -61,15 +62,16 @@ Both setup forms are opened from inside Factorial, but that doesn't protect
 them: a submission's parameters are caller-controlled, so each of these processes authorizes the caller
 itself and never trusts a submitted `company_id` (see `fcode-forms`).
 
-`processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
+`processes/settings/metadata.json` — step 2 of install, reached
 via `nextProcessId`. It also doubles as the app's post-install settings
-screen (re-map teams later), which is what `appRole: SETTINGS` marks:
+screen (re-map teams later), which is what the reserved slug `settings` marks.
+No `form.appRole` in either file: the slug names the lifecycle form.
 
 ```json
 {
   "name": "Map Linear teams",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "SETTINGS" }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
@@ -143,7 +145,7 @@ async function main() {
   await fcode.variables.set("LINEAR_API_KEY", linear_api_key);
 
   // 3. Chain to step 2 by slug — slugs are identical in every workspace.
-  return { nextProcessId: "linear-setup-mapping" };
+  return { nextProcessId: "settings" };
 }
 ```
 
@@ -163,7 +165,7 @@ those nodes:
 {
   "title": "Map Linear teams to Factorial teams",
   "type": "object",
-  "preRenderProcess": "linear-setup-mapping-prerender",
+  "preRenderProcess": "settings-prerender",
   "variables": {
     "linearTeamField": { "title": "Linear team", "type": "string" },
     "factorialTeamField": { "title": "Factorial team", "type": "string" },
@@ -189,12 +191,12 @@ those nodes:
 ```
 
 ```javascript
-// processes/linear-setup-mapping-prerender/index.js — runs while the form is served
+// processes/settings-prerender/index.js — runs while the form is served
 async function main() {
   const { selectField, toOptions } = fcode.import("fcode-forms");
 
   const linearApiKey = process.env.LINEAR_API_KEY; // stored by step 1
-  if (!linearApiKey) throw new Error("LINEAR_API_KEY is not set. Run linear-setup first.");
+  if (!linearApiKey) throw new Error("LINEAR_API_KEY is not set. Run install first.");
 
   const { LinearApiClient } = fcode.import("linear-client");
   const linearTeams = (await new LinearApiClient(linearApiKey).getTeams())
@@ -204,7 +206,7 @@ async function main() {
   const factorialTeams = (await createFactorialClient().teams.teams.all())
     .map((t) => ({ id: t.id, name: t.name }));
 
-  // The same process backs appRole: SETTINGS, so the form is re-opened after
+  // The same process is the settings form, so it is re-opened after
   // install — scaffold the rows from the mapping already saved, not blank ones.
   const saved = JSON.parse((await fcode.datastore.get("linear.teams.mappings")) || "{}");
 
@@ -281,7 +283,7 @@ async function main() {
 
 ## Re-opened as the settings screen — show what is configured now
 
-`linear-setup-mapping` carries `appRole: SETTINGS`, so the *same* form is opened
+`settings` is the app's settings form, so the *same* form is opened
 again long after install, to re-map teams or rotate the key. **It must render the
 current state**, or the user is asked to re-enter configuration they cannot
 see.
@@ -290,7 +292,7 @@ The pre-render above already does this for the mapping. Extending it to cover th
 credential and a poll interval is the whole pattern:
 
 ```javascript
-// processes/linear-setup-mapping-prerender/index.js (continued)
+// processes/settings-prerender/index.js (continued)
 const MAPPINGS_KEY = "linear.teams.mappings";
 const SETTINGS_KEY = "linear.settings";
 
@@ -334,7 +336,7 @@ otherwise a user who only wants to re-map a team cannot submit:
 
 ```json
 {
-  "preRenderProcess": "linear-setup-mapping-prerender",
+  "preRenderProcess": "settings-prerender",
   "variables": {
     "pollIntervalDefault": 1,
     "apiKeyLabel": "Linear API key",

@@ -77,9 +77,10 @@ instead — see the routing table in `SKILL.md`.
   Backoffice) works across companies. An app installed by many companies
   needs a global OAuth app — see stage 4 in `journey.md`.
 - **Two `INSTALL`/`SETTINGS`/`UNINSTALL` forms fight each other.** The
-  platform doesn't enforce one process per `appRole`; on a clash the
-  first process slug (alphabetically) wins and a duplicate-role warning is
-  reported. Keep each role on exactly one process.
+  platform doesn't enforce one process per lifecycle role, whether it comes
+  from the reserved slug or a legacy `appRole`; on a clash the first process
+  slug (alphabetically) wins and a duplicate-role warning is reported. Keep
+  each role on exactly one process, ideally the one with the reserved slug.
 - **"My installation is stuck in `configuration_pending`."** The install
   isn't finished until setup completes (the `INSTALL` form / setup process).
   Re-open the app from the marketplace and finish configuration.
