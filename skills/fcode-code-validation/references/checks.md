@@ -66,8 +66,10 @@ own rules and note the mix in the report header.
 | FORM-08 | `preRenderProcess` defaults missing state (`?? 60`, `\|\| "{}"`) instead of throwing — a throw makes the form unopenable | W | `fcode-forms` references/advanced.md §Server-side pre-render |
 | FORM-09 | Form-uploaded files only needed transiently are deleted at the end of the process | W | `fcode-forms` §Automatic file uploads |
 | FORM-10 | Result `message`/`errorMessage` and schema markdown blocks are markdown, not HTML (HTML is dropped, never rendered) | W | `fcode-forms` §Handle submission results |
-| FORM-11 | Schema quality: secret inputs use `isSensitive: true`; `nextProcessId` carries a slug, not a UUID; schema follows `fcode-json-schema` | S | `fcode-json-schema`, `fcode-forms` §Multi-step forms |
-| FORM-12 | A long form (≈10+ fields) declares `ui:steps` to group fields into steps; a `nextProcessId` chain whose intermediate processes do no real work exists only for visual steps — replace it with `ui:steps` in a single process | S | `fcode-forms` §Multi-step forms |
+| FORM-11 | Schema quality: secret inputs use `isSensitive: true`; `nextProcessId` and every `ui:steps` `process` step carry a slug, not a UUID; schema follows `fcode-json-schema` | S | `fcode-json-schema`, `fcode-forms` §Multi-step forms |
+| FORM-12 | A long form (≈10+ fields) declares `ui:steps` to group fields into steps; a `nextProcessId` chain whose intermediate processes do no real work exists only for visual steps — replace it with `ui:steps` in a single process; a chain whose processes always return the same fixed `nextProcessId` is a fixed wizard — declare it as a multi-process flow in the entry form's `ui:steps` | S | `fcode-forms` §Multi-step forms |
+| FORM-13 | Every process in a multi-process flow is safe to re-run (the user can go back and re-submit): it overwrites variables and datastore keys rather than appending, and looks up webhooks/schedules or their recorded ids before creating them | W | `fcode-forms` §Multi-step forms |
+| FORM-14 | Every install / settings / uninstall form declares its `form.appRole` (a slug-only install form never moves the installation to `active`) and none sets `factorial.form.appTool: true` (rewritten to `USER_FACING_FORM` on push, so the App loses that lifecycle form) | B | `fcode-factorial-actions` §Reserved lifecycle slugs |
 
 ## I18N — internationalization
 

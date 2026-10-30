@@ -39,9 +39,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **A form opened from inside Factorial is configured in `factorial.form`**, the
   Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
   and is kept mirrored. A form offered to users on the App's own page is
-  `factorial.form.appTool`; the install / settings / uninstall forms are named
-  by `form.appRole`, or by the **reserved slugs** when a process declares no
-  role (`fcode-factorial-actions`). `factorial.form.public` releases the form to
+  `factorial.form.appTool`; the install / settings / uninstall forms declare
+  `form.appRole` and never set `appTool: true`, which would turn them into App
+  tools (`fcode-factorial-actions`). `factorial.form.public` releases the form to
   anyone holding its link, for a form meant for people outside Factorial.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
@@ -55,6 +55,11 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
   synchronous process fast, or run long work asynchronously (see below).
+- **A fixed wizard across processes is a flow, not a `nextProcessId` chain**:
+  declare every step in the entry form's `ui:steps` (`process` steps take
+  slugs) and return no `nextProcessId` on the default path. The user can go
+  back and re-submit, so every process in a flow must be safe to re-run. See
+  "Multi-step forms".
 - Prefer driving UX from the **process return value** (below); reserve
   `onSuccess`/`onError` for client-only logic.
 
@@ -79,19 +84,20 @@ block also holds the button, the Factorial One tool and the backend job
 top-level `"form": { "enabled": true }` still works and is kept mirrored with
 `factorial.form.enabled`; prefer `factorial` in new work.
 
-The **lifecycle forms** of a marketplace app are the processes with the
-**reserved slugs** `install`, `settings` and `uninstall` (`sync` is the fourth
-reserved slug, for the integrations sync process); the platform derives their
-role from the slug.
+The **lifecycle forms** of a marketplace app are its install, settings and
+uninstall forms. Give each one the reserved slug (`install`, `settings`,
+`uninstall`; `sync` is the fourth reserved slug, for the integrations sync
+process) **and** its `form.appRole`: only a declared `INSTALL` role completes
+an installation.
 
 A form the App offers its own users, on the App's page in Factorial, is
 `"factorial": { "form": { "enabled": true, "appTool": true } }`. Never write
 `form.appRole: USER_FACING_FORM` in a new process — that is exactly what
 `appTool` sets, and the platform keeps the two mirrored. The other three values
 are a different matter: the block has no switch for them, so an install,
-settings or uninstall form is named either by `form.appRole` or by carrying the
-reserved slug. Prefer the slug in a new process; `fcode-factorial-actions` has
-the rule and what it takes to adopt one in an App that already ships.
+settings or uninstall form declares them in `form.appRole`, and must not set
+`appTool: true`, which would replace them. `fcode-factorial-actions` has the
+rule and what it takes to adopt a reserved slug in an App that already ships.
 
 An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the
@@ -263,20 +269,25 @@ flow between steps. For passing data, don't block the submit — instead:
 
 - **`preRenderProcess`** computes server-side `variables` before the form
   renders (see `references/advanced.md`).
-- **Chained multi-step forms** carry state forward via `nextProcessId` +
-  `variables` (below). If the steps are only visual — no work between them —
-  use `ui:steps` instead and keep a single process.
+- **Multi-step forms across processes** — a multi-process flow, or
+  `nextProcessId` chaining — carry state forward in `steps` + `variables`
+  (below). If the steps are only visual — no work between them — use
+  `ui:steps` instead and keep a single process.
 
 ## Multi-step forms
 
-Two mechanisms, and picking the right one matters:
+Three mechanisms, and picking the right one matters:
 
 | Mechanism | Processes | Executions | Use when |
 |---|---|---|---|
 | **`ui:steps`** — steps within one form | one | one, after the last step | The split is purely visual; all the logic lives in one process |
-| **`nextProcessId`** — chaining | one per step | one per step | An intermediate step must actually execute something (validate externally, compute `variables` for the next form) |
+| **Multi-process flow** — `process` steps in `ui:steps` | one per form | one per form | An intermediate step must execute something (validate externally, store a credential the next form needs) **and** the steps are known up front |
+| **`nextProcessId`** — chaining | one per form | one per form | Each process decides at run time which form comes next |
 
-They compose: a chained process's form can itself declare `ui:steps`.
+They compose: a flow's entry form splits into `fields` steps, and a chained
+process's form can itself declare `ui:steps`. A wizard whose processes always
+return the same fixed `nextProcessId` is a flow written the hard way — declare
+the flow instead, so the user gets one navigation and can go back.
 
 **When a form grows long — roughly ten fields or more — split it with
 `ui:steps`**, grouping related fields per step with the required ones early.
@@ -303,6 +314,9 @@ parameter exactly as a one-page form would — process code needs no changes.
 - `config` (optional): `layout` — `"tabs"` (default) or `"sidebar"`;
   `nextLabel` / `backLabel` — button labels, default `"Next"` / `"Back"`.
   `ui:submitButtonOptions` applies to the **last** step's button.
+- A step can set its own `nextLabel` / `backLabel`, which win over `config`
+  for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
+  "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
 - "Next" validates only the fields on screen (including that step's share of
   `required`); a Back button and the step navigation revisit completed steps
   without losing input, and unreached steps stay disabled.
@@ -312,9 +326,120 @@ parameter exactly as a one-page form would — process code needs no changes.
   `oneOf`/`allOf` compositions are not split into steps. SDK version
   requirements in `references/advanced.md`.
 
+### Multi-process flows (`process` steps)
+
+The entry form's `ui:steps` declares every step of the wizard, including the
+forms other processes serve: a step with `process: "<slug>"` instead of
+`fields` renders that process's whole form. The user sees one navigation for
+the whole flow, and the SDK moves from one process to the next on its own.
+
+Worked example — an install form that takes a third-party API key, then maps
+teams in a second form whose dropdowns are fetched with that key. The entry
+process `vendor-setup` owns the flow:
+
+```json
+{
+  "title": "Connect Vendor",
+  "type": "object",
+  "properties": {
+    "vendor_api_key": { "title": "Vendor API key", "type": "string", "isSensitive": true }
+  },
+  "required": ["vendor_api_key"],
+  "ui": {
+    "ui:steps": {
+      "steps": [
+        { "title": "Connect", "description": "Enter your API key", "fields": ["vendor_api_key"] },
+        { "title": "Map teams", "description": "Map each Vendor team", "process": "vendor-setup-mapping" }
+      ]
+    }
+  }
+}
+```
+
+```js
+// processes/vendor-setup/index.js — runs when "Connect" is submitted
+async function main() {
+  const { vendor_api_key } = fcode.context.parameters;
+  const { VendorClient } = fcode.import("vendor-client");
+  await new VendorClient(vendor_api_key).getTeams(); // throws on a bad key
+  await fcode.variables.set("VENDOR_API_KEY", vendor_api_key); // overwrite: safe to re-run
+  return {}; // no nextProcessId: the flow moves on to "Map teams"
+}
+```
+
+`vendor-setup-mapping`'s schema sets `preRenderProcess`, and that pre-render
+reads `VENDOR_API_KEY` to load the vendor's teams into `#/variables` — it runs
+when the "Map teams" form is served, after the key is stored, which a
+pre-render on the entry form never could. The full app (Linear, mapping
+pre-render, activation, settings, uninstall) is `fcode-examples`
+(`references/custom-app-linear.md`).
+
+The rules:
+
+- **The entry form owns the flow.** Only the first form declares the flow's
+  steps and its `config` (`layout`, `nextLabel`, `backLabel`), which applies
+  throughout. A later form's own `process` steps and `config` are ignored.
+- **A `process` step can have sub-steps.** When that process's own form
+  declares `ui:steps` with two or more `fields` steps, they show one level
+  below the process step in the navigation (`2.1`, `2.2`, …) once the form
+  loads. Until then the process step is a single item. They behave like
+  in-form steps: only the last one submits, running the process once. Without
+  its own `ui:steps`, the process step renders as one page. Use this for a
+  long form served by a later process: the flow keeps one navigation, and the
+  form keeps its steps when it is opened on its own.
+- **`fields` steps first, at least one of them.** They split the entry form
+  and are submitted together to the entry process. A `fields` step after a
+  `process` step is dropped with a console warning; with no `fields` step at
+  all, the whole `ui:steps` is ignored and the form renders as a single page.
+- **`process` takes a slug**, like `nextProcessId`. On the marketplace path
+  the platform rewrites the slugs into its own action ids — never write ids.
+- **No `nextProcessId` on the default path.** After each successful submit the
+  SDK moves to the next declared step. Every submit button but the last is
+  labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
+  Per-step `nextLabel` / `backLabel` work on `process` steps too; when that
+  form has sub-steps, `nextLabel` goes on the sub-step that submits it and
+  `backLabel` on the first one, whose Back leaves it.
+- **State carries forward as in a chain**: each process receives the earlier
+  forms' data and results in `fcode.context.parameters.steps`, and a returned
+  `variables` node reaches the following forms.
+- **Every process in a flow must be safe to re-run.** The user can go back to
+  any step already reached; it reopens filled with what was submitted (a
+  process step with sub-steps reopens on its last sub-step), and
+  submitting it again re-runs its process and discards every later step's
+  `steps` entries, data and variables. Overwrite variables and datastore keys
+  rather than appending, and look up webhooks or schedules (or the ids you
+  recorded for them) before creating them.
+- **Going back drops unsubmitted input, after a confirmation.** Leaving a
+  process step for an earlier one, when the user changed a value there
+  (sub-steps included), asks first. Moving between a step's own sub-steps never
+  asks, and values from schema defaults or a pre-render don't count as
+  changes. The wording comes from the entry form's `config`: `leaveTitle`,
+  `leaveMessage`, `leaveConfirmLabel`, `leaveCancelLabel` (English defaults).
+- **An install flow activates the installation at step 1.** When the entry
+  process of an install form (declared `form.appRole: "INSTALL"`,
+  `fcode-factorial-actions`) succeeds, the installation becomes `active`, so
+  the later process steps run on an active installation, and a user who
+  abandons the flow there leaves it active. Do the setup the App can't run
+  without in the entry step.
+
+**Overriding the next step.** A process may still return `nextProcessId`:
+
+- naming a **later declared step**, the flow jumps there and the steps in
+  between show as skipped;
+- naming a process the flow **doesn't declare**, the flow resets: its
+  navigation and history go away, and that process's form renders on its own,
+  honouring its own `ui:steps`. `steps` and `variables` still carry forward,
+  and the console warns. Treat this as an exit from the wizard, not a branch
+  inside it.
+
+Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.6.0
+(`references/advanced.md`).
+
 ### Chaining processes (`nextProcessId`)
 
-Each step is its own process. Return the next process's **slug** to advance:
+Each form is its own process, and each process names the next form to show by
+returning its **slug** — use this when the route is decided at run time, not
+for a fixed sequence (declare a flow for that):
 
 ```js
 return { nextProcessId: "collect-shipping-address" };
@@ -326,6 +451,7 @@ slug, so the same chain works in every workspace.
 The SDK then renders the form for `nextProcessId`. Each later step receives all
 previous steps' data and results in `fcode.context.parameters` under a `steps`
 array. Return a `variables` node alongside `nextProcessId` to pass state forward.
+A chain has no shared navigation and no way back: each form replaces the last.
 
 ## Connect an external account (OAuth)
 
