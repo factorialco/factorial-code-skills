@@ -183,12 +183,14 @@ platform resolves for it (field reference in `fcode-cli`; embedding in
 
 | Form | How it is declared | Shown |
 |---|---|---|
-| Install | process slug `install` | At install time — the installation form |
-| Settings | process slug `settings` | From the installed app — settings, mappings, configuration |
-| Uninstall | process slug `uninstall` | When uninstalling — e.g. to remove webhook subscriptions the app created |
+| Install | process slug `install` + `form.appRole: INSTALL` | At install time — the installation form |
+| Settings | process slug `settings` + `form.appRole: SETTINGS` | From the installed app — settings, mappings, configuration |
+| Uninstall | process slug `uninstall` + `form.appRole: UNINSTALL` | When uninstalling — e.g. to remove webhook subscriptions the app created |
 | App tool | `factorial.form.appTool: true` | On the app's own page, for the installing company's users to run — file uploads, one-off automations |
 
-The first three come from the **reserved slugs**. The fourth used to be
+The first three take the **reserved slugs** and declare their role too: only a
+declared `INSTALL` role completes an installation, and none of them may set
+`appTool: true` (`fcode-factorial-actions`). The fourth used to be
 `form.appRole: USER_FACING_FORM`, which the platform keeps mirrored with
 `appTool` — do not set it directly in new work.
 

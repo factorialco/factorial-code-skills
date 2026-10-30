@@ -71,6 +71,11 @@ does.
 - **The four lifecycle slugs are reserved.** `install`, `settings`,
   `uninstall`, `sync` mean something to Factorial regardless of the block. Do
   not give an ordinary action one of them.
+- **A lifecycle form declares `form.appRole` and never sets `form.appTool:
+  true`.** Only an `INSTALL` role completes an installation: an install form
+  known by its slug alone runs, but leaves the installation pending. And
+  `appTool: true` is rewritten to `appRole: USER_FACING_FORM`, which then beats
+  the slug. See "Reserved lifecycle slugs".
 - **Omit the defaults.** `fcode pull` leaves out `awaitResult` when `true`,
   `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`,
   unset `agentTool` texts and empty lists, and any sub-block whose `enabled` is `false`. A process
@@ -173,9 +178,32 @@ with no install, settings or uninstall form at all — and an installation waiti
 on configuration is offered only its lifecycle forms, so it could not finish
 installing either.
 
-**The fallback is permanent.** `appRole` has no deprecation date and there is no
-migration you are required to run. Use a reserved slug in a new process because
-it is the clearer name; a process that declares a role keeps working unchanged.
+**Declare the role, even on a reserved slug.** The slug fallback covers the
+console tag and the catalogue, but not the step that finishes an install: the
+platform moves an installation from `configuration_pending` to `active` only
+when a form whose declared `form.appRole` is `INSTALL` runs successfully
+(synchronously, in the installation's `deploy-` workspace). An install form
+identified by its slug alone renders and runs, and the installation never
+becomes `active`. So write the role on every lifecycle form, whatever its slug:
+
+```json
+{
+  "name": "Connect Linear",
+  "form": { "appRole": "INSTALL" },
+  "factorial": { "enabled": true, "form": { "enabled": true } }
+}
+```
+
+**Never set `factorial.form.appTool: true` on a lifecycle form.** `appTool:
+true` is `appRole: USER_FACING_FORM` (see "The transition from `form` and
+`uiTrigger`"), so on push it replaces `INSTALL` / `SETTINGS` / `UNINSTALL`, the
+declared role then beats the slug, and the CLI writes `USER_FACING_FORM` back
+into `metadata.json`. The form becomes an App tool and the App loses its
+lifecycle form, with no error. Leave `appTool` out, or `false`, which keeps the
+role.
+
+`appRole` has no deprecation date, and the reserved slug is still the clearer
+name for a new lifecycle process. Give it the role as well.
 
 ### Adopting a reserved slug in an existing App
 
@@ -234,9 +262,8 @@ match.
 
 `INSTALL` / `SETTINGS` / `UNINSTALL` are the other side of it: the block has no
 switch for them, so they stay in `form.appRole`, and that is what
-`lifecycleRole` reads first. Keep writing them there — a reserved slug is the
-alternative for a process that declares no role at all, not a replacement you
-are expected to move to.
+`lifecycleRole` reads first. Keep writing them there, on a reserved slug as
+well (see "Reserved lifecycle slugs").
 
 **Prefer `factorial`**: write it in new processes, and when touching an old
 `metadata.json`, move the settings into it rather than editing `uiTrigger`.
@@ -323,4 +350,5 @@ an `fcode.storage://…` reference — `fcode-forms`).
 4. `agentTool`: `effect` set, `whenNotToUse` names the neighbour tools, dry runs
    point at their real process with `simulatesFor`.
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
-   the schema has titles, descriptions and `required`.
+   every install / settings / uninstall form declares its `form.appRole` and has
+   no `appTool: true`; the schema has titles, descriptions and `required`.

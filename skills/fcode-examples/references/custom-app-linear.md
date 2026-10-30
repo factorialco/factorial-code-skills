@@ -173,6 +173,13 @@ async function main() {
 }
 ```
 
+`linear-setup` carries `appRole: INSTALL`, so its success is what makes the
+installation `active`, before "Map teams" has run. The webhook and schedule
+come from step 2, so an admin who stops after step 1 has an active
+installation that syncs nothing until the mapping is saved from the settings
+screen. That is acceptable here; an App that can't run at all without its
+second step should do that setup in the entry step instead.
+
 Why a flow rather than one form: the mapping dropdowns are built from Linear
 data that only the submitted key can fetch, so the key must be stored by a
 process *before* the second form is served. A `preRenderProcess` on

@@ -39,9 +39,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **A form opened from inside Factorial is configured in `factorial.form`**, the
   Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
   and is kept mirrored. A form offered to users on the App's own page is
-  `factorial.form.appTool`; the install / settings / uninstall forms are named
-  by `form.appRole`, or by the **reserved slugs** when a process declares no
-  role (`fcode-factorial-actions`). `factorial.form.public` releases the form to
+  `factorial.form.appTool`; the install / settings / uninstall forms declare
+  `form.appRole` and never set `appTool: true`, which would turn them into App
+  tools (`fcode-factorial-actions`). `factorial.form.public` releases the form to
   anyone holding its link, for a form meant for people outside Factorial.
 - **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
   and field `transformFn` were removed, and messages are markdown — raw HTML is
@@ -84,19 +84,20 @@ block also holds the button, the Factorial One tool and the backend job
 top-level `"form": { "enabled": true }` still works and is kept mirrored with
 `factorial.form.enabled`; prefer `factorial` in new work.
 
-The **lifecycle forms** of a marketplace app are the processes with the
-**reserved slugs** `install`, `settings` and `uninstall` (`sync` is the fourth
-reserved slug, for the integrations sync process); the platform derives their
-role from the slug.
+The **lifecycle forms** of a marketplace app are its install, settings and
+uninstall forms. Give each one the reserved slug (`install`, `settings`,
+`uninstall`; `sync` is the fourth reserved slug, for the integrations sync
+process) **and** its `form.appRole`: only a declared `INSTALL` role completes
+an installation.
 
 A form the App offers its own users, on the App's page in Factorial, is
 `"factorial": { "form": { "enabled": true, "appTool": true } }`. Never write
 `form.appRole: USER_FACING_FORM` in a new process — that is exactly what
 `appTool` sets, and the platform keeps the two mirrored. The other three values
 are a different matter: the block has no switch for them, so an install,
-settings or uninstall form is named either by `form.appRole` or by carrying the
-reserved slug. Prefer the slug in a new process; `fcode-factorial-actions` has
-the rule and what it takes to adopt one in an App that already ships.
+settings or uninstall form declares them in `form.appRole`, and must not set
+`appTool: true`, which would replace them. `fcode-factorial-actions` has the
+rule and what it takes to adopt a reserved slug in an App that already ships.
 
 An `install` or `settings` form is re-opened after the app is configured, so it
 should show the **current** values rather than an empty form — the
@@ -313,6 +314,9 @@ parameter exactly as a one-page form would — process code needs no changes.
 - `config` (optional): `layout` — `"tabs"` (default) or `"sidebar"`;
   `nextLabel` / `backLabel` — button labels, default `"Next"` / `"Back"`.
   `ui:submitButtonOptions` applies to the **last** step's button.
+- A step can set its own `nextLabel` / `backLabel`, which win over `config`
+  for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
+  "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
 - "Next" validates only the fields on screen (including that step's share of
   `required`); a Back button and the step navigation revisit completed steps
   without losing input, and unreached steps stay disabled.
@@ -392,6 +396,9 @@ The rules:
 - **No `nextProcessId` on the default path.** After each successful submit the
   SDK moves to the next declared step. Every submit button but the last is
   labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
+  Per-step `nextLabel` / `backLabel` work on `process` steps too; when that
+  form has sub-steps, `nextLabel` goes on the sub-step that submits it and
+  `backLabel` on the first one, whose Back leaves it.
 - **State carries forward as in a chain**: each process receives the earlier
   forms' data and results in `fcode.context.parameters.steps`, and a returned
   `variables` node reaches the following forms.
@@ -402,6 +409,18 @@ The rules:
   `steps` entries, data and variables. Overwrite variables and datastore keys
   rather than appending, and look up webhooks or schedules (or the ids you
   recorded for them) before creating them.
+- **Going back drops unsubmitted input, after a confirmation.** Leaving a
+  process step for an earlier one, when the user changed a value there
+  (sub-steps included), asks first. Moving between a step's own sub-steps never
+  asks, and values from schema defaults or a pre-render don't count as
+  changes. The wording comes from the entry form's `config`: `leaveTitle`,
+  `leaveMessage`, `leaveConfirmLabel`, `leaveCancelLabel` (English defaults).
+- **An install flow activates the installation at step 1.** When the entry
+  process of an install form (declared `form.appRole: "INSTALL"`,
+  `fcode-factorial-actions`) succeeds, the installation becomes `active`, so
+  the later process steps run on an active installation, and a user who
+  abandons the flow there leaves it active. Do the setup the App can't run
+  without in the entry step.
 
 **Overriding the next step.** A process may still return `nextProcessId`:
 

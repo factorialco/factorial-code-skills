@@ -69,6 +69,7 @@ own rules and note the mix in the report header.
 | FORM-11 | Schema quality: secret inputs use `isSensitive: true`; `nextProcessId` and every `ui:steps` `process` step carry a slug, not a UUID; schema follows `fcode-json-schema` | S | `fcode-json-schema`, `fcode-forms` §Multi-step forms |
 | FORM-12 | A long form (≈10+ fields) declares `ui:steps` to group fields into steps; a `nextProcessId` chain whose intermediate processes do no real work exists only for visual steps — replace it with `ui:steps` in a single process; a chain whose processes always return the same fixed `nextProcessId` is a fixed wizard — declare it as a multi-process flow in the entry form's `ui:steps` | S | `fcode-forms` §Multi-step forms |
 | FORM-13 | Every process in a multi-process flow is safe to re-run (the user can go back and re-submit): it overwrites variables and datastore keys rather than appending, and looks up webhooks/schedules or their recorded ids before creating them | W | `fcode-forms` §Multi-step forms |
+| FORM-14 | Every install / settings / uninstall form declares its `form.appRole` (a slug-only install form never moves the installation to `active`) and none sets `factorial.form.appTool: true` (rewritten to `USER_FACING_FORM` on push, so the App loses that lifecycle form) | B | `fcode-factorial-actions` §Reserved lifecycle slugs |
 
 ## I18N — internationalization
 
