@@ -92,7 +92,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace (or `fcode team:clone` for every App of your team at once), code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
 | 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
-| 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the `appRole` forms and any UI trigger buttons inside the demo company's Factorial |
+| 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the install / settings / uninstall forms and any UI trigger buttons inside the demo company's Factorial |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
@@ -162,7 +162,7 @@ What to tell users:
 | Question is about | Route to |
 |---|---|
 | Platform model: processes, modules, variables & inheritance, datastore/storage, versioning & `stable` | `fcode-core-concepts` |
-| CLI commands, `metadata.json` / `settings.json` fields, `appRole` field reference, webhook auth, `FACTORIAL_TOKEN` | `fcode-cli` — docs: `/docs/cli/` |
+| CLI commands, `metadata.json` / `settings.json` fields, webhook auth, `FACTORIAL_TOKEN` | `fcode-cli` — docs: `/docs/cli/` |
 | Writing process/module code | `fcode-javascript` / `fcode-python` — docs: `/docs/processes/` |
 | Input-parameter schemas (forms definition) | `fcode-json-schema` |
 | Embedding forms on webpages, themes, pre-fill | `fcode-forms` — docs: `/docs/forms/` |

@@ -347,9 +347,9 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `tags` | string[] | Tags (defaults to `[]`) |
 | `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
 | `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`appTool`, offer the form on the App's own page in Factorial; `public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
-| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `appRole` (`INSTALL`, `SETTINGS`, `USER_FACING_FORM`, `UNINSTALL`): `USER_FACING_FORM` is now `factorial.form.appTool`, while the three lifecycle values have no equivalent in the block and stay here (the reserved lifecycle slugs are the alternative, not a replacement — see `fcode-factorial-actions`); `authMode` (`FACTORIAL`, `NONE`) decides whether a caller needs a Factorial account, and `factorial.form.public` is the switch for it |
+| `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL`, `NONE`) decides whether a caller needs a Factorial account, and `factorial.form.public` is the switch for it. `form.appRole` is retired: `fcode push` refuses a process that carries it (lifecycle forms are the reserved slugs, see `fcode-factorial-actions`) |
 | `uiTrigger` | object, optional | **Legacy**, mirrored with `factorial.uiTrigger` (see `fcode-ui-triggers`): `enabled`, `locationId`, `label`, `icon`, and `awaitResult` (now `factorial.awaitResult`) |
-| `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the process's `form.appRole`, or from the reserved slugs `install`, `settings`, `uninstall`, `sync` when it declares none; reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
+| `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the reserved slugs `install`, `settings`, `uninstall`, `sync`; reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
 
 ```json
 {
@@ -426,19 +426,14 @@ Notes:
   redaction proxies and log pipelines give `Authorization`. Use one only when the
   sender can't set `Authorization` — Factorial's own webhook sender, which puts
   its token in `x-factorial-wh-challenge`, is the case in point.
-- **`form.appRole` and `webhook.authMode` are omitted when unset or `NONE`**, as
-  is `webhook.auth.headerName` when it is `Authorization`, so a form carries only
-  `"form": { "enabled": true }`. To lift protection from a protected webhook,
+- **`webhook.authMode` is omitted when unset or `NONE`**, as is
+  `webhook.auth.headerName` when it is `Authorization`. To lift protection from a protected webhook,
   write `"authMode": "NONE"` **explicitly** — omitting the field leaves the
   stored mode untouched, and sending `auth` without `authMode: CUSTOM` is
   rejected.
-- In a new process, prefer the reserved lifecycle slugs for install / settings
-  / uninstall and `factorial.form.appTool` for a form the App offers on its own
-  page, rather than `form.appRole`. In an App that already ships, `appRole`
-  keeps naming its lifecycle forms indefinitely — there is no deadline to move
-  off it. A file that still carries `appRole: USER_FACING_FORM` keeps its role
-  on push: when `appTool` is absent the CLI derives it from the role, and stops
-  sending that one role from the legacy key.
+- Install, settings and uninstall forms are the processes slugged `install`,
+  `settings`, `uninstall`; a form the App offers on its own page is
+  `factorial.form.appTool`. The rules are in `fcode-factorial-actions`.
 - **The `factorial` block omits its defaults too**: `awaitResult` when `true`,
   `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`, the `agentTool`
   texts when unset and its lists when empty, and any sub-block whose `enabled`

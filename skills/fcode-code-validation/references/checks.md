@@ -52,11 +52,11 @@ own rules and note the mix in the report header.
 | LANG-05 | Main flow wrapped in `try/catch` (`try/except`); code doesn't read `fcode.env` expecting a value it `fcode.variables.set` in the same run (snapshot at start) | W | `fcode-javascript`/`fcode-python` §Gotchas, §Variables, schedules & OAuth |
 | LANG-06 | Idiom: `const`/`let` never `var`; `async/await` for async work; PEP 8 + type hints in Python | S | `fcode-javascript`/`fcode-python` §Gotchas |
 
-## FORM — forms & appRole lifecycle
+## FORM — forms & lifecycle
 
 | ID | Check | Sev | Owner |
 |---|---|---|---|
-| FORM-01 | At most one process per `INSTALL`/`SETTINGS`/`UNINSTALL` lifecycle role, counting both `form.appRole` and the reserved slugs (on a clash the first slug alphabetically wins, and the catalogue reports a `duplicate_role_warnings` entry) | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
+| FORM-01 | At most one process per install / settings / uninstall slot: the process with the reserved slug, plus any other process the console or CLI reports with that `lifecycleRole` (a legacy role stored in the cloud). On a clash the first slug alphabetically wins, and the catalogue reports a `duplicate_role_warnings` entry | B | `fcode-ama` references/troubleshooting.md §Demo companies & Test marketplace |
 | FORM-02 | A stored secret is never echoed back to a form — pre-render reports only *whether* it is set, blank submit keeps the value; escalation: echoing the value is **B**, marking the secret field `required` (locking users out of partial edits) is **W** | B/W | `fcode-forms` references/advanced.md §Pre-filling current values |
 | FORM-03 | A process behind a form authorizes the caller itself and never trusts caller-supplied identity (`company_id`, `triggered_from_location`) — a form that hands back company data or writes on the strength of those params is **B**; a submission result or pre-render `variables` node exposing more than the caller should see is **W** | B/W | `fcode-forms` §What a form may trust |
 | FORM-04 | No secrets in embed code, embed `options`, or the schema — they all reach the browser | B | `fcode-forms` §Gotchas |
@@ -69,7 +69,7 @@ own rules and note the mix in the report header.
 | FORM-11 | Schema quality: secret inputs use `isSensitive: true`; `nextProcessId` and every `ui:steps` `process` step carry a slug, not a UUID; schema follows `fcode-json-schema` | S | `fcode-json-schema`, `fcode-forms` §Multi-step forms |
 | FORM-12 | A long form (≈10+ fields) declares `ui:steps` to group fields into steps; a `nextProcessId` chain whose intermediate processes do no real work exists only for visual steps — replace it with `ui:steps` in a single process; a chain whose processes always return the same fixed `nextProcessId` is a fixed wizard — declare it as a multi-process flow in the entry form's `ui:steps` | S | `fcode-forms` §Multi-step forms |
 | FORM-13 | Every process in a multi-process flow is safe to re-run (the user can go back and re-submit): it overwrites variables and datastore keys rather than appending, and looks up webhooks/schedules or their recorded ids before creating them | W | `fcode-forms` §Multi-step forms |
-| FORM-14 | Every install / settings / uninstall form declares its `form.appRole` (a slug-only install form never moves the installation to `active`) and none sets `factorial.form.appTool: true` (rewritten to `USER_FACING_FORM` on push, so the App loses that lifecycle form) | B | `fcode-factorial-actions` §Reserved lifecycle slugs |
+| FORM-14 | Lifecycle forms are the processes slugged `install`/`settings`/`uninstall`; no process declares `form.appRole` (the CLI refuses the push); none sets `factorial.form.appTool: true` | B | `fcode-factorial-actions` §Reserved lifecycle slugs |
 | FORM-15 | Every process in a multi-process flow has its form enabled with the same access as the entry form, and, when the flow starts from a UI trigger, the same `uiTrigger.locationId` (a step that isn't exposed answers not found mid-flow) | B | `fcode-forms` §Multi-step forms |
 
 ## I18N — internationalization
@@ -151,7 +151,7 @@ and not so much that production output floods.
 
 ## LIFE — install/uninstall hygiene
 
-Applies to apps with an install lifecycle (any `appRole` process, or code
+Applies to apps with an install lifecycle (an `install` or `uninstall` process, or code
 creating external webhooks/schedules). For a pure utility app, mark the
 category "N/A — no lifecycle".
 

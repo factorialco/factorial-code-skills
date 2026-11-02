@@ -33,7 +33,7 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 | **A form requires Factorial authentication unless `form.public` releases it**, which is the switch for the auth mode the form endpoints check | |
 | **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path | |
 | `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | |
-| `lifecycleRole` derived from the process's `form.appRole`, or from the reserved slug when it declares none, and tagged in the console | |
+| `lifecycleRole` derived from the reserved slug and tagged in the console | |
 
 So today `uiTrigger`, `form`, `requiredPolicies` and `awaitResult` all do
 something. `agentTool` and `backend` are stored and reachable, but no assistant
@@ -70,12 +70,8 @@ does.
   (approval + "cannot be undone" warning) until you say `READ` or `WRITE`.
 - **The four lifecycle slugs are reserved.** `install`, `settings`,
   `uninstall`, `sync` mean something to Factorial regardless of the block. Do
-  not give an ordinary action one of them.
-- **A lifecycle form declares `form.appRole` and never sets `form.appTool:
-  true`.** Only an `INSTALL` role completes an installation: an install form
-  known by its slug alone runs, but leaves the installation pending. And
-  `appTool: true` is rewritten to `appRole: USER_FACING_FORM`, which then beats
-  the slug. See "Reserved lifecycle slugs".
+  not give an ordinary action one of them, and never make a lifecycle form an
+  App tool. See "Reserved lifecycle slugs".
 - **Omit the defaults.** `fcode pull` leaves out `awaitResult` when `true`,
   `requiredPolicies` when empty, `form.public` and `form.appTool` when `false`,
   unset `agentTool` texts and empty lists, and any sub-block whose `enabled` is `false`. A process
@@ -111,7 +107,7 @@ does.
 | `uiTrigger.label` | string | Button text. **The only i18n field**: plain text or `fcode.i18n("key")` tokens |
 | `uiTrigger.icon` | string | Allowlisted icon name (`fcode-ui-triggers`); omit for a text-only button |
 | `form.enabled` | boolean | Expose the parameters as a form (`fcode-forms`). Same switch and same quota as the Forms flag |
-| `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. This is the block's name for the legacy `form.appRole: USER_FACING_FORM`, which it is kept mirrored with |
+| `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. A lifecycle form never sets it: the platform refuses it there |
 | `form.public` | boolean, `false` | Releases the form to anyone holding its link, with no Factorial account. It is the switch for the legacy `form.authMode`, which the form endpoints enforce, and the two are kept mirrored: on writes `NONE`, off writes `FACTORIAL`. Leave it off unless the form is meant for people outside Factorial; nothing authenticates a caller once it is on |
 | `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section) |
 | `backend.enabled` | boolean | Let Factorial backend jobs run the process with no user in front of it |
@@ -161,70 +157,43 @@ tells it **what the tool is for**. Plain text, no i18n.
 | `uninstall` | Runs when the company removes the App | `UNINSTALL` |
 | `sync` | The sync process of an integrations-framework App | `SYNC` |
 
-`lifecycleRole` is **read-only**: the console shows a tinted **Install /
-Settings / Uninstall / Sync** tag in the processes list and the process header,
-the CLI and API report it, nothing ever writes it (it is not in `metadata.json`
-and not in the content hash). `install`, `settings` and `uninstall` are the
-marketplace lifecycle forms; they still take `factorial.form.enabled` like any
-form. The pre-render pattern for re-opened install/settings forms is in
-`fcode-forms`.
+`lifecycleRole` is **read-only**: the platform derives it from the reserved
+slug (or from a legacy role where one is still stored, below), the console shows a tinted **Install / Settings / Uninstall / Sync** tag
+in the processes list and the process header, the CLI and API report it, and
+nothing ever writes it (it is not in `metadata.json` and not in the content
+hash). `install`, `settings` and `uninstall` are the marketplace lifecycle
+forms; they still take `factorial.form.enabled` like any form. The pre-render
+pattern for re-opened install/settings forms is in `fcode-forms`.
 
-What it is derived **from** is the process's declared `form.appRole`, and the
-reserved slug only when it declares none. It has to be this way round: the
-marketplace catalogue has always keyed these forms on `appRole`, and the Apps in
-production name their forms `datev-install`, `net-empregos-install` and so on
-with the right role set throughout. Keying on the slug alone would leave them
-with no install, settings or uninstall form at all — and an installation waiting
-on configuration is offered only its lifecycle forms, so it could not finish
-installing either.
+The rules for lifecycle forms:
 
-**Declare the role, even on a reserved slug.** The slug fallback covers the
-console tag and the catalogue, but not the step that finishes an install: the
-platform moves an installation from `configuration_pending` to `active` only
-when a form whose declared `form.appRole` is `INSTALL` runs successfully
-(synchronously, in the installation's `deploy-` workspace). An install form
-identified by its slug alone renders and runs, and the installation never
-becomes `active`. So write the role on every lifecycle form, whatever its slug:
+- **The slug is the whole rule.** A process slugged `install`, `settings` or
+  `uninstall` is that form; nothing else needs setting. When the `install`
+  form runs successfully, the platform moves the installation from
+  `configuration_pending` to `active`.
+- **Never write `form.appRole`.** It is retired: `fcode push` refuses a process
+  whose `metadata.json` carries it, with a message per process, and `fcode pull`
+  no longer writes it.
+- **A form offered to the company's users on the App's page is
+  `factorial.form.appTool: true`.** A lifecycle form never sets `appTool`; the
+  platform refuses it.
+
+`processes/install/metadata.json` needs nothing lifecycle-specific:
 
 ```json
 {
   "name": "Connect Linear",
-  "form": { "appRole": "INSTALL" },
   "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
-**Never set `factorial.form.appTool: true` on a lifecycle form.** `appTool:
-true` is `appRole: USER_FACING_FORM` (see "The transition from `form` and
-`uiTrigger`"), so on push it replaces `INSTALL` / `SETTINGS` / `UNINSTALL`, the
-declared role then beats the slug, and the CLI writes `USER_FACING_FORM` back
-into `metadata.json`. The form becomes an App tool and the App loses its
-lifecycle form, with no error. Leave `appTool` out, or `false`, which keeps the
-role.
-
-`appRole` has no deprecation date, and the reserved slug is still the clearer
-name for a new lifecycle process. Give it the role as well.
-
-### Adopting a reserved slug in an existing App
-
-Optional, and worth it only for the clearer name. `fcode push` matches local
-processes to remote ones **by slug**, so renaming a process folder renames
-nothing: it creates a second process and leaves the first one in the workspace.
-Retire the old one in the same push.
-
-1. Create a process with the reserved slug, moving the source and the
-   `factorial` block across.
-2. Set `factorial.form.enabled: false` on the old process **in the same push**.
-   Do not leave both enabled: when two processes claim one lifecycle slot the
-   winner is the lexicographically-first slug, which is as likely to be the old
-   name (`datev-install` < `install`) as the new one (`install` <
-   `net-empregos-install`). The clash is reported as a `duplicate_role_warnings`
-   entry on the App's catalogue entry.
-3. `fcode push`.
-
-The action id changes, since it is derived from the slug. Nothing persists it,
-so installations and their configuration are untouched; a bookmarked form URL
-stops resolving.
+**Legacy roles.** Older processes may still hold a role in the cloud, such as a
+lifecycle role on a slug that is not reserved (`acme-install`). The role stays
+in the cloud and keeps working; deleting the line from `metadata.json` does not
+remove it. Do not rename such a process by renaming its folder: `fcode push`
+pairs processes by slug, so a renamed folder creates a second process instead of
+renaming the first. A declared legacy role still wins over the slug, and when
+two processes claim one lifecycle slot the alphabetically-first slug wins.
 
 ## Parameters: the contract with Factorial
 
@@ -248,22 +217,9 @@ trigger** button (`uiTrigger`). Both stay for now and the platform keeps them
 | `uiTrigger.locationId`, `uiTrigger.icon`, `uiTrigger.label` | the same keys of `uiTrigger` |
 | `awaitResult` | `uiTrigger.awaitResult` |
 | `enabled && form.enabled` | `form.enabled` |
-| `form.appTool` | `form.appRole` = `USER_FACING_FORM` |
 
 Writing the legacy blocks mirrors the same fields back, and `factorial.enabled`
 turns on as soon as any entry point is enabled.
-
-`form.appRole` is the one legacy field the block **partly** owns. Of its four
-values, `USER_FACING_FORM` is `form.appTool` — turning the flag on claims that
-value, turning it off releases it only if it was held, and a write that says
-nothing about `appTool` leaves the role alone. So a file written before the flag
-existed keeps its role on push: the CLI reads `appRole` and sends the flag to
-match.
-
-`INSTALL` / `SETTINGS` / `UNINSTALL` are the other side of it: the block has no
-switch for them, so they stay in `form.appRole`, and that is what
-`lifecycleRole` reads first. Keep writing them there, on a reserved slug as
-well (see "Reserved lifecycle slugs").
 
 **Prefer `factorial`**: write it in new processes, and when touching an old
 `metadata.json`, move the settings into it rather than editing `uiTrigger`.
@@ -350,5 +306,5 @@ an `fcode.storage://…` reference — `fcode-forms`).
 4. `agentTool`: `effect` set, `whenNotToUse` names the neighbour tools, dry runs
    point at their real process with `simulatesFor`.
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
-   every install / settings / uninstall form declares its `form.appRole` and has
-   no `appTool: true`; the schema has titles, descriptions and `required`.
+   lifecycle forms use the reserved slugs, with no `form.appRole` and no
+   `appTool: true`; the schema has titles, descriptions and `required`.
