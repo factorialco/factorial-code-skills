@@ -107,7 +107,7 @@ does.
 | `uiTrigger.label` | string | Button text. **The only i18n field**: plain text or `fcode.i18n("key")` tokens |
 | `uiTrigger.icon` | string | Allowlisted icon name (`fcode-ui-triggers`); omit for a text-only button |
 | `form.enabled` | boolean | Expose the parameters as a form (`fcode-forms`). Same switch and same quota as the Forms flag |
-| `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. A lifecycle form never sets it: the platform refuses it there |
+| `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. A `settings` form may also set it; an `install` or `uninstall` form never does, and the platform refuses it there |
 | `form.public` | boolean, `false` | Releases the form to anyone holding its link, with no Factorial account. It is the switch for the legacy `form.authMode`, which the form endpoints enforce, and the two are kept mirrored: on writes `NONE`, off writes `FACTORIAL`. Leave it off unless the form is meant for people outside Factorial; nothing authenticates a caller once it is on |
 | `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section) |
 | `backend.enabled` | boolean | Let Factorial backend jobs run the process with no user in front of it |
@@ -175,8 +175,10 @@ The rules for lifecycle forms:
   whose `metadata.json` carries it, with a message per process, and `fcode pull`
   no longer writes it.
 - **A form offered to the company's users on the App's page is
-  `factorial.form.appTool: true`.** A lifecycle form never sets `appTool`; the
-  platform refuses it.
+  `factorial.form.appTool: true`.** The `settings` form may set it too, to be
+  offered again from the App's page. The `install` and `uninstall` forms never
+  set it, and the platform refuses it: one re-runs the setup, the other removes
+  the installation.
 
 `processes/install/metadata.json` needs nothing lifecycle-specific:
 
@@ -306,5 +308,6 @@ an `fcode.storage://…` reference — `fcode-forms`).
 4. `agentTool`: `effect` set, `whenNotToUse` names the neighbour tools, dry runs
    point at their real process with `simulatesFor`.
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
-   lifecycle forms use the reserved slugs, with no `form.appRole` and no
-   `appTool: true`; the schema has titles, descriptions and `required`.
+   lifecycle forms use the reserved slugs, with no `form.appRole`, and the
+   install and uninstall forms have no `appTool: true`; the schema has titles,
+   descriptions and `required`.
