@@ -45,14 +45,13 @@ modules/acme-client/        # thin vendor HTTP client
 
 ## Setup
 
-- **Inherit the base.** Apps flagged as integrations framework get
-  `base-integration-app-<lang>` automatically. Any other App (an inbound import
-  is usually a **Standard app**) adds it to `settings.json` `parentTeams`,
-  after `base-app-<lang>`. Until the base's `stable` alias includes the inbound
-  modules, pin the version that ships them:
+- **Inherit the base.** An inbound import needs the **Integrations-framework
+  app** type: it makes the App inherit `base-integration-app-<lang>` when it is
+  created. Until the base's `stable` alias includes the inbound modules, pin
+  the version that ships them in `settings.json` `parentTeams`:
 
   ```json
-  "parentTeams": ["base-app-js", { "slug": "base-integration-app-js", "version": "2.4.0" }]
+  "parentTeams": ["base-app-js", { "slug": "base-integration-app-js", "version": "2.5.0" }]
   ```
 
 - **Credentials** come from the inherited `factorial-sdk` module: the
