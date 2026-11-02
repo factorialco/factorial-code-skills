@@ -188,9 +188,8 @@ platform resolves for it (field reference in `fcode-cli`; embedding in
 | Uninstall | process slug `uninstall` | When uninstalling — e.g. to remove webhook subscriptions the app created |
 | App tool | `factorial.form.appTool: true` | On the app's own page, for the installing company's users to run — file uploads, one-off automations |
 
-The first three come from the **reserved slugs**. The fourth used to be
-`form.appRole: USER_FACING_FORM`, which the platform keeps mirrored with
-`appTool` — do not set it directly in new work.
+The rules for the first three, the reserved slugs, are in
+`fcode-factorial-actions`.
 
 Everything exercised here behaves identically in the production marketplace.
 

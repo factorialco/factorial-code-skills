@@ -1,7 +1,7 @@
 # Reference: custom app with lifecycle ("Linear integration")
 
 A complete custom app that connects Factorial to **Linear**: a two-step setup
-form, a webhook-driven outbound push, a scheduled inbound poll, and a clean
+flow across two processes, a webhook-driven outbound push, a scheduled inbound poll, and a clean
 uninstall. This is the pattern for any app that must be *installed* by an
 end user (collect credentials, map entities, create webhooks/schedules) and
 later *uninstalled* without leaving residue.
@@ -10,14 +10,14 @@ later *uninstalled* without leaving residue.
 
 ```
 SETUP (user-facing forms)
-  linear-setup ──nextProcessId──▶ linear-setup-mapping
-       │                              │ form rendered with data from
-       │ stores LINEAR_API_KEY        │ linear-setup-mapping-prerender
-       ▼                              ▼
-                            stores mapping, creates webhook + schedule,
-                            records their ids in the datastore
+  install ──flow step "Map teams"──▶ settings
+     │                                 │ form rendered with data from
+     │ stores LINEAR_API_KEY           │ settings-prerender
+     ▼                                 ▼
+                               stores mapping, creates webhook + schedule,
+                               records their ids in the datastore
 
-SETTINGS (linear-setup-mapping re-opened after install)
+SETTINGS (the settings form re-opened after install)
   its pre-render reads variables + datastore so the form shows the current
   configuration; a credential is reported as set, never echoed back
 
@@ -26,34 +26,35 @@ RUNTIME
   linear-projects-poll  ◀── hourly schedule (created at setup)
 
 TEARDOWN
-  linear-uninstall — deletes webhook, schedule, variable, datastore keys
+  uninstall — deletes webhook, schedule, variable, datastore keys
 ```
 
 Workspace layout:
 
 ```
-processes/linear-setup/                    # step 1: validate + store API key
-processes/linear-setup-mapping/            # step 2: map teams, activate
-processes/linear-setup-mapping-prerender/  # renders step 2's dropdowns + current values
-processes/linear-users-push/               # webhook: Factorial employee → Linear user
-processes/linear-projects-poll/            # schedule: Linear projects → Factorial
-processes/linear-uninstall/                # teardown
-modules/linear-client/                     # vendor API client (wraps @linear/sdk)
+processes/install/              # step 1: validate + store API key
+processes/settings/             # step 2: map teams, activate
+processes/settings-prerender/   # renders step 2's dropdowns + current values
+processes/linear-users-push/    # webhook: Factorial employee → Linear user
+processes/linear-projects-poll/ # schedule: Linear projects → Factorial
+processes/uninstall/            # teardown
+modules/linear-client/          # vendor API client (wraps @linear/sdk)
 ```
 
 ## Triggers per process — `metadata.json`
 
 Each process declares how it's invoked in its `metadata.json` (full field
-reference in `fcode-cli`). The setup entry point is a form and carries the
-app's `INSTALL` role; the runtime push process is webhook-only:
+reference in `fcode-cli`). The setup entry point is a form, and its reserved
+slug `install` is what makes it the app's install form; the runtime push process
+is webhook-only:
 
-`processes/linear-setup/metadata.json` — the app's install form:
+`processes/install/metadata.json` — the app's install form:
 
 ```json
 {
   "name": "Connect Linear",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "INSTALL" }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
@@ -61,15 +62,15 @@ Both setup forms are opened from inside Factorial, but that doesn't protect
 them: a submission's parameters are caller-controlled, so each of these processes authorizes the caller
 itself and never trusts a submitted `company_id` (see `fcode-forms`).
 
-`processes/linear-setup-mapping/metadata.json` — step 2 of install, reached
-via `nextProcessId`. It also doubles as the app's post-install settings
-screen (re-map teams later), which is what `appRole: SETTINGS` marks:
+`processes/settings/metadata.json` — step 2 of install, a `process` step of
+the flow `install` declares. It also doubles as the app's post-install settings
+screen (re-map teams later), which is what the reserved slug `settings` marks:
 
 ```json
 {
   "name": "Map Linear teams",
   "tags": ["linear", "setup"],
-  "form": { "enabled": true, "appRole": "SETTINGS" }
+  "factorial": { "enabled": true, "form": { "enabled": true } }
 }
 ```
 
@@ -119,12 +120,37 @@ class LinearApiClient {
 module.exports = { LinearApiClient };
 ```
 
-## Setup step 1 — validate credentials, chain to step 2
+## Setup step 1 — validate credentials, declare the flow
 
-A minimal form (one credential field with `"isSensitive": true`, which renders
-a password input — see `fcode-json-schema`). The process validates the key
-with a real API call, persists it as a team variable, and chains by returning
-`nextProcessId`:
+`install`'s form is the entry of a **multi-process flow**: its `ui:steps`
+declares both steps of the install, the second one served by `settings`
+(rules in `fcode-forms` § Multi-step forms). One
+credential field with `"isSensitive": true` renders a password input (see
+`fcode-json-schema`):
+
+```json
+{
+  "title": "Connect to Linear",
+  "type": "object",
+  "properties": {
+    "linear_api_key": { "title": "Linear API Key", "type": "string", "isSensitive": true }
+  },
+  "required": ["linear_api_key"],
+  "ui": {
+    "ui:steps": {
+      "steps": [
+        { "title": "Connect", "description": "Enter your Linear API key", "fields": ["linear_api_key"] },
+        { "title": "Map teams", "description": "Map each Linear team to a Factorial team", "process": "settings" }
+      ]
+    }
+  }
+}
+```
+
+The process validates the key with a real API call and persists it as a team
+variable. It returns no `nextProcessId` — after a successful submit the SDK
+moves on to "Map teams" by itself — and no "Next" button text either: the flow
+labels every submit but the last with `config.nextLabel`.
 
 ```javascript
 async function main() {
@@ -140,15 +166,26 @@ async function main() {
   }
 
   // 2. Persist for the pre-render and runtime processes (sensitive by default).
+  //    Overwriting makes a re-run safe: the user can go back to "Connect" and
+  //    submit a different key.
   await fcode.variables.set("LINEAR_API_KEY", linear_api_key);
 
-  // 3. Chain to step 2 by slug — slugs are identical in every workspace.
-  return { nextProcessId: "linear-setup-mapping" };
+  return {};
 }
 ```
 
-Returning `{ nextProcessId }` is what makes the form multi-step: after
-submitting step 1, the UI renders `nextProcessId`'s form as step 2.
+`install` is the app's install form, so its success is what makes the
+installation `active`, before "Map teams" has run. The webhook and schedule
+come from step 2, so an admin who stops after step 1 has an active
+installation that syncs nothing until the mapping is saved from the settings
+screen. That is acceptable here; an App that can't run at all without its
+second step should do that setup in the entry step instead.
+
+Why a flow rather than one form: the mapping dropdowns are built from Linear
+data that only the submitted key can fetch, so the key must be stored by a
+process *before* the second form is served. A `preRenderProcess` on
+`install` itself could not do it — it runs before the user has typed
+anything.
 
 ## Setup step 2 — dynamic dropdowns via `preRenderProcess`
 
@@ -163,7 +200,7 @@ those nodes:
 {
   "title": "Map Linear teams to Factorial teams",
   "type": "object",
-  "preRenderProcess": "linear-setup-mapping-prerender",
+  "preRenderProcess": "settings-prerender",
   "variables": {
     "linearTeamField": { "title": "Linear team", "type": "string" },
     "factorialTeamField": { "title": "Factorial team", "type": "string" },
@@ -189,12 +226,12 @@ those nodes:
 ```
 
 ```javascript
-// processes/linear-setup-mapping-prerender/index.js — runs while the form is served
+// processes/settings-prerender/index.js — runs while the form is served
 async function main() {
   const { selectField, toOptions } = fcode.import("fcode-forms");
 
   const linearApiKey = process.env.LINEAR_API_KEY; // stored by step 1
-  if (!linearApiKey) throw new Error("LINEAR_API_KEY is not set. Run linear-setup first.");
+  if (!linearApiKey) throw new Error("LINEAR_API_KEY is not set. Run install first.");
 
   const { LinearApiClient } = fcode.import("linear-client");
   const linearTeams = (await new LinearApiClient(linearApiKey).getTeams())
@@ -204,7 +241,7 @@ async function main() {
   const factorialTeams = (await createFactorialClient().teams.teams.all())
     .map((t) => ({ id: t.id, name: t.name }));
 
-  // The same process backs appRole: SETTINGS, so the form is re-opened after
+  // The same process is the settings form, so it is re-opened after
   // install — scaffold the rows from the mapping already saved, not blank ones.
   const saved = JSON.parse((await fcode.datastore.get("linear.teams.mappings")) || "{}");
 
@@ -240,6 +277,11 @@ const SCHEDULES_KEY = "linear.install.schedules";
 async function main() {
   const { team_mappings } = fcode.context.parameters;
 
+  // Safe to re-run: a user can go back in the setup flow and submit again, and
+  // the same form is re-opened as the settings screen. Overwrite the mapping and
+  // create the webhook and schedule only when no earlier run recorded them.
+  const recorded = async (key) => JSON.parse((await fcode.datastore.get(key)) || "[]");
+
   // 1. Persist the mapping (datastore = strings only → JSON.stringify).
   const mapping = {};
   for (const row of team_mappings) {
@@ -248,32 +290,36 @@ async function main() {
   await fcode.datastore.set(MAPPINGS_KEY, JSON.stringify(mapping));
 
   // 2. Create the Factorial webhook (employee created → linear-users-push).
-  const { createFactorialClient } = fcode.import("factorial-sdk");
-  const { getCompanyId, setupWebhook } = fcode.import("factorial-utils");
-  const factorialClient = createFactorialClient();
-  const companyId = await getCompanyId(factorialClient);
+  if ((await recorded(SUBSCRIPTIONS_KEY)).length === 0) {
+    const { createFactorialClient } = fcode.import("factorial-sdk");
+    const { getCompanyId, setupWebhook } = fcode.import("factorial-utils");
+    const factorialClient = createFactorialClient();
+    const companyId = await getCompanyId(factorialClient);
 
-  // setupWebhook embeds FACTORIAL_CHALLENGE_TOKEN as the subscription's
-  // challenge, and throws when the variable is unset.
-  const subscription = await setupWebhook({
-    factorialClient,
-    subscriptionType: "employees/employee/create_with_contract",
-    processSlug: "linear-users-push",
-    companyId,
-    name: `${fcode.team.slug}-linear-users-push`,
-  });
-  // Gotcha: the API response field is "type", not "subscription_type".
-  const subscriptionType = subscription.type ?? subscription.subscription_type;
-  await fcode.datastore.set(SUBSCRIPTIONS_KEY,
-    JSON.stringify([{ id: subscription.id, subscription_type: subscriptionType }]));
+    // setupWebhook embeds FACTORIAL_CHALLENGE_TOKEN as the subscription's
+    // challenge, and throws when the variable is unset.
+    const subscription = await setupWebhook({
+      factorialClient,
+      subscriptionType: "employees/employee/create_with_contract",
+      processSlug: "linear-users-push",
+      companyId,
+      name: `${fcode.team.slug}-linear-users-push`,
+    });
+    // Gotcha: the API response field is "type", not "subscription_type".
+    const subscriptionType = subscription.type ?? subscription.subscription_type;
+    await fcode.datastore.set(SUBSCRIPTIONS_KEY,
+      JSON.stringify([{ id: subscription.id, subscription_type: subscriptionType }]));
+  }
 
   // 3. Schedule the hourly poll; record its id.
-  const created = await fcode.schedule.create("linear-projects-poll", {
-    cron: "0 0 */1 * * *",
-    allowConcurrentExecutions: false,
-  });
-  await fcode.datastore.set(SCHEDULES_KEY,
-    JSON.stringify([{ id: created.id, process_slug: "linear-projects-poll" }]));
+  if ((await recorded(SCHEDULES_KEY)).length === 0) {
+    const created = await fcode.schedule.create("linear-projects-poll", {
+      cron: "0 0 */1 * * *",
+      allowConcurrentExecutions: false,
+    });
+    await fcode.datastore.set(SCHEDULES_KEY,
+      JSON.stringify([{ id: created.id, process_slug: "linear-projects-poll" }]));
+  }
 
   return { success: true };
 }
@@ -281,7 +327,7 @@ async function main() {
 
 ## Re-opened as the settings screen — show what is configured now
 
-`linear-setup-mapping` carries `appRole: SETTINGS`, so the *same* form is opened
+`settings` is the app's settings form, so the *same* form is opened
 again long after install, to re-map teams or rotate the key. **It must render the
 current state**, or the user is asked to re-enter configuration they cannot
 see.
@@ -290,7 +336,7 @@ The pre-render above already does this for the mapping. Extending it to cover th
 credential and a poll interval is the whole pattern:
 
 ```javascript
-// processes/linear-setup-mapping-prerender/index.js (continued)
+// processes/settings-prerender/index.js (continued)
 const MAPPINGS_KEY = "linear.teams.mappings";
 const SETTINGS_KEY = "linear.settings";
 
@@ -334,7 +380,7 @@ otherwise a user who only wants to re-map a team cannot submit:
 
 ```json
 {
-  "preRenderProcess": "linear-setup-mapping-prerender",
+  "preRenderProcess": "settings-prerender",
   "variables": {
     "pollIntervalDefault": 1,
     "apiKeyLabel": "Linear API key",
@@ -510,14 +556,17 @@ async function main() {
 1. Replace `linear-client` with a module wrapping the vendor's SDK/API
    (`@add-package` for the dependency).
 2. Step 1: swap the credential field(s) and the validation call; keep the
-   store-variable + `nextProcessId` chain.
+   store-variable step and the flow declared in its `ui:steps` — no
+   `nextProcessId`.
 3. Pre-render: load whatever collections the mapping needs (teams, projects,
    ledgers, …) and return them as `#/variables` nodes with
    `selectField`/`toOptions`, **plus the values already configured** so the form
    shows current state when re-opened as the settings screen — reporting whether
    a credential is set, never echoing it.
 4. Step 2: keep the discipline — persist config, create webhooks/schedules,
-   **record every created id in the datastore**.
+   **record every created id in the datastore**, and create only what isn't
+   recorded yet, so a re-run (the user going back in the flow, or the settings
+   screen) adds nothing twice.
 5. Runtime processes: keep cursor + dedup for polling (vendor-native upsert
    instead of the dedup map when the target API has one); keep `authMode: TEAM` +
    HTTP-style error returns for webhooks.

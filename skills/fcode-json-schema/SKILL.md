@@ -49,7 +49,9 @@ so its `ui:` options apply.
   the field. Detail and a worked example in `fcode-forms`
   (`references/advanced.md`).
 - **Long forms** — split roughly ten or more fields into steps with a root-level
-  `ui:steps` node; see `fcode-forms` §Multi-step forms.
+  `ui:steps` node; see `fcode-forms` §Multi-step forms. The same node can
+  declare `process` steps that span several processes' forms (a multi-process
+  flow, owned by `fcode-forms`).
 - **Connect an external account** — a `string` or `boolean` with
   `"ui": { "ui:widget": "oauth", "ui:options": { "authorizationUrl": … } }`
   renders a button that completes an OAuth flow in a popup (`"ui:field":

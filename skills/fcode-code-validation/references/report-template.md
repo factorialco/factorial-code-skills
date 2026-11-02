@@ -35,7 +35,7 @@ workspace, overwriting any previous run.
 |---|---|---|---|
 | STRUCT — structure & platform rules | 0 | 1 | 0 |
 | LANG — language rules | 0 | 0 | 0 |
-| FORM — forms & appRole lifecycle | 1 | 0 | 0 |
+| FORM — forms & lifecycle | 1 | 0 | 0 |
 | I18N — internationalization | 0 | 1 | 0 |
 | SEC — security & secrets | 1 | 0 | 0 |
 | MAIL — email delivery | 0 | 0 | 0 |

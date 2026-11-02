@@ -104,6 +104,8 @@ same markdown renders as plain elements.
   `@factorialco/fcode-react-forms` ≥ 3.2.0; since `@factorialco/rjsf-f0` 2.1.0
   the theme renders its navigation with f0 components (sidebar → table of
   contents, tabs → button strip) — `rjsfTheme={Theme}` brings it along.
+- Multi-process flows (`process` steps in `ui:steps`, see `SKILL.md`) need
+  the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.6.0.
 - The OAuth connect button (`ui:widget: "oauth"`, see `SKILL.md`) needs
   `@factorialco/fcode-react-forms` ≥ 3.3.0; `@factorialco/rjsf-f0` ≥ 2.3.0
   renders it as an `F0Button` — the flow itself (popup, completion, form
@@ -142,7 +144,9 @@ root set to a process slug/id. When the form is served the API runs that process
 `$ref`s resolve — without a throwaway first step. The process must return
 `{ variables: { ... } }`. Form query-string params arrive as
 `fcode.context.parameters`. Since it runs before any user input, it can't use
-data derived from user-submitted secrets — that still needs a multi-step form.
+data derived from user-submitted secrets — for that, put the secret in an
+earlier step of a multi-process flow and give the pre-render to the next
+step's form (`SKILL.md` "Multi-step forms").
 It is also where an OAuth connect field's `authorizationUrl` comes from: the
 pre-render calls `fcode.oauth.start()` and injects the `authorizationUrl` it
 returns. The platform mints the `state` and the PKCE pair, so never build

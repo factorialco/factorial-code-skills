@@ -72,7 +72,7 @@ cited on the catalog row — read the owner when a finding needs context.
    cloned: `fcode pull`; on divergence never `--force` — ask whether to
    review the local state as-is and record the answer in the report header.
 3. **Inventory** (read-only). Detect the language per process (`index.js`
-   vs `main.py`). List processes, modules, `appRole`s, and webhook/form
+   vs `main.py`). List processes, modules, lifecycle slugs, and webhook/form
    settings from each `processes/<slug>/metadata.json`; read `settings.json`,
    the three variables files, `variables.meta.json`, and `i18n/`. Run
    `fcode status`, `fcode variables:status`, `fcode settings:status`, and
