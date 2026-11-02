@@ -393,6 +393,12 @@ The rules:
   all, the whole `ui:steps` is ignored and the form renders as a single page.
 - **`process` takes a slug**, like `nextProcessId`. On the marketplace path
   the platform rewrites the slugs into its own action ids — never write ids.
+- **Every process in the flow is exposed where the entry form is.** Each step
+  loads and submits its own form, so each one needs its form enabled with the
+  same access as the entry. A flow started from a UI trigger needs every step
+  on the same `uiTrigger.locationId`, which also shows each step as its own
+  button there. A step that isn't exposed answers not found in the middle of
+  the flow, and the user is left on an error with no way back.
 - **No `nextProcessId` on the default path.** After each successful submit the
   SDK moves to the next declared step. Every submit button but the last is
   labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
