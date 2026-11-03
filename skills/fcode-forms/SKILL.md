@@ -122,7 +122,10 @@ so the process behind the form is still the guard:
   submission, and a `preRenderProcess`'s `variables`, reach whoever opened the
   URL.
 - **Keep credentials one-way**: a settings form reports only *whether* a secret
-  is set, never its value (`references/advanced.md`).
+  is set, never its value (`references/advanced.md`). The platform strips the
+  `default`/`examples`/`const` of `isSensitive` fields from the schema it
+  serves, but a secret put in a label, a markdown block or a `variables` node
+  still reaches the caller.
 
 ## Embed a form
 
@@ -611,8 +614,9 @@ A file field is `"type": "string"` with a `"ui": { "ui:widget": "file" }` key
 (A root-level `ui` map keyed by field name — rjsf's `uiSchema` convention — is
 also merged, but per-property `ui` is the documented form; the root `ui` is
 mainly for form-level options like `ui:submitButtonOptions`. For secret inputs
-prefer `"isSensitive": true` on the property — it renders a password widget
-automatically; see `fcode-json-schema`.)
+use `"isSensitive": true` on the property — it renders a password widget
+automatically, while `"ui:widget": "password"` alone only hides the value and
+the CLI warns about it on push; see `fcode-json-schema`.)
 
 On submit the file is **uploaded to Storage before the process starts**, and the
 parameter arrives as an `fcode.storage://…` reference (an **array** if multiple

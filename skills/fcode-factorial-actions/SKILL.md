@@ -109,13 +109,15 @@ does.
 | `form.enabled` | boolean | Expose the parameters as a form (`fcode-forms`). Same switch and same quota as the Forms flag |
 | `form.appTool` | boolean, `false` | Offer the form to the company's users **on the App's own page** in Factorial, among the things the App lets them run — a "Report a sync issue" or "Sync now" form. Leave it `false` for a form the App opens itself. A `settings` form may also set it; an `install` or `uninstall` form never does, and the platform refuses it there |
 | `form.public` | boolean, `false` | Releases the form to anyone holding its link, with no Factorial account. It is the switch for the legacy `form.authMode`, which the form endpoints enforce, and the two are kept mirrored: on writes `NONE`, off writes `FACTORIAL`. Leave it off unless the form is meant for people outside Factorial; nothing authenticates a caller once it is on |
-| `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section) |
+| `agentTool.enabled` | boolean | Let the Factorial One assistant call the process as a tool. The rest of the sub-block is the tool contract (next section); on a lifecycle form it guides One through the form (see "Reserved lifecycle slugs") |
 | `backend.enabled` | boolean | Let Factorial backend jobs run the process with no user in front of it |
 
 ## The Factorial One tool contract (`agentTool`)
 
 The parameters schema tells the assistant **what the tool takes**; this block
-tells it **what the tool is for**. Plain text, no i18n.
+tells it **what the tool is for**. Plain text, no i18n. It describes one
+process; the App as a whole is described to One by the App's
+`agent.description` (`fcode-ama`).
 
 | Field | Type | What it buys the model |
 |---|---|---|
@@ -179,6 +181,17 @@ The rules for lifecycle forms:
   offered again from the App's page. The `install` and `uninstall` forms never
   set it, and the platform refuses it: one re-runs the setup, the other removes
   the installation.
+- **`agentTool` is optional on `install`, `settings` and `uninstall`** (not
+  `appTool`, which stays refused on install and uninstall). Leave it off and
+  Factorial One still opens the form for the user. Turn it on and
+  its contract texts become the guidance One follows to fill the form in:
+  `description` says what the form sets up and how to fill it in, `whenToUse`
+  when to open it, `preconditions` what to check first, `doesNotDo` what the
+  user should not expect. In Factorial's web app One still opens the form in a
+  card for the user to submit; outside it, One may run the process from the
+  conversation — so set `effect` to `WRITE` for `install` and `settings` and
+  `DESTRUCTIVE` for `uninstall`. The texts are worth most on a form that needs
+  judgment, such as a mapping.
 
 `processes/install/metadata.json` needs nothing lifecycle-specific:
 
@@ -186,6 +199,27 @@ The rules for lifecycle forms:
 {
   "name": "Connect Linear",
   "factorial": { "enabled": true, "form": { "enabled": true } }
+}
+```
+
+A `settings` form that maps SILTRA contingencies to absence types, with the
+guidance on:
+
+```json
+{
+  "name": "Map absence types",
+  "factorial": {
+    "enabled": true,
+    "form": { "enabled": true },
+    "agentTool": {
+      "enabled": true,
+      "description": "Maps each SILTRA contingency type to one of the company's absence types, so imported leaves land on the right one. To fill it in, read the company's absence types and pair each contingency with the closest one; ask the user only about the pairs you are unsure of.",
+      "effect": "WRITE",
+      "whenToUse": "The user wants to set up or change how SILTRA contingencies map to absence types.",
+      "preconditions": ["The company has at least one absence type."],
+      "doesNotDo": ["It does not create absence types.", "It does not re-import leaves already imported."]
+    }
+  }
 }
 ```
 
@@ -310,4 +344,6 @@ an `fcode.storage://…` reference — `fcode-forms`).
 5. No ordinary action uses `install`, `settings`, `uninstall` or `sync` as slug;
    lifecycle forms use the reserved slugs, with no `form.appRole`, and the
    install and uninstall forms have no `appTool: true`; the schema has titles,
-   descriptions and `required`.
+   descriptions and `required`. A lifecycle form with `agentTool` on has texts
+   that guide One through the form and `effect` `WRITE` (install, settings) or
+   `DESTRUCTIVE` (uninstall).

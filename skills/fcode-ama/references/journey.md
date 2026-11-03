@@ -157,8 +157,10 @@ variables and executions, fully isolated from other companies — and because
 it inherits, any change pushed to the dev workspace is automatically
 available in every installation.
 
-Installation lifecycle: `configuration_pending → active → suspended →
-deprovisioned` (`active` once the customer completes setup).
+Installation lifecycle: `connection_pending → configuration_pending →
+active → suspended → deprovisioned`. `connection_pending` waits for the
+OAuth connection, and an `active` installation whose connection Factorial
+refuses drops back to it; `active` comes once the customer completes setup.
 
 For each company that has an installation, the Test marketplace app page
 links to its `deploy-` workspace — the **"Open on platform"** button beside
@@ -262,6 +264,31 @@ The App detail page's **Publication** tab manages what the listing shows:
   single language suffices. The same fields (minus the screenshots) live in
   the App folder as `MARKETPLACE.md` and can be edited from Git — see
   `fcode app:push` in `fcode-cli`.
+
+**Agent description** — a short description written for Factorial's AI agent
+(One), which reads it to decide whether the App fits what a user asked for.
+It is not the tagline: the tagline sells the App to a person, the agent
+description tells a model exactly which requests it serves. One falls back to
+the tagline when it is missing. English only, at most 300 characters, plain
+text. Write three things:
+
+- **What it does** — the concrete job, naming the external system.
+- **Use it when** — the situation or request it answers.
+- **Not for** — the nearby requests it does not handle.
+
+> Sends approved payroll to Acme Payroll every night. Use it when a company
+> runs payroll in Acme and wants Factorial as the source. Not for expenses or
+> invoices.
+
+It lives in this stage but is edited outside the Publication tab: in **App
+settings → Configuration** ("AI agent"), or in Git as `agent.description` in
+the App folder's `settings.json` from `fcode team:clone` — never the
+workspace's own `settings.json` (see `fcode app:push` in `fcode-cli`).
+
+It is not a process's `agentTool.description` (`fcode-factorial-actions`):
+the agent description tells One whether to pick the App; a process's
+`agentTool` texts tell it when to call that process, or how to fill in a
+lifecycle form.
 
 The **README** tab holds the App's internal README — documentation for the
 team that owns and operates the App, not shown to end users. It is the same

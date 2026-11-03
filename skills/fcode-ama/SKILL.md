@@ -94,7 +94,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
 | 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the install / settings / uninstall forms and any UI trigger buttons inside the demo company's Factorial |
 | 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
-| 9 | Publish listing | App detail → Publication tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields |
+| 9 | Publish listing | App detail → Publication tab; App settings → Configuration | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields; the agent description One reads to pick the App |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
 
 Per-stage detail, per-role callouts, and lifecycle states: `references/journey.md`.
