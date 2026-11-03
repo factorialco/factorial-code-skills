@@ -115,7 +115,9 @@ does.
 ## The Factorial One tool contract (`agentTool`)
 
 The parameters schema tells the assistant **what the tool takes**; this block
-tells it **what the tool is for**. Plain text, no i18n.
+tells it **what the tool is for**. Plain text, no i18n. It describes one
+process; the App as a whole is described to One by the App's
+`agent.description` (`fcode-ama`).
 
 | Field | Type | What it buys the model |
 |---|---|---|
@@ -179,8 +181,9 @@ The rules for lifecycle forms:
   offered again from the App's page. The `install` and `uninstall` forms never
   set it, and the platform refuses it: one re-runs the setup, the other removes
   the installation.
-- **`agentTool` is optional on `install`, `settings` and `uninstall`.** Leave
-  it off and Factorial One still opens the form for the user. Turn it on and
+- **`agentTool` is optional on `install`, `settings` and `uninstall`** (not
+  `appTool`, which stays refused on install and uninstall). Leave it off and
+  Factorial One still opens the form for the user. Turn it on and
   its contract texts become the guidance One follows to fill the form in:
   `description` says what the form sets up and how to fill it in, `whenToUse`
   when to open it, `preconditions` what to check first, `doesNotDo` what the

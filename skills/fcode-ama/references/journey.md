@@ -280,9 +280,15 @@ text. Write three things:
 > runs payroll in Acme and wants Factorial as the source. Not for expenses or
 > invoices.
 
-It is edited in **App settings → Configuration** ("AI agent"), or in Git as
-`agent.description` in the App folder's `settings.json` (see `fcode app:push`
-in `fcode-cli`).
+It lives in this stage but is edited outside the Publication tab: in **App
+settings → Configuration** ("AI agent"), or in Git as `agent.description` in
+the App folder's `settings.json` from `fcode team:clone` — never the
+workspace's own `settings.json` (see `fcode app:push` in `fcode-cli`).
+
+It is not a process's `agentTool.description` (`fcode-factorial-actions`):
+the agent description tells One whether to pick the App; a process's
+`agentTool` texts tell it when to call that process, or how to fill in a
+lifecycle form.
 
 The **README** tab holds the App's internal README — documentation for the
 team that owns and operates the App, not shown to end users. It is the same

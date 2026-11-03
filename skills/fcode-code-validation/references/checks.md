@@ -71,6 +71,7 @@ own rules and note the mix in the report header.
 | FORM-13 | Every process in a multi-process flow is safe to re-run (the user can go back and re-submit): it overwrites variables and datastore keys rather than appending, and looks up webhooks/schedules or their recorded ids before creating them | W | `fcode-forms` §Multi-step forms |
 | FORM-14 | Lifecycle forms are the processes slugged `install`/`settings`/`uninstall`; no process declares `form.appRole` (the CLI refuses the push); the `install` and `uninstall` forms don't set `factorial.form.appTool: true` (the platform refuses it; `settings` may) | B | `fcode-factorial-actions` §Reserved lifecycle slugs |
 | FORM-15 | Every process in a multi-process flow has its form enabled with the same access as the entry form, and, when the flow starts from a UI trigger, the same `uiTrigger.locationId` (a step that isn't exposed answers not found mid-flow) | B | `fcode-forms` §Multi-step forms |
+| FORM-16 | An `install`/`settings`/`uninstall` process with `agentTool` enabled sets `effect` explicitly: `WRITE` for install and settings, `DESTRUCTIVE` for uninstall — unset means `DESTRUCTIVE`, so One would warn that installing cannot be undone | W | `fcode-factorial-actions` §Reserved lifecycle slugs |
 
 ## I18N — internationalization
 

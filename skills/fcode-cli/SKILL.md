@@ -232,8 +232,8 @@ commands only add the ones that span Apps:
 - **There is no `team:push`.** Code is pushed from inside a workspace, one App at
   a time; the App's README and listing go up with `fcode app:push` (below).
 - The App folder's files come in two kinds. **Mirrors** — `settings.json` (all
-  but `agent.description`), `CHANGELOG.md`, `marketplace/logo.*` — are rewritten on every pull; editing
-  them changes nothing upstream (rename an App in the dashboard, release notes
+  but `agent.description`), `CHANGELOG.md`, `marketplace/logo.*` — are rewritten
+  on every pull; editing them changes nothing upstream (rename an App in the dashboard, release notes
   are the comments given when a release is requested). **Yours** — `README.md`,
   `MARKETPLACE.md` and the `agent.description` field of `settings.json` — are
   kept when edited: a pull only overwrites one you have not changed since the
@@ -269,8 +269,11 @@ fcode app:push --force    # local wins over a cloud edit
 - **`agent.description`** in the App folder's `settings.json` is the description
   Factorial's AI agent (One) reads to pick the App — not the tagline. English
   only, at most 300 characters; a longer one is refused before any request, and
-  a blank one clears it. Also editable in the dashboard's App Settings ›
-  Configuration. What to write in it: see `fcode-ama`.
+  a blank one clears it. It exists only in the App folder that `team:clone` /
+  `team:pull` create, never in the workspace `settings.json` under `app/`:
+  written there, `fcode push` sends it nowhere. Without an App folder, set it in
+  the dashboard's App settings → Configuration. What to write in it: see
+  `fcode-ama`.
 
   ```json
   { "id": "…", "name": "Payroll Sync", "description": "…",
