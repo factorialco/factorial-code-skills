@@ -33,7 +33,12 @@ so its `ui:` options apply.
 
 - **Text** — `"type": "string"`; `format: "email"`; `ui:widget` of `textarea`,
   `color`, `hidden`, or `file`.
-- **Secret** — `"isSensitive": true` masks the input (e.g. passwords/tokens).
+- **Secret** — `"isSensitive": true` masks the input and marks it as a secret
+  for the platform (e.g. passwords/tokens); the platform never serves its
+  `default`/`examples`/`const` (see `fcode-forms`). `"ui:widget": "password"`
+  alone only hides the value on screen — without `isSensitive` the field is not
+  protected, and the CLI warns on push about a password widget or a
+  secret-looking name (token, password, API key, client secret…) without it.
 - **Numbers** — `integer` / `number` with `minimum` / `maximum`.
 - **Boolean** — `"type": "boolean"`.
 - **Choices** — `enum` (select), `oneOf` of `{ const, title }` (labeled radio

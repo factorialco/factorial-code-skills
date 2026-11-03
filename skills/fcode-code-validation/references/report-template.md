@@ -77,7 +77,7 @@ workspace, overwriting any previous run.
 - REUSE: 01–05
 - LOG: 01, 03
 - LIFE: N/A — no lifecycle
-- REL: 01–05
+- REL: 01–06
 
 ## Re-running validation
 

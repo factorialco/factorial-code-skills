@@ -217,7 +217,13 @@ the browser DOM. Report *whether* a credential is set (label, description, or a
 `markdown` status line, as above) and let a blank submit mean "keep the current
 value": the submit handler writes the variable only when the field is
 non-empty, and the field must **not** be `required`, or a user changing another
-setting can't submit. Two more things:
+setting can't submit. The platform backs this up: when it serves a schema it
+removes `default`, `examples` and `const` from every `isSensitive` field (and
+from everything below one, plus the `variables` such a value referenced), so a
+secret returned as a field default never leaves the server. It cannot see a
+secret written into a label, a description, a `markdown` block, a field that
+isn't `isSensitive` or a `variables` node used elsewhere — those still reach the
+browser, so the rule stands. Two more things:
 
 - **Read variables through `fcode.env` / `process.env`, not by listing them.**
   A pre-render sees inherited variables from parent workspaces too

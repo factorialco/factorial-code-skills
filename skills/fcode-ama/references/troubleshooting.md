@@ -83,6 +83,12 @@ instead — see the routing table in `SKILL.md`.
 - **"My installation is stuck in `configuration_pending`."** The install
   isn't finished until setup completes (the `install` form).
   Re-open the app from the marketplace and finish configuration.
+- **"The installation lost its connection."** When Factorial refuses its
+  refresh token, an `active` installation moves to `connection_pending`.
+  Reconnect it from the marketplace: one already configured goes straight
+  back to `active` without the install form — its configuration is still in
+  the App's datastore. Reinstalling after an uninstall, or reviving a
+  `suspended` installation, asks for the install form again.
 - **"Variables differ between companies."** By design: each installation
   workspace holds only that company's variables and executions. Shared
   values belong in the parent (dev/prod) workspace; per-company overrides in
