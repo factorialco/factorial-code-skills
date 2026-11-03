@@ -80,7 +80,8 @@ modules/acme-client/        # thin vendor HTTP client
    whose default calls **`process(item, parameters)`** once per item.
 6. Reports each result **as soon as it settles** (every `batchSize` results, on
    `this.flush()`, and after each batch), so the customer sees progress.
-7. `afterSync(items, results, parameters)` — optional; a throw is logged.
+7. `afterSync(items, results, parameters)` — optional; a throw is logged. A
+   result settled again here is reported before the run closes.
 8. Finishes the run: declared rows never reported fail as `not_reported`. On an
    unexpected error it **cancels** the run (`run_cancelled`) and rethrows.
 
@@ -257,8 +258,8 @@ write updates it in place and returns it.
 | `finishRun(run)` | Fails every declared-but-unreported row (`not_reported`) |
 | `cancelRun(run, reason?)` | Fails every open row (`run_cancelled`, with `reason`) |
 | `abortRun(runId, { reason? })` | Closes a run whose object is lost (crashed worker), from the API |
-| `abortOpenRunsForIntegration(integrationUuid, { since?, reason? })` | Aborts every still-running run (default: last two hours) — e.g. on uninstall |
-| `listRunsForIntegration(uuid, createdAtGteq)` | Lists the integration's runs (API field names, snake_case), e.g. to check whether one is still running |
+| `abortOpenRunsForIntegration(integrationUuid, { since?, reason? })` | Aborts every still-running run of the integration (default: last two hours) — e.g. on uninstall. Throws before any request when the uuid is missing or blank. Runs carry no origin: an integration that also exports would have its running outbound runs aborted too |
+| `listRunsForIntegration(uuid, createdAtGteq)` | Lists the integration's runs (API field names, snake_case), e.g. to check whether one is still running. Throws when the uuid is missing or blank |
 
 ## Status semantics
 
@@ -318,4 +319,5 @@ launcher in one can hand it to a worker in the other.
 5. `process` for one write per item, or `processBatch` (+ `flush`) for bulk/atomic writes.
 6. Raise `invalid(...)` for data/mapping problems, with a message the customer can act on.
 7. A form that must answer fast: open and declare with `InboundSyncClient`, hand the run to an async worker as `sync_run` (Example C).
-8. On uninstall, `abortOpenRunsForIntegration` so no run stays open.
+8. On uninstall, `abortOpenRunsForIntegration` so no run stays open. Store the
+   run's `integration_uuid` when you open it: the call needs it.
