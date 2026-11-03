@@ -258,7 +258,7 @@ write updates it in place and returns it.
 | `cancelRun(run, reason?)` | Fails every open row (`run_cancelled`, with `reason`) |
 | `abortRun(runId, { reason? })` | Closes a run whose object is lost (crashed worker), from the API |
 | `abortOpenRunsForIntegration(integrationUuid, { since?, reason? })` | Aborts every still-running run (default: last two hours) — e.g. on uninstall |
-| `getRun(runId)`, `listRunsForIntegration(uuid, createdAtGteq)`, `readResults(runId)` | Read back (API field names, snake_case) |
+| `listRunsForIntegration(uuid, createdAtGteq)` | Lists the integration's runs (API field names, snake_case), e.g. to check whether one is still running |
 
 ## Status semantics
 
@@ -306,8 +306,7 @@ properties `external_system` / `data_type` / `syncable_type`, hooks
 `flush`; `raise self.invalid("...")`. The client is
 `fcode.import_module("inbound-sync").InboundSyncClient()` with `start_run`,
 `declare_plan`, `report_outcome`, `finish_run`, `cancel_run`, `abort_run`,
-`abort_open_runs_for_integration`, `get_run`, `list_runs_for_integration`,
-`read_results`. The run dict is the same JSON document in both languages, so a
+`abort_open_runs_for_integration`, `list_runs_for_integration`. The run dict is the same JSON document in both languages, so a
 launcher in one can hand it to a worker in the other.
 
 ## Adapting to a real vendor — checklist

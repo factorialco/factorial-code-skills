@@ -68,7 +68,7 @@ reimplement them:
 | `error-handler` | base-app | Shared error handling |
 | `outbound-sync` | base-integration-app | `OutboundSync` base class for marketplace syncs |
 | `inbound-record-sync` | base-integration-app | `InboundRecordSync` base class for imports into Factorial tracked as a sync run |
-| `inbound-sync` | base-integration-app | `InboundSyncClient`: open, declare, report, finish and abort sync runs, read them back |
+| `inbound-sync` | base-integration-app | `InboundSyncClient`: open, declare, report, finish and abort sync runs, list an integration's runs |
 
 Integration apps inherit base-integration-app (which inherits base-app);
 custom apps inherit base-app directly. An App that only imports into Factorial
