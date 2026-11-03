@@ -91,8 +91,22 @@ Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
 Set `webhookAuth` in **every** app workspace — it is not inherited through
 `parentTeams` (why, and field reference, in `fcode-cli`).
 
-The platform authenticates the caller before the process runs, so there is
-nothing to check in code and the body stays minimal:
+`authMode: CUSTOM` is the per-process alternative: the same pair goes in the
+process's own `metadata.json`, and no `webhookAuth` is needed:
+
+```json
+"webhook": {
+  "enabled": true,
+  "authMode": "CUSTOM",
+  "auth": { "headerName": "x-factorial-wh-challenge", "variableKey": "FACTORIAL_CHALLENGE_TOKEN" }
+}
+```
+
+Either way, the platform authenticates the caller before the process runs. A
+missing or wrong header gets a platform 403 and no execution starts. So there
+is nothing to check in code: never read `x-factorial-wh-challenge` or
+`FACTORIAL_CHALLENGE_TOKEN` in the process (the base `factorial-utils`
+helper `checkWebhookChallenge()` is deprecated and logs a warning on every call). The body stays minimal:
 
 ```javascript
 const AcmeSync = fcode.import("sync-file"); // ← the ONE line that picks the flavor
