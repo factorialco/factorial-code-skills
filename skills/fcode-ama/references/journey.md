@@ -48,6 +48,10 @@ signing in. The creation flow asks for:
    `https://apidoc.factorialhr.com/docs/integrations-framework`. A standard
    app is free-form: forms, scheduled jobs, webhooks, reports, syncs of any
    other shape.
+   An app that **imports** into Factorial is usually a standard app; to show
+   the customer what each import did, it inherits `base-integration-app` and
+   extends `InboundRecordSync` (`fcode-examples` `references/integration-inbound.md`;
+   docs: `/docs/building-apps/inbound-sync/`).
 
 App lifecycle: `active → published → suspended → archived` (`published` is a
 side effect of the first deployed release, never set by hand; suspended and

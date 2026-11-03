@@ -169,9 +169,10 @@ What to tell users:
 | Exposing a process to Factorial (`factorial` block, Factorial One tool contract, lifecycle slugs) | `fcode-factorial-actions` — docs: `/docs/factorial-actions/` |
 | Buttons inside Factorial (`factorial.uiTrigger`, locations, result envelope) | `fcode-ui-triggers` |
 | Recommended agent working method, MCP tools | `fcode-agent` — docs: `/docs/mcp-server/` |
-| Worked examples (integration, install/uninstall lifecycle) | `fcode-examples` |
+| Worked examples (integration, inbound import, install/uninstall lifecycle) | `fcode-examples` |
 | Executions, schedules, webhooks at runtime | docs: `/docs/executions/` |
-| Integrations framework | docs: `/docs/building-apps/integrations-framework/` |
+| Integrations framework (outbound) | docs: `/docs/building-apps/integrations-framework/` |
+| Inbound imports tracked as a sync run (`InboundRecordSync`) | `fcode-examples` `references/integration-inbound.md` — docs: `/docs/building-apps/inbound-sync/` |
 | OAuth & API tokens | docs: `/docs/building-apps/oauth/` |
 | Workspace hierarchy | docs: `/docs/building-apps/workspaces/` |
 | Roles & permissions: who can read/write/promote per workspace | `references/journey.md` §8 — docs: `/docs/building-apps/permissions/` |

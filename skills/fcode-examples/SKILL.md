@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration, a custom app with full install/uninstall lifecycle, an OAuth account connection from a form, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, an inbound import tracked as a sync run, a custom app with full install/uninstall lifecycle, an OAuth account connection from a form, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code
@@ -24,6 +24,7 @@ case doesn't need.
 | You are building… | Read |
 |---|---|
 | A marketplace integration that delivers Factorial data (payroll, leaves, …) to an external system | [`references/integration-acme.md`](references/integration-acme.md) |
+| An import of external data into Factorial (payroll results, expenses, …) the customer can follow row by row | [`references/integration-inbound.md`](references/integration-inbound.md) |
 | A custom app with install/uninstall lifecycle: setup form, webhooks, schedules | [`references/custom-app-linear.md`](references/custom-app-linear.md) |
 | A one-shot automation: export/report generation, file processing | [`references/utility-processes.md`](references/utility-processes.md) |
 | An app that connects a third-party account through OAuth from a form (no pasted API tokens) | [`references/oauth-connect.md`](references/oauth-connect.md) |
@@ -36,7 +37,10 @@ Where to find a specific pattern, regardless of which app you build:
 |---|---|
 | Extending the `outbound-sync` base class (`OutboundSync`) | integration-acme |
 | Per-item API push vs aggregate-to-file delivery | integration-acme |
-| Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme |
+| Reporting per-item sync status (`success` / `invalid` / `failed`) | integration-acme, integration-inbound |
+| Extending the `inbound-record-sync` base class (`InboundRecordSync`): `fetchItems` + `process` / `processBatch` | integration-inbound |
+| Opening a sync run in a form and importing it in an async worker (`sync_run` hand-off) | integration-inbound |
+| Aborting open sync runs on uninstall (`abortOpenRunsForIntegration`) | integration-inbound |
 | Webhook entry point authenticated by the platform, not in process code | integration-acme, custom-app-linear |
 | Activating webhook / form triggers in `metadata.json`, and protecting the webhook (`webhook.authMode` + the workspace `webhookAuth`, the reserved `install` / `settings` slugs) | integration-acme, custom-app-linear |
 | Multi-step setup flow across processes (`process` steps in `ui:steps`), with a second form built from data fetched with the first step's key | custom-app-linear |
@@ -63,9 +67,13 @@ reimplement them:
 | `mail-helper` | base-app | `brandedHtml()` for styled email bodies |
 | `error-handler` | base-app | Shared error handling |
 | `outbound-sync` | base-integration-app | `OutboundSync` base class for marketplace syncs |
+| `inbound-record-sync` | base-integration-app | `InboundRecordSync` base class for imports into Factorial tracked as a sync run |
+| `inbound-sync` | base-integration-app | `InboundSyncClient`: open, declare, report, finish and abort sync runs, list an integration's runs |
 
 Integration apps inherit base-integration-app (which inherits base-app);
-custom apps inherit base-app directly.
+custom apps inherit base-app directly. An App that only imports into Factorial
+adds `base-integration-app-<lang>` to its `parentTeams` to get the inbound
+modules (see integration-inbound).
 
 Note: the `fcode-forms` **module** above (form-schema builders you
 `fcode.import`) is unrelated to the `fcode-forms` **skill**, which documents
