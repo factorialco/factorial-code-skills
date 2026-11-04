@@ -41,6 +41,10 @@ action is ready when one does.
 
 ## Gotchas
 
+- **Exposing a One tool needs no `one:read` / `one:write` scope.** One
+  invokes it from the `factorial` block. Those scopes are for an App whose
+  own code calls Factorial One through the API (`fcode-ama`
+  references/journey.md §2).
 - **`enabled` is a master switch.** While it is `false` nothing below is
   exposed, whatever each entry point's own `enabled` says. Turning it back on
   restores the entry points exactly as they were.

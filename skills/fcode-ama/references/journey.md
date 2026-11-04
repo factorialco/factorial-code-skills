@@ -29,7 +29,11 @@ signing in. The creation flow asks for:
    **JavaScript** or **Python** (this selects the language-matched base
    workspaces the app inherits).
 2. **OAuth scopes** — the scopes the app will request on the Factorial API.
-   They bound the app's permissions, so request only what the app needs.
+   They bound the app's permissions, so request only what the app's code
+   calls. Exposing a process as a Factorial One tool needs no scope: One
+   invokes it from the `factorial` block in the process's metadata
+   (`fcode-factorial-actions`). Request `one:read` / `one:write` only when
+   the app's own code calls Factorial One resources through the API.
    Scopes can be extended later from the app settings' OAuth tab, which
    re-opens the corresponding setup step.
 3. **Integrations framework** — whether the app uses it. **Steer users away
