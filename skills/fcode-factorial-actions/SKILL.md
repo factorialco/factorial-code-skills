@@ -21,24 +21,23 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 `factorial` key of `processes/<slug>/metadata.json` (round-tripped by
 `fcode pull` / `fcode push`, field reference in `fcode-cli`).
 
-## What is live today and what is not
+## What is live today
 
-| Available now | Still to come |
-|---|---|
-| The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API | **Factorial One tools**: the assistant reading the `agentTool` contract and calling the process |
-| The **Actions API** Factorial invokes through: list a company's actions, read an action's form schema, invoke it, issue upload grants, and list an app's declared actions before it is installed | |
-| **`requiredPolicies` enforced** on every invocation, before anything runs | |
-| **`uiTrigger`**: the button lists and runs over this contract, addressed by an opaque `action_id` — no process slug reaches the browser | |
-| **`form`**: a form opened from Factorial submits through Factorial's backend, which carries the user's identity and injects the trusted context | |
-| **A form requires Factorial authentication unless `form.public` releases it**, which is the switch for the auth mode the form endpoints check | |
-| **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path | |
-| `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing | |
-| `lifecycleRole` derived from the reserved slug and tagged in the console | |
+- The `factorial` block in the console, in `metadata.json`, and as `settings.factorial` in the API
+- **Factorial One tools**: the assistant reads the `agentTool` contract, picks the process when a request matches it, and calls it — asking for approval first unless `effect` is `READ`
+- The **Actions API** Factorial invokes through: list a company's actions, read an action's form schema, invoke it, issue upload grants, and list an app's declared actions before it is installed
+- **`requiredPolicies` enforced** on every invocation, before anything runs
+- **`uiTrigger`**: the button lists and runs over this contract, addressed by an opaque `action_id` — no process slug reaches the browser
+- **`form`**: a form opened from Factorial submits through Factorial's backend, which carries the user's identity and injects the trusted context
+- **A form requires Factorial authentication unless `form.public` releases it**, which is the switch for the auth mode the form endpoints check
+- **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path
+- `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing
+- `lifecycleRole` derived from the reserved slug and tagged in the console
 
-So today `uiTrigger`, `form`, `requiredPolicies` and `awaitResult` all do
-something. `agentTool` and `backend` are stored and reachable, but no assistant
-reads a tool contract yet — fill them in now so the action is ready when it
-does.
+So today `uiTrigger`, `form`, `agentTool`, `requiredPolicies` and
+`awaitResult` all do something. `backend` is stored and reachable, but no
+Factorial backend job runs a process through it yet — fill it in now so the
+action is ready when one does.
 
 ## Gotchas
 
