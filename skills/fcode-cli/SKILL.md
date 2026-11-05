@@ -497,6 +497,36 @@ curl -X POST "https://code.factorialhr.com/platform/api/<team-slug>/webhooks/<pr
   runs the current version silently. When a run behaves unexpectedly, check the
   execution's version.
 
+### Reading the request — signed webhooks
+
+A webhook run also receives the HTTP request that started it in
+`fcode.context.request` (an empty object for any other trigger):
+
+| JavaScript | Python | Content |
+|---|---|---|
+| `request.headers` | `request["headers"]` | The request headers; match names case-insensitively |
+| `request.rawBody` | `request["raw_body"]` | The body exactly as received, as a UTF-8 string, before it is parsed into `fcode.context.parameters` |
+| `request.method` | `request["method"]` | `POST`, `PUT`, … |
+| `request.query` | `request["query"]` | The raw query string, `version_tag` and the other reserved names included |
+
+`rawBody` is what a signature check needs. Some senders can't send a fixed
+header or token, so `authMode: CUSTOM` and `TEAM` don't fit them, but they
+sign every request with an HMAC instead (HTTP Message Signatures,
+`X-Hub-Signature-256` and the like). Such a webhook keeps `authMode: NONE` and
+verifies the signature in code:
+
+- Compute the HMAC over `rawBody`, never over re-serialized parameters: a
+  `JSON.stringify` of the parsed body does not reproduce the sender's bytes.
+- Compare with `crypto.timingSafeEqual` / `hmac.compare_digest`, never `===`.
+- Verify first, before reading or writing anything else, and answer
+  `{ status: 401 }` when the check fails.
+- Keep the signing secret in a sensitive team variable, or encrypted in the
+  datastore when each sender has its own (SEC-11 in `fcode-code-validation`).
+- Don't fall back to a `?token=` query parameter: URLs end up in access logs.
+
+The body reaches the process as UTF-8 text, so a binary (non-UTF-8) body is not
+byte-exact and can't be verified this way.
+
 ## Workspace settings — `settings.json`
 
 A singleton file at the workspace root holding workspace-level settings. Synced by

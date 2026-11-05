@@ -19,6 +19,7 @@ Guidelines for writing JavaScript that runs on Factorial Code. Runtime is
 | Entry point | `async function main()` |
 | Export (required) | `module.exports = { main }` |
 | Parameters | `fcode.context.parameters` |
+| Webhook request | `fcode.context.request` (`headers`, `rawBody`, `method`, `query`; see `fcode-cli` › Reading the request) |
 | Variables | `process.env.X` or `fcode.env.X` |
 | Import a module | `fcode.import("module-slug")` |
 
