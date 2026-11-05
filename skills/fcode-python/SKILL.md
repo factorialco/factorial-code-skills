@@ -18,6 +18,7 @@ Guidelines for writing Python that runs on Factorial Code. Runtime is
 | Process entry file | `main.py` |
 | Entry point | `def main()` |
 | Parameters | `fcode.context.parameters` |
+| Webhook request | `fcode.context.request` (dict: `headers`, `raw_body`, `method`, `query`; see `fcode-cli` › Reading the request) |
 | Variables | `os.getenv("X")` or `fcode.env.X` |
 | Import a module | `fcode.import_module("module-slug")` |
 
