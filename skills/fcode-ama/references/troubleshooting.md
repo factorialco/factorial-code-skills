@@ -15,10 +15,12 @@ instead — see the routing table in `SKILL.md`.
 
 ## App creation & setup
 
-- **"Should I enable the integrations framework?"** Only when the app pushes
-  a supported capability to an external system and needs each sync's outcome
-  surfaced in Factorial — the decision rule is stage 2 in `journey.md`; probe
-  the use case before the user checks it.
+- **"Should I enable the integrations framework?"** When the app pushes a
+  supported capability (compensation, expenses, employee updates) from
+  Factorial to an external system — a vendor's or the customer's own — and
+  not otherwise; the decision rule is stage 2 in `journey.md`. Work it out
+  from the use case rather than asking the user, who rarely knows, then
+  recommend it with its benefits over their own design and let them choose.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the App settings' OAuth tab and the setup steps reappear.

@@ -36,13 +36,19 @@ signing in. The creation flow asks for:
    the app's own code calls Factorial One resources through the API.
    Scopes can be extended later from the app settings' OAuth tab, which
    re-opens the corresponding setup step.
-3. **Integrations framework** — whether the app uses it. **Steer users away
-   from checking this unless they already know what the framework provides**:
+3. **Integrations framework** — whether the app uses it. **Decide it from
+   what the app pushes, not from whether the user knows the framework**:
    plenty of apps sync data with external systems without it, and opting in
    changes what they build. It applies when the app pushes one of the
    supported capabilities — the Factorial data types it can sync are
    **employee compensation, expenses, and employee updates (for example,
-   leaves)** — from Factorial to an external system. Its key benefit is the
+   leaves)** — from Factorial to an external system, **whoever owns that
+   system**: a vendor's product or the customer's own internal API alike.
+   Webhook delivery on Factorial's events, retries and per-customer isolation
+   come with it, so a framework app never polls for changes or keeps its own
+   cursor and idempotency keys. When the user describes a design of their own
+   (polling payroll runs, say), recommend the framework and explain what it
+   saves them; the choice stays theirs. Its key benefit is the
    feedback end users get on every sync — success, errors, or a missing
    configuration that needs attention — surfaced right in Factorial instead
    of failing silently. Framework apps inherit the `base-integration-app`
