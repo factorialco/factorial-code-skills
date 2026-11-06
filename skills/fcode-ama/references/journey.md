@@ -48,10 +48,12 @@ signing in. The creation flow asks for:
    come with it, so a framework app never polls for changes or keeps its own
    cursor and idempotency keys. When the user describes a design of their own
    (polling payroll runs, say), recommend the framework and explain what it
-   saves them; the choice stays theirs. Its key benefit is the
-   feedback end users get on every sync — success, errors, or a missing
-   configuration that needs attention — surfaced right in Factorial instead
-   of failing silently. Framework apps inherit the `base-integration-app`
+   saves them; the choice stays theirs. Its key benefit is what the
+   customer's users get in Factorial: they start each sync from Factorial's
+   UI and see there that everything synced, or which items failed and why,
+   or a missing configuration that needs attention, instead of the sync
+   failing silently. Lead with that when recommending it, and never present
+   it as required. Framework apps inherit the `base-integration-app`
    templates (the generic `OutboundSync` orchestrator), so the developer
    implements only the mapping. Platform docs:
    `/docs/building-apps/integrations-framework/`; full specification:
