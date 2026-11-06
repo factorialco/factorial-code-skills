@@ -119,8 +119,8 @@ action is ready when one does.
 
 The parameters schema tells the assistant **what the tool takes**; this block
 tells it **what the tool is for**. Plain text, no i18n. It describes one
-process; the App as a whole is described to One by the App's
-`agent.description` (`fcode-ama`).
+process; the App as a whole is described to One by the workspace setting
+`factorial.agentDescription` (`fcode-cli`; what to write: `fcode-ama`).
 
 | Field | Type | What it buys the model |
 |---|---|---|

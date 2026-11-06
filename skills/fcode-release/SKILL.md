@@ -37,6 +37,10 @@ Gate every release with `fcode-code-validation` — see the procedure.
 - **The `fcode pull` after `remote:add` is mandatory** — it picks up the
   prod workspace's current metadata. Skipping it pushes stale settings over
   prod's.
+- **Workspace settings are not copied from dev.** Customers read the App's
+  description for Factorial One (`factorial` in `settings.json`) from prod: if
+  prod's is missing or stale, edit it after the pull and before the push, and
+  include it in the confirmation summary (`fcode-cli` §Workspace settings).
 - **Both slugs are encoded tokens** (`dev-…` / `prod-…`), not the app's
   UUID (see `fcode-cli`). Verify the prefixes: cloning target and push
   target must not be swapped.
