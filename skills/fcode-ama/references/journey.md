@@ -294,10 +294,13 @@ text. Write three things:
 > runs payroll in Acme and wants Factorial as the source. Not for expenses or
 > invoices.
 
-It lives in this stage but is edited outside the Publication tab: in **App
-settings → Configuration** ("AI agent"), or in Git as `agent.description` in
-the App folder's `settings.json` from `fcode team:clone` — never the
-workspace's own `settings.json` (see `fcode app:push` in `fcode-cli`).
+It lives in this stage but is a workspace setting, not part of the
+Publication tab: `factorial.agentDescription` in the App workspace's
+`settings.json`, uploaded by `fcode push`, or the workspace's **Settings ›
+Factorial** tab in the platform web client (field reference: Workspace
+settings in `fcode-cli`). Customers get the **production** workspace's
+(`prod-…`) value; promotion does not copy it from `dev-…`, so set it there
+too.
 
 It is not a process's `agentTool.description` (`fcode-factorial-actions`):
 the agent description tells One whether to pick the App; a process's

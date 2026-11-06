@@ -205,7 +205,7 @@ acme-payroll/
 ┣ 📂 .fcode/team.json      # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/       # installed once, symlinked into every App below
 ┗ 📂 payroll-sync/
-  ┣ 📜 settings.json       # the App — name, description, id (mirror); agent.description is yours
+  ┣ 📜 settings.json       # the App — name, description, id (mirror)
   ┣ 📜 README.md           # the App's README — yours, pushed with `fcode app:push`
   ┣ 📜 MARKETPLACE.md      # the marketplace listing — yours, pushed with `fcode app:push`
   ┣ 📜 CHANGELOG.md        # generated from the App's releases (mirror)
@@ -225,18 +225,16 @@ commands only add the ones that span Apps:
   pulls every workspace, and refreshes each App's metadata files. An App that
   left the team is **reported, never deleted** — remove the folder yourself if
   you want it gone.
-- **`team:status`** reports the state of each App's `README.md`,
-  `MARKETPLACE.md` and `agent.description` (up to date, modified locally, out of
-  date, conflict), then
+- **`team:status`** reports the state of each App's `README.md` and
+  `MARKETPLACE.md` (up to date, modified locally, out of date, conflict), then
   runs `fcode status` in the App workspace under its own header.
 - **There is no `team:push`.** Code is pushed from inside a workspace, one App at
   a time; the App's README and listing go up with `fcode app:push` (below).
-- The App folder's files come in two kinds. **Mirrors** — `settings.json` (all
-  but `agent.description`), `CHANGELOG.md`, `marketplace/logo.*` — are rewritten
+- The App folder's files come in two kinds. **Mirrors** — `settings.json`,
+  `CHANGELOG.md`, `marketplace/logo.*` — are rewritten
   on every pull; editing them changes nothing upstream (rename an App in the dashboard, release notes
-  are the comments given when a release is requested). **Yours** — `README.md`,
-  `MARKETPLACE.md` and the `agent.description` field of `settings.json` — are
-  kept when edited: a pull only overwrites one you have not changed since the
+  are the comments given when a release is requested). **Yours** — `README.md` and
+  `MARKETPLACE.md` — are kept when edited: a pull only overwrites one you have not changed since the
   last sync, and reports the ones it kept.
 - A failing App doesn't abort the run: it is listed in the summary, and rerunning
   `team:pull` retries only what is still missing. A metadata file the dashboard
@@ -245,10 +243,10 @@ commands only add the ones that span Apps:
 
 ### `fcode app:push`
 
-Uploads the App folder's `README.md`, `MARKETPLACE.md` and `agent.description` to
-the dashboard. Run it from the App folder or anywhere inside its `app/` checkout —
-it recognises the folder by the `settings.json` + `app/` pair. It moves
-documentation only, never code.
+Uploads the App folder's `README.md` and `MARKETPLACE.md` to the dashboard. Run
+it from the App folder or anywhere inside its `app/` checkout — it recognises the
+folder by the `settings.json` + `app/` pair. It moves documentation only, never
+code.
 
 ```sh
 cd payroll-sync
@@ -266,20 +264,6 @@ fcode app:push --force    # local wins over a cloud edit
   as the body. Fields the dashboard owns — `publication_state`, `datocms_id` —
   appear as comments and are never pushed. A linked DatoCMS record still wins
   over these fields in the marketplace (see `fcode-ama`).
-- **`agent.description`** in the App folder's `settings.json` is the description
-  Factorial's AI agent (One) reads to pick the App — not the tagline. English
-  only, at most 300 characters; a longer one is refused before any request, and
-  a blank one clears it. It exists only in the App folder that `team:clone` /
-  `team:pull` create, never in the workspace `settings.json` under `app/`:
-  written there, `fcode push` sends it nowhere. Without an App folder, set it in
-  the dashboard's App settings → Configuration. What to write in it: see
-  `fcode-ama`.
-
-  ```json
-  { "id": "…", "name": "Payroll Sync", "description": "…",
-    "agent": { "description": "Sends approved payroll to Acme Payroll every night. Use it when a company runs payroll in Acme. Not for expenses or invoices." } }
-  ```
-
 - **Conflicts**: a file changed both locally and in the dashboard since the last
   pull is refused. `--force` makes the local file win; deleting the file and
   running `fcode team:pull` makes the dashboard win. A file that is only behind
@@ -540,6 +524,7 @@ exists first).
 | `zoneId` | string, optional | Team timezone (e.g. for schedules) |
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
+| `factorial` | object, optional | `{ agentDescription?, availableInOne? }` — the App's description for Factorial One (below) |
 | `primaryLocale` | string, optional | The workspace's main language: the locale used when a caller names none, and the key-level fallback for untranslated keys (see `fcode-i18n`) |
 | `versions` | array, optional | Workspace versions: `{ tag, comment?, createdAt? }` — declaring a new `tag` and pushing publishes it; omit `createdAt`, the cloud fills it in |
 | `aliases` | array, optional | Workspace aliases: `{ name, tag }` |
@@ -585,6 +570,42 @@ by several webhooks is named — and rotated — in one place. Two things about 
   needs its own `webhookAuth` entry.
 - **Removing the object and pushing clears the cloud configuration**, which makes
   every webhook inheriting it reject all calls.
+
+`factorial` holds what Factorial One (Factorial's AI agent) reads to decide
+whether the App fits what a user asked for — not the marketplace tagline. It is
+set in the App workspace's `settings.json` (`app/settings.json` in a team clone):
+
+```json
+{
+  "parentTeams": ["base-app-js"],
+  "factorial": {
+    "agentDescription": "Sends approved payroll to Acme Payroll every night. Use it when a company runs payroll in Acme. Not for expenses or invoices.",
+    "availableInOne": true
+  }
+}
+```
+
+- **`agentDescription`** — English only, plain text, at most 300 characters,
+  written for AI agents: One reads it as data, never as instructions. Absent ⇒
+  inherited from the parent workspaces; `null` ⇒ none; a string ⇒ the
+  workspace's own. With none, One falls back to the tagline
+  (`shortDescription`). What to write in it: see `fcode-ama`.
+- **`availableInOne`** — boolean: `false` keeps the App out of Factorial One
+  (when off, One does not use the App). Leave it out to inherit it; the default
+  is `true`.
+- It syncs like the rest of the file: `fcode push` uploads it, `fcode pull`
+  brings it down, `settings:status` / `settings:diff` show it. The CLI refuses a
+  description over 300 characters or a non-boolean `availableInOne`, naming the
+  file and key. It is also editable in the platform web client, in the
+  workspace's **Settings › Factorial** tab (the description field shows only
+  while "Available in Factorial One" is on).
+- **Customers get the production workspace's values.** The marketplace
+  catalogue reads them from the App's `prod-…` workspace; only the team's own
+  demo companies read `dev-…`. Promotion does not copy workspace settings, so set
+  them on `prod-…` too — edit `settings.json` after the release flow's
+  `fcode pull` and before its `fcode push` (`fcode-release`), or in the prod
+  workspace's Settings › Factorial tab. A change may take about a minute to show
+  in the catalogue.
 
 ## Inherited resources on disk
 
