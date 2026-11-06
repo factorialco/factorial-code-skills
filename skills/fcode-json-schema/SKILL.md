@@ -79,6 +79,20 @@ so its `ui:` options apply.
 - **The schema is data, not code** — no executable JavaScript, and all form
   text is markdown (raw HTML is never rendered). Client-side behaviour belongs
   in the embedding page — see `fcode-forms`.
+- **Size a choice field for the biggest customer.** Every option of an
+  `enum`, a `oneOf` of `{ const, title }` or the `fcode-forms` module's
+  `selectField` / `multiSelectField` ships inside the schema, so a list fed
+  from a directory that grows with the company (every employee, every
+  manager, all projects or cost centers) turns into thousands of options for
+  a large account. Nobody can pick from that, and hosts on a forms SDK older
+  than `@factorialco/fcode-react-forms` 3.6.1 fail validation with "Maximum
+  call stack size exceeded" from about 1,000 options: the submit button
+  silently does nothing. The forms SDK has no searchable or remote-loading
+  picker, so ask for something bounded instead: a team, legal entity, role or
+  location the process resolves to people; a list narrowed by the API's
+  filters to the people who can plausibly be chosen (keep it to a couple of
+  hundred at most); or emails / ids as text that the process checks and
+  rejects with a clear message.
 - **Visible text can be translated**: schema strings (titles, descriptions,
   `ui:placeholder`) accept `fcode.i18n("key")` tokens, substituted server-side
   before the form is served — see `fcode-i18n`.
