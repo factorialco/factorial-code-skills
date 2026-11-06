@@ -590,8 +590,9 @@ set in the App workspace's `settings.json` (`app/settings.json` in a team clone)
   inherited from the parent workspaces; `null` ⇒ none; a string ⇒ the
   workspace's own. With none, One falls back to the tagline
   (`shortDescription`). What to write in it: see `fcode-ama`.
-- **`availableInOne`** — boolean, default `true`; absent ⇒ inherited. It is
-  stored but has no effect yet — don't promise it keeps the App out of One.
+- **`availableInOne`** — boolean: `false` keeps the App out of Factorial One
+  (when off, One does not use the App). Leave it out to inherit it; the default
+  is `true`.
 - It syncs like the rest of the file: `fcode push` uploads it, `fcode pull`
   brings it down, `settings:status` / `settings:diff` show it. The CLI refuses a
   description over 300 characters or a non-boolean `availableInOne`, naming the
