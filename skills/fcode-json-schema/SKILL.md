@@ -85,7 +85,7 @@ so its `ui:` options apply.
   from a directory that grows with the company (every employee, every
   manager, all projects or cost centers) turns into thousands of options for
   a large account. Nobody can pick from that, and hosts on a forms SDK older
-  than `@factorialco/fcode-react-forms` 3.6.1 fail validation with "Maximum
+  than `@factorialco/fcode-react-forms` 3.7.1 fail validation with "Maximum
   call stack size exceeded" from about 1,000 options: the submit button
   silently does nothing. The forms SDK has no searchable or remote-loading
   picker, so ask for something bounded instead: a team, legal entity, role or
