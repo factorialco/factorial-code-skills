@@ -195,6 +195,8 @@ The rules for lifecycle forms:
   conversation — so set `effect` to `WRITE` for `install` and `settings` and
   `DESTRUCTIVE` for `uninstall`. The texts are worth most on a form that needs
   judgment, such as a mapping.
+  On a multi-process flow One fills in each step as it opens; how to make the
+  steps fillable is in `fcode-forms` (Multi-process flows).
 
 `processes/install/metadata.json` needs nothing lifecycle-specific:
 
