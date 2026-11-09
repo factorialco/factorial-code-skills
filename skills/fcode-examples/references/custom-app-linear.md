@@ -88,7 +88,9 @@ screen (re-map teams later), which is what the reserved slug `settings` marks:
 `authMode: TEAM` inherits the workspace `webhookAuth` from `settings.json` — the
 same challenge token `setupWebhook` embeds in the subscription at install (see
 below), checked by the platform before the process runs, so webhook processes
-carry no auth code. Setup in `references/integration-acme.md`; field reference
+carry no auth code and never read the header or the token themselves
+(`authMode: CUSTOM` with the same pair in the process `webhook.auth` works the
+same way). Setup in `references/integration-acme.md`; field reference
 in `fcode-cli`.
 
 `linear-projects-poll` needs neither webhook nor form — it's invoked by the
