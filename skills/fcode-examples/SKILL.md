@@ -63,7 +63,7 @@ reimplement them:
 |---|---|---|
 | `factorial-sdk` | base-app | `createFactorialClient()` — authenticated `@factorialco/api-client` / `factorial-api-client` instance |
 | `factorial-utils` | base-app | `getCompanyId()`, `setupWebhook()`, `listWebhookSubscriptions()`, `deleteWebhookSubscription()` |
-| `fcode-forms` | base-app | Form-schema builders: `selectField()`, `toOptions()`, … |
+| `fcode-forms` | base-app | Form-schema builders: `selectField()`, `toOptions()`, … — never fed a directory that grows with the company (employees, projects, cost centers); small lists such as teams or legal entities are fine (see `fcode-json-schema` §Gotchas) |
 | `mail-helper` | base-app | `brandedHtml()` for styled email bodies |
 | `error-handler` | base-app | Shared error handling |
 | `outbound-sync` | base-integration-app | `OutboundSync` base class for marketplace syncs |
