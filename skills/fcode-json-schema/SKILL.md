@@ -87,12 +87,17 @@ so its `ui:` options apply.
   a large account. Nobody can pick from that, and hosts on a forms SDK older
   than `@factorialco/fcode-react-forms` 3.7.1 fail validation with "Maximum
   call stack size exceeded" from about 1,000 options: the submit button
-  silently does nothing. The forms SDK has no searchable or remote-loading
-  picker, so ask for something bounded instead: a team, legal entity, role or
-  location the process resolves to people; a list narrowed by the API's
-  filters to the people who can plausibly be chosen (keep it to a couple of
-  hundred at most); or emails / ids as text that the process checks and
-  rejects with a clear message.
+  silently does nothing. Small organisational lists (teams, legal entities,
+  locations, roles) stay in the tens even for large accounts and are fine to
+  list whole. The forms SDK has no searchable or remote-loading picker, so for
+  people, projects or cost centers ask for something bounded instead: a team,
+  legal entity, role or location the process resolves to people; a list
+  narrowed by the API's filters to the people who can plausibly be chosen
+  (keep it to a couple of hundred at most); or emails / ids as text. Free text
+  drops the limit a select gave, so the process must check both that the
+  person exists and that the caller may choose them (for example as an
+  approver), and reject anything else with a clear message — parameters are
+  untrusted (`fcode-forms` §What a form may trust).
 - **Visible text can be translated**: schema strings (titles, descriptions,
   `ui:placeholder`) accept `fcode.i18n("key")` tokens, substituted server-side
   before the form is served — see `fcode-i18n`.

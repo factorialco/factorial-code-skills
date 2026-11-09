@@ -238,6 +238,8 @@ async function main() {
     .map((t) => ({ id: t.id, name: t.name }));
 
   const { createFactorialClient } = fcode.import("factorial-sdk");
+  // Listing every team is fine: teams stay in the tens even for large accounts.
+  // Never list every employee this way (see fcode-json-schema §Gotchas).
   const factorialTeams = (await createFactorialClient().teams.teams.all())
     .map((t) => ({ id: t.id, name: t.name }));
 
