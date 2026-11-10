@@ -15,10 +15,12 @@ instead — see the routing table in `SKILL.md`.
 
 ## App creation & setup
 
-- **"Should I enable the integrations framework?"** When the app pushes a
-  supported capability (compensation, expenses, employee updates) from
-  Factorial to an external system — a vendor's or the customer's own — and
-  not otherwise; the decision rule is stage 2 in `journey.md`. Work it out
+- **"Should I enable the integrations framework?"** When the app syncs a
+  supported capability between Factorial and an external system, in either
+  direction (compensation, expenses or employee updates out of Factorial;
+  payroll results, expenses, vendors or employee updates imported into it),
+  whether that system is a vendor's or the customer's own; not otherwise. The
+  decision rule is stage 2 in `journey.md`. Work it out
   from the use case rather than asking the user, who rarely knows, then
   recommend it with its benefits over their own design and let them choose.
 - **"There are no OAuth steps in my checklist."** An app that requests no
