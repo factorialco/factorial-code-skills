@@ -37,12 +37,14 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Never hardcode or log secrets.** Use variables/env vars; mask or omit
   secrets from logs.
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
-- **Pushing compensation, expenses or employee updates out of Factorial is an
-  integrations-framework use case**, even when the destination is the
-  customer's own API: Factorial fires each sync and the inherited
-  `OutboundSync` does the delivery, retries and per-item status. Recommend it
-  over a hand-built design with polling and idempotency keys. The rule and the opt-in are in `fcode-ama`; the payroll
-  example is `fcode-examples`.
+- **Syncing compensation, expenses or employee updates with an external
+  system is an integrations-framework use case, in either direction**: a
+  push out of Factorial (`OutboundSync`) or an import into it
+  (`InboundRecordSync`), even when that system is the customer's own API. The
+  customer sees each item's outcome in Factorial. Recommend it over a
+  hand-built design with polling and idempotency keys. The rule and the
+  opt-in are in `fcode-ama`; the outbound and inbound examples are in
+  `fcode-examples`.
 - **Limits are fixed per workspace** — 12 h per execution, 50 concurrent
   executions, 50 req/s, 500 KB return value, 50 KB per datastore entry. Raising
   one means asking us, not changing a plan. See Plans & limits.

@@ -37,33 +37,41 @@ signing in. The creation flow asks for:
    Scopes can be extended later from the app settings' OAuth tab, which
    re-opens the corresponding setup step.
 3. **Integrations framework** — whether the app uses it. **Decide it from
-   what the app pushes, not from whether the user knows the framework**:
-   plenty of apps sync data with external systems without it, and opting in
-   changes what they build. It applies when the app pushes one of the
-   supported capabilities — the Factorial data types it can sync are
-   **employee compensation, expenses, and employee updates (for example,
-   leaves)** — from Factorial to an external system, **whoever owns that
-   system**: a vendor's product or the customer's own internal API alike.
-   Webhook delivery on Factorial's events, retries and per-customer isolation
-   come with it, so a framework app never polls for changes or keeps its own
-   cursor and idempotency keys. When the user describes a design of their own
-   (polling payroll runs, say), recommend the framework and explain what it
-   saves them; the choice stays theirs. Its key benefit is what the
-   customer's users get in Factorial: they start each sync from Factorial's
-   UI and see there that everything synced, or which items failed and why,
-   or a missing configuration that needs attention, instead of the sync
-   failing silently. Lead with that when recommending it, and never present
-   it as required. Framework apps inherit the `base-integration-app`
-   templates (the generic `OutboundSync` orchestrator), so the developer
-   implements only the mapping. Platform docs:
+   what the app syncs, not from whether the user knows the framework**:
+   plenty of apps exchange data with external systems without it, and opting
+   in changes what they build. It applies when the app syncs one of the
+   supported capabilities between Factorial and an external system, **in
+   either direction** and **whoever owns that system** (a vendor's product or
+   the customer's own internal API alike):
+   - **Outbound** (Factorial → external system): **employee compensation,
+     expenses, and employee updates (for example, leaves)**. The App inherits
+     the generic `OutboundSync` orchestrator; webhook delivery, retries and
+     per-customer isolation come with it, so it never polls for changes or
+     keeps its own cursor and idempotency keys.
+   - **Inbound** (external system → Factorial, an import): records Factorial
+     tracks as inbound sync rows, today compensations (payroll results),
+     expenses, finance vendors and financial documents, and employee updates.
+     The App reads the external system and extends `InboundRecordSync`
+     (`fcode-examples` `references/integration-inbound.md`; docs:
+     `/docs/building-apps/inbound-sync/`).
+
+   What starts a sync run is a separate question from its direction: either
+   way it can start on a schedule, on an event, or when a user starts it from
+   Factorial's UI (a sync or an import button). It does not apply to
+   notifications or messages (Slack, email), reports or read-only
+   automations. When the user describes a design of their own (polling
+   payroll runs, a hand-built import, say), recommend the framework and
+   explain what it saves them; the choice stays theirs. Its key benefit is
+   what the customer's users get in Factorial: they see there that everything
+   synced or imported, or which items failed and why, or a missing
+   configuration that needs attention, instead of the sync failing silently.
+   Lead with that when recommending it, and never present it as required.
+   Framework apps inherit the `base-integration-app` templates, so the
+   developer implements only the mapping. Platform docs:
    `/docs/building-apps/integrations-framework/`; full specification:
    `https://apidoc.factorialhr.com/docs/integrations-framework`. A standard
    app is free-form: forms, scheduled jobs, webhooks, reports, syncs of any
    other shape.
-   An app that **imports** into Factorial is usually a standard app; to show
-   the customer what each import did, it inherits `base-integration-app` and
-   extends `InboundRecordSync` (`fcode-examples` `references/integration-inbound.md`;
-   docs: `/docs/building-apps/inbound-sync/`).
 
 App lifecycle: `active → published → suspended → archived` (`published` is a
 side effect of the first deployed release, never set by hand; suspended and
