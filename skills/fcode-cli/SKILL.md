@@ -646,9 +646,19 @@ Team variables live in three `.env` files at the workspace root:
 **Resolution order for a local run** (highest wins), matching what the cloud
 does: `variables.local.env` → `variables.env` → `variables.inherited.env`.
 
-Precedence is decided by which file **declares** a key, not by its value — so
-blanking a key in `variables.env` overrides the inherited variable with an empty
-string rather than falling through to the parent.
+**A blank value is unset, not empty.** The platform has no empty values — the
+cloud rejects a blank variable — so a key left blank (`KEY=`) in any of the
+three files falls through to the layer below it, and with nothing below it the
+key is missing from the run (`process.env.KEY` / `os.environ` absent,
+`fcode.variables.get` returns `undefined` / `None`). A blank key can't override
+an inherited value with an empty string; to switch an inherited setting off,
+give it an explicit value your code checks for (`false`, `none`).
+
+**Blanking a key the workspace owns deletes it on the next push.** A blank value
+on a variable the cloud already has (your own, or an override you pushed) is
+`LOCAL_REMOVED`. `fcode push` offers to delete it, and with `--force` does. For
+an override, the parent's value comes back. For an own variable, it's gone. To
+blank a key only for local runs, put `KEY=` in `variables.local.env`.
 
 ### Overriding an inherited variable
 
