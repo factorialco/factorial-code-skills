@@ -56,16 +56,21 @@ signing in. The creation flow asks for:
      `/docs/building-apps/inbound-sync/`).
 
    What starts a sync run is a separate question from its direction: either
-   way it can start on a schedule, on an event, or when a user starts it from
-   Factorial's UI (a sync or an import button). It does not apply to
-   notifications or messages (Slack, email), reports or read-only
+   way it starts on a schedule or when a user starts it from Factorial's UI
+   (a sync or an import button), never on a Factorial event. When the user
+   wants one (a payroll run reaching a state, say), tell them the framework
+   does not start on events and offer a schedule or the button. It does not
+   apply to notifications or messages (Slack, email), reports or read-only
    automations. When the user describes a design of their own (polling
-   payroll runs, a hand-built import, say), recommend the framework and
-   explain what it saves them; the choice stays theirs. Its key benefit is
-   what the customer's users get in Factorial: they see there that everything
-   synced or imported, or which items failed and why, or a missing
-   configuration that needs attention, instead of the sync failing silently.
-   Lead with that when recommending it, and never present it as required.
+   payroll runs, their own trigger, a hand-built import, say), there is a
+   better way to build it, and the point is to show them why: compare the
+   two side by side as the customer's payroll or finance admin lives them.
+   With the framework, a sync runs on a schedule or from a sync or import
+   button in Factorial, and the admin sees there that everything synced or
+   imported, or which items failed and why, or a missing configuration that
+   needs attention. With their design, a failure stays in the App's logs and
+   the admin finds out late. Name what they give up (an event trigger, say),
+   recommend the framework, never as required, and leave the choice to them.
    Framework apps inherit the `base-integration-app` templates, so the
    developer implements only the mapping. Platform docs:
    `/docs/building-apps/integrations-framework/`; full specification:
