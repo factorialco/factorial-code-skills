@@ -86,7 +86,19 @@ instead — see the routing table in `SKILL.md`.
   reported. See the legacy note in `fcode-factorial-actions`.
 - **"My installation is stuck in `configuration_pending`."** The install
   isn't finished until setup completes (the `install` form).
-  Re-open the app from the marketplace and finish configuration.
+  Re-open the app from the marketplace and finish configuration. If the setup
+  can't be finished (the `install` form is broken, or you no longer need that
+  installation), remove it instead. An installation whose setup never finished
+  can't be suspended or uninstalled, but it can be removed: open it in the
+  dashboard (the App's Development tab for a dev installation) and choose
+  **Remove installation**. This deletes the installation and its `deploy-`
+  workspace, and revokes the company's stored Factorial token for it unless
+  another installation of that company still uses it, so a `FACTORIAL_TOKEN`
+  copied into `variables.local.env` stops working. Installing again from the
+  marketplace starts over. Anyone on the App can remove a dev
+  installation; a demo or production one needs a Factorial admin of the App's
+  team, or an operator. This does not apply to an installation that was set up
+  and then lost its connection: reconnect that one (next entry).
 - **"The installation lost its connection."** When Factorial refuses its
   refresh token, an `active` installation moves to `connection_pending`.
   Reconnect it from the marketplace: one already configured goes straight
