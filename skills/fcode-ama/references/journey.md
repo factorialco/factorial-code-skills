@@ -1,9 +1,9 @@
 # The Factorial Code journey, stage by stage
 
 Roles: **Internal** (Factorial developer), **Partner** (external company
-building with Factorial), **Individual Contributor / IC** (building their own
-app or automation; may be a customer, but not always). Where a stage has no
-role callout, it is the same for everyone.
+building with Factorial), **Factorial Customer** (a company that uses
+Factorial, building its own app or automation). Where a stage has no role
+callout, it is the same for everyone.
 
 ## 1. Landing and access
 
@@ -129,8 +129,9 @@ a company-scoped one will only ever authorize its own company.
   company-scoped one — registering the redirect URIs the credential dialog
   shows, then enter the client credentials in that environment's dialog on
   the OAuth tab.
-- **Partner / IC**: an administrator preconfigures the OAuth application; it
-  appears on the OAuth tab once done. (Automatic creation is planned.)
+- **Partner / Factorial Customer**: an administrator preconfigures the OAuth
+  application; it appears on the OAuth tab once done. (Automatic creation is
+  planned.)
 
 Once running, tokens are handled by the platform — installed apps get their
 OAuth tokens automatically; there is no credential handling in app code.
@@ -167,8 +168,8 @@ managed on the **Demo companies** page and belong to the development team.
 
 - **Internal**: create demo companies directly using the **Demo generator**,
   and save them in Factorial Code.
-- **Partner / IC**: use **Request a demo company**; an administrator
-  provisions it and you are notified by email when it's ready.
+- **Partner / Factorial Customer**: use **Request a demo company**; an
+  administrator provisions it and you are notified by email when it's ready.
 
 ## 7. Test marketplace — test the install
 
@@ -265,7 +266,7 @@ workspace and marking the release deployed — takes one of:
   detail page shows the release actions and a **"How to promote"** dialog
   with the exact `fcode` commands (procedure in `fcode-release`).
 - **An operator** (the Factorial Code platform team) — the route for
-  Partner / Individual Contributor teams and for members holding the
+  Partner / Factorial Customer teams and for members holding the
   developer role.
 
 Marking a release **stable** — re-pointing what every customer installation
