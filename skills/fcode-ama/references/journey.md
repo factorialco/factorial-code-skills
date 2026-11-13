@@ -55,6 +55,14 @@ signing in. The creation flow asks for:
      (`fcode-examples` `references/integration-inbound.md`; docs:
      `/docs/building-apps/inbound-sync/`).
 
+   **A syncing App also has to be registered with Factorial.** The data types
+   picked at App creation only preselect OAuth scopes. Factorial starts or
+   accepts sync runs only for an integration it has registered, inbound or
+   outbound, and developers can't do that themselves. Ask the Factorial contact
+   to register the integration before the first sync run. This step is
+   temporary and will be removed in a future release, so don't build tooling
+   or docs that depend on it.
+
    What starts a sync run is a separate question from its direction: either
    way it starts on a schedule, when a user starts it from Factorial's UI (a
    sync or an import button), or when the App's own code starts it through

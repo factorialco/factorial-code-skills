@@ -358,7 +358,7 @@ workspace above nested inside it — `fcode team:clone` in `fcode-cli`:
 acme-payroll/               # the development team
 ┣ 📂 .fcode/team.json       # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/        # installed once, symlinked into every App
-┗ 📂 payroll-sync/          # one folder per App — a future git repo
+┗ 📂 payroll-sync/          # one folder per App — commit it, `.fcode/` included
   ┣ 📜 settings.json        #   the App — name, description (mirror, read-only)
   ┣ 📜 README.md            #   the App's README (editable, `fcode app:push`)
   ┣ 📜 MARKETPLACE.md       #   the marketplace listing (editable, `fcode app:push`)
@@ -366,6 +366,25 @@ acme-payroll/               # the development team
   ┣ 📂 marketplace/logo.*   #   the App logo (read-only)
   ┗ 📂 app/                 #   the workspace laid out above
 ```
+
+**In git, commit `app/.fcode/`, both `workspace.json` and
+`remote.<hash>.json`.** The remote file is the sync baseline: each resource's
+id and content hash as of the last pull or push. Without it `fcode` doesn't
+recognise the folder, so a fresh clone that lacks it fails every
+`fcode status`/`pull` with "not a Factorial Code workspace". It changes whenever
+a resource changes, and can conflict when two people push around the same time.
+Don't hand-merge it, because the ids decide whether a variable is new or removed
+on the next push. Take either side, then run `fcode pull` in `app/`, which
+rewrites it from the cloud. (`fcode team:pull` does the same for every App, but
+only from the development-team root.) The CLI gitignores what must stay out
+(`variables.local.env`, inherited files, `storage/`). Full workflow:
+`/docs/building-apps/github/`.
+
+**Check `activeTeam` in `workspace.json` before committing it.** It decides
+where every teammate's `fcode push` goes, and `fcode remote:add` makes the
+remote it adds the active one. After a release flow's `fcode remote:add prod-…`,
+switch back with `fcode remote:set dev-…` before committing, or every teammate
+who pulls the repository pushes to production.
 
 Processes and modules also carry `versions/<tag>/` subfolders (e.g.
 `versions/v1.0.0/`) holding their published version snapshots — see the
