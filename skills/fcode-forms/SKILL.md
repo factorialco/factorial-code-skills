@@ -421,6 +421,23 @@ The rules:
   and a user who abandons the flow there leaves it active. Do the setup the App
   can't run without in the entry step.
 
+- **Factorial One fills in each step of a lifecycle flow as it opens.** When
+  One opens an `install`, `settings` or `uninstall` form in the web chat, each
+  `process` step is read only once the user has sent the steps before it, so
+  its pre-render sees what they saved (an API key from step 1 that step 2's
+  pre-render uses to list options, say). The card reads the step once and
+  hands One that schema with what the user asked for; the step opens with
+  One's values over the pre-render's, and the user reviews and sends it. If
+  One cannot propose values, the step opens as the pre-render built it. To
+  make a flow fillable:
+  - Pre-render each step from what the earlier steps saved (draft or
+    `variables`), as for a user.
+  - Give options human titles: One picks an option by its meaning and
+    proposes its value.
+  - Say in the lifecycle form's `agentTool.description` what each step holds
+    and what to keep — for example that rows are matched by position, or that
+    a proposed list replaces the step's whole list.
+
 **Overriding the next step.** A process may still return `nextProcessId`:
 
 - naming a **later declared step**, the flow jumps there and the steps in
