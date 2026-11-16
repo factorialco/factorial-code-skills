@@ -62,12 +62,42 @@ so its `ui:` options apply.
   renders a button that completes an OAuth flow in a popup (`"ui:field":
   "oauth"` for an `object`; see `oneOauthConnectField` in the sample). Contract
   and callback in `fcode-forms` §Connect an external account.
+- **Employees** — Factorial's employee picker (search, filters, avatars). An
+  `array` of `string` picks several people and a `string` picks one; mark it with
+  `"x-fcode-entity": "employee"` and draw it with `"ui:widget": "employee"`. The
+  value is Factorial **employee IDs** (not access IDs), the same IDs the public
+  API and Factorial One use. Optional `ui:options`: `onlyActive` (default `true`;
+  `false` lists inactive employees too) and `filters`, the filter names to offer
+  (e.g. `["team", "legalEntity"]`). See `employees` in the sample.
+
+  ```json
+  "employees": {
+    "type": "array",
+    "title": "Employees",
+    "items": { "type": "string" },
+    "x-fcode-entity": "employee",
+    "ui": { "ui:widget": "employee", "ui:options": { "filters": ["team", "legalEntity"] } }
+  }
+  ```
 
 ## Gotchas
 
 - **A file field** (`"ui:widget": "file"`) is auto-uploaded to Storage before
   the process runs; the parameter arrives as an `fcode.storage://…` reference,
   not the file contents. Strip the prefix before `fcode.storage.download(...)`.
+- **The employee picker only exists inside Factorial.** Anywhere else (an
+  embedded form, the hosted `forms.js`) the field falls back to a plain select
+  when it lists its choices with `enum` / `oneOf`, and to a short notice
+  otherwise (`ui:options.unavailableMessage` replaces the text). Expose a form
+  with an employee field through Factorial (`fcode-factorial-actions`).
+- **Keep both keys on an employee field.** `x-fcode-entity` says what the field
+  means and is what Factorial One reads; `ui:widget` only draws it, and One never
+  sees `ui` keys. Without `x-fcode-entity`, One does not know to pass employee IDs.
+- **The picker lists the employees the person filling in the form may see**, not
+  what the App may see. Check every employee ID the process receives before acting
+  on it.
+- **There is no "select all".** The user picks each person; the process never
+  receives "everyone matching a filter".
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
 - **An oauth field's `authorizationUrl` must be injected with
