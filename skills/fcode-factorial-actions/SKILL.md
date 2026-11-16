@@ -31,6 +31,7 @@ Everything an action needs lives in **one settings block, `factorial`**: the
 - **`form`**: a form opened from Factorial submits through Factorial's backend, which carries the user's identity and injects the trusted context
 - **A form requires Factorial authentication unless `form.public` releases it**, which is the switch for the auth mode the form endpoints check
 - **File parameters** (`x-fcode-file`) uploaded straight to Factorial Code storage with a grant, the submission carrying the `fcode.storage://` path
+- **Employee parameters** (`x-fcode-entity: "employee"` + `"ui:widget": "employee"`) rendered as Factorial's employee picker, the submission carrying employee IDs (field contract in `fcode-json-schema`)
 - `uiTrigger.label` localized with `fcode.i18n("key")` tokens on the `?locale=` listing
 - `lifecycleRole` derived from the reserved slug and tagged in the console
 

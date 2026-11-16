@@ -26,6 +26,10 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   immediately. Details below.
 - **An unknown version or alias doesn't fail the form** — it silently runs the
   current version (see "Pin the form to a version").
+- **An employee field (`"ui:widget": "employee"`) has no picker in an embedded
+  form** — it renders a plain select when the field lists its choices, and a
+  notice otherwise. The picker only exists in forms opened from Factorial; see
+  `fcode-json-schema`.
 - **The `Forms` flag must be enabled** — in the **Trigger from Factorial**
   section of the process Dashboard, or via `factorial.form.enabled` (legacy:
   `"form": { "enabled": true }`) in the process's `metadata.json` + `fcode push`

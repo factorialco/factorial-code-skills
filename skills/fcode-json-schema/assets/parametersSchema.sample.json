@@ -181,6 +181,24 @@
           "onComplete": "reload"
         }
       }
+    },
+    "employees": {
+      "type": "array",
+      "title": "Employees",
+      "description": "Factorial's employee picker inside Factorial. The value is a list of employee IDs.",
+      "items": {
+        "type": "string"
+      },
+      "x-fcode-entity": "employee",
+      "ui": {
+        "ui:widget": "employee",
+        "ui:options": {
+          "filters": [
+            "team",
+            "legalEntity"
+          ]
+        }
+      }
     }
   },
   "dependencies": {
