@@ -168,7 +168,10 @@ in the processes list and the process header, the CLI and API report it, and
 nothing ever writes it (it is not in `metadata.json` and not in the content
 hash). `install`, `settings` and `uninstall` are the marketplace lifecycle
 forms; they still take `factorial.form.enabled` like any form. The pre-render
-pattern for re-opened install/settings forms is in `fcode-forms`.
+pattern for re-opened install/settings forms is in `fcode-forms`. A form's
+pre-render also gets `fcode.context.factorial` when Factorial opens the form;
+how to use it, and its limits, are in `fcode-forms`
+(`references/advanced.md` "Who is opening the form").
 
 The rules for lifecycle forms:
 

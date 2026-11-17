@@ -120,7 +120,8 @@ so the process behind the form is still the guard:
   `access_id`). Never authorize on them.
 - **Return nothing the caller shouldn't already have** — the result of a
   submission, and a `preRenderProcess`'s `variables`, reach whoever opened the
-  URL.
+  URL. A pre-render has no trusted viewer on a public URL
+  (`references/advanced.md` "Who is opening the form").
 - **Keep credentials one-way**: a settings form reports only *whether* a secret
   is set, never its value (`references/advanced.md`). The platform strips the
   `default`/`examples`/`const` of `isSensitive` fields from the schema it
@@ -262,7 +263,10 @@ syncs — will blow the timeout and fail the submit.
 flow between steps. For passing data, don't block the submit — instead:
 
 - **`preRenderProcess`** computes server-side `variables` before the form
-  renders (see `references/advanced.md`).
+  renders (see `references/advanced.md`). Opened from Factorial, it can trust
+  `fcode.context.factorial` (who is looking) to adapt the form, never its
+  parameters; hiding fields is UX only (`references/advanced.md` "Who is
+  opening the form").
 - **Multi-step forms across processes** — a multi-process flow, or
   `nextProcessId` chaining — carry state forward in `steps` + `variables`
   (below). If the steps are only visual — no work between them — use
