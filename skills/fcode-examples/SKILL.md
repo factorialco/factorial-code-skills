@@ -1,6 +1,6 @@
 ---
 name: fcode-examples
-description: Reference implementations for Factorial Code — a complete marketplace payroll integration, an inbound import tracked as a sync run, a custom app with full install/uninstall lifecycle, an OAuth account connection from a form, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
+description: Reference implementations for Factorial Code — a complete marketplace payroll integration, an inbound import tracked as a sync run, a custom app with full install/uninstall lifecycle, an OAuth account connection from a form, a pairing table mapping Factorial records to another system's, and utility processes. Use when building a Factorial Code (fcode) integration, custom app, or automation end to end and you want a proven, working pattern to adapt — read the matching reference before writing code.
 license: MIT
 metadata:
   category: factorial-code
@@ -28,6 +28,7 @@ case doesn't need.
 | A custom app with install/uninstall lifecycle: setup form, webhooks, schedules | [`references/custom-app-linear.md`](references/custom-app-linear.md) |
 | A one-shot automation: export/report generation, file processing | [`references/utility-processes.md`](references/utility-processes.md) |
 | An app that connects a third-party account through OAuth from a form (no pasted API tokens) | [`references/oauth-connect.md`](references/oauth-connect.md) |
+| A settings form that maps many Factorial records to another system's (accounts, departments, codes) as one reviewable table | [`references/pairing-table.md`](references/pairing-table.md) |
 
 ## Pattern index
 
@@ -47,6 +48,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Multi-step setup flow across processes (`process` steps in `ui:steps`), with a second form built from data fetched with the first step's key | custom-app-linear |
 | Dynamic form dropdowns via `preRenderProcess` + `#/variables` | custom-app-linear |
 | OAuth connect button in a form (`ui:widget: "oauth"`): pre-render calls `fcode.oauth.start()`, the platform runs both redirect legs and invokes the completion process, which exchanges the code and 302s to the SDK callback page; `onComplete: "reload"` renders the connected state | oauth-connect |
+| Pairing table (`ui:field: "pairing"`): pre-render builds one row per Factorial record with the vendor's records as choices, the stored pair as `default`, a name match as `x-fcode-suggestion` and `x-fcode-in-use`; the settings process validates and stores the flat map | pairing-table |
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
 | Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |

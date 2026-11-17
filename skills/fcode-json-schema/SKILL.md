@@ -62,6 +62,16 @@ so its `ui:` options apply.
   renders a button that completes an OAuth flow in a popup (`"ui:field":
   "oauth"` for an `object`; see `oneOauthConnectField` in the sample). Contract
   and callback in `fcode-forms` §Connect an external account.
+- **Pair records with another system** — an `object` with
+  `"ui": { "ui:field": "pairing" }` whose properties are one row each (a
+  `string` with `oneOf` / `enum` choices: the other system's records) renders
+  as one reviewable table instead of a dropdown per record. Per row,
+  `"x-fcode-suggestion": { "value", "reason" }` proposes a match and
+  `"x-fcode-in-use": true` narrows the default list; `default` is the stored
+  pair. Use it for any mapping of more than a handful of Factorial records
+  (accounts, tax codes, cost centers, wage types, absence codes, positions).
+  Contract and semantics in `fcode-forms` §Pairing tables; see `accountPairing`
+  in the sample.
 - **Employees** — Factorial's employee picker (search, filters, avatars). An
   `array` of `string` picks several people and a `string` picks one; mark it with
   `"x-fcode-entity": "employee"` and draw it with `"ui:widget": "employee"`. The
@@ -98,6 +108,11 @@ so its `ui:` options apply.
   on it.
 - **There is no "select all".** The user picks each person; the process never
   receives "everyone matching a filter".
+- **A pairing row's suggestion is not its `default`.** Put a proposal in
+  `x-fcode-suggestion`, never in `default`: a `default` is a stored pair, shown
+  as confirmed and submitted as it is, while a suggestion is only submitted
+  once the user accepts it. Keep both on the row (`x-fcode-*` is what
+  Factorial One reads; `ui` only draws the table).
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
 - **An oauth field's `authorizationUrl` must be injected with

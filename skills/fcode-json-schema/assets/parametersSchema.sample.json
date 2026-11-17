@@ -199,6 +199,86 @@
           ]
         }
       }
+    },
+    "accountPairing": {
+      "type": "object",
+      "title": "Expense accounts",
+      "description": "Renders one table pairing each Factorial record (a property) with a record of the other system (its choices). x-fcode-suggestion proposes a match the user accepts; default is a stored pair.",
+      "ui": {
+        "ui:field": "pairing",
+        "ui:options": {
+          "columns": [
+            "Factorial",
+            "NetSuite"
+          ],
+          "inUseNote": "Only the accounts in use are listed.",
+          "labels": {
+            "addRow": "Add account"
+          }
+        }
+      },
+      "properties": {
+        "acc_travel": {
+          "type": "string",
+          "title": "Travel",
+          "oneOf": [
+            {
+              "const": "",
+              "title": "Not mapped"
+            },
+            {
+              "const": "6100",
+              "title": "6100 · Travel"
+            },
+            {
+              "const": "6200",
+              "title": "6200 · Meals"
+            }
+          ],
+          "default": "6100"
+        },
+        "acc_meals": {
+          "type": "string",
+          "title": "Meals",
+          "oneOf": [
+            {
+              "const": "",
+              "title": "Not mapped"
+            },
+            {
+              "const": "6100",
+              "title": "6100 · Travel"
+            },
+            {
+              "const": "6200",
+              "title": "6200 · Meals"
+            }
+          ],
+          "x-fcode-suggestion": {
+            "value": "6200",
+            "reason": "Same name"
+          },
+          "x-fcode-in-use": true
+        },
+        "acc_gifts": {
+          "type": "string",
+          "title": "Gifts",
+          "oneOf": [
+            {
+              "const": "",
+              "title": "Not mapped"
+            },
+            {
+              "const": "6100",
+              "title": "6100 · Travel"
+            },
+            {
+              "const": "6200",
+              "title": "6200 · Meals"
+            }
+          ]
+        }
+      }
     }
   },
   "dependencies": {

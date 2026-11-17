@@ -55,6 +55,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   `"ui:widget": "oauth"` plus an `fcode.oauth` flow whose completion redirects to the
   SDK's callback page. Never ask users to paste an API token into a form when
   the vendor offers OAuth. See "Connect an external account".
+- **Mapping many Factorial records to another system is a pairing table**
+  (`"ui:field": "pairing"`), not a dropdown per record. A row's proposal goes in
+  `x-fcode-suggestion`, never in `default`. See "Pairing tables".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
   substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
@@ -640,6 +643,100 @@ Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.3.0 (f0 control:
 A complete sample — pre-render starting the flow, the completion process, the form
 process verifying the connection — is in `fcode-examples`
 (`references/oauth-connect.md`).
+
+## Pairing tables
+
+Integrations map Factorial records to their counterparts elsewhere: expense
+accounts to a NetSuite chart of accounts, payroll concepts to DATEV wage types,
+absence types to an official code list. One dropdown per record turns hundreds
+of records into a form nobody can review. Mark the section
+`"ui:field": "pairing"` and Factorial draws it as one table: per row the
+Factorial record, a searchable picker of the other system's records, and a
+status — **Confirmed** (has a value), **Suggested** (with the app's reason) or
+**Needs a choice** — plus **Accept N suggestions** above the table and
+**Accept** on each suggested row.
+
+```json
+"accounts": {
+  "type": "object",
+  "title": "Expense accounts",
+  "ui": {
+    "ui:field": "pairing",
+    "ui:options": {
+      "columns": ["Factorial", "NetSuite"],
+      "inUseNote": "Only the accounts your expense categories use are listed.",
+      "labels": { "addRow": "Add account" }
+    }
+  },
+  "properties": {
+    "acc_12": {
+      "type": "string",
+      "title": "Travel",
+      "oneOf": [
+        { "const": "", "title": "Not mapped" },
+        { "const": "6100", "title": "6100 · Travel" },
+        { "const": "6200", "title": "6200 · Meals" }
+      ],
+      "default": "6100"
+    },
+    "acc_13": {
+      "type": "string",
+      "title": "Meals",
+      "oneOf": [
+        { "const": "", "title": "Not mapped" },
+        { "const": "6100", "title": "6100 · Travel" },
+        { "const": "6200", "title": "6200 · Meals" }
+      ],
+      "x-fcode-suggestion": { "value": "6200", "reason": "Same name" },
+      "x-fcode-in-use": true
+    }
+  }
+}
+```
+
+The contract:
+
+- **One property per row.** The property name is the key the submission
+  carries (use the Factorial record's id, prefixed so it is a valid key:
+  `acc_12`), `title` is the Factorial side, the choices (`oneOf` of
+  `{ const, title }`, or `enum`) are the other system's records. A property
+  that is not a string choice is left out of the table with a console warning.
+- **`default` is the stored pair** and shows as Confirmed.
+- **`x-fcode-suggestion: { value, reason }` is a proposal**, never submitted
+  until the user accepts it: saving without accepting leaves the row unpaired.
+  A `value` that is not one of the row's choices is ignored.
+- **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
+  marked, the table lists only those plus rows paired or suggested; **Show all**
+  and **Add row** bring in the rest. Mark them on long lists: each edit
+  re-renders every listed row, and a few hundred listed rows make every change
+  lag noticeably.
+- **"Not mapped".** A `""` choice is not listed as a record; clearing such a row
+  submits `""`. Clearing a row without one leaves its key out of the
+  submission.
+- **Submission** is the same flat `{ "acc_12": "6100", … }` object a section of
+  ordinary dropdowns submits, so the handler reads it as it always did; the
+  process must still check every value against the other system's records
+  (parameters are untrusted, §What a form may trust).
+- **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
+  `labels` overriding the table text — `status`, `confirmed`, `suggested`,
+  `needsChoice`, `accept`, `acceptAll` (`{count}`), `summary` (`{confirmed}`,
+  `{toReview}`), `placeholder`, `addRow`, `showAll`, `showInUse`, `empty`.
+  Translate them with `fcode.i18n` tokens (`fcode-i18n`). A bad option falls
+  back to its default with a console warning.
+- **Validation** works per row: a row listed in the section's `required` must be
+  paired, and the error shows on that row.
+
+Build the section in a `preRenderProcess` (`references/advanced.md`): rows from
+the Factorial records, choices from the other system, `default` from what the
+app stored, `x-fcode-suggestion` from the app's own matching (same number, same
+name…), `x-fcode-in-use` from what Factorial actually uses. Inject the whole
+section as one variable (`"accounts": { "$ref": "#/variables/accountsField" }`).
+
+The table is drawn inside Factorial (`@factorialco/fcode-react-forms` ≥ 3.8.0
+with `@factorialco/rjsf-f0` ≥ 3.0.0). The hosted `forms.js` and any host without
+the f0 theme render the same section as ordinary dropdowns, which submit the
+same values. A complete app — pre-render building the section, settings process
+storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
 
 ## Automatic file uploads
 
