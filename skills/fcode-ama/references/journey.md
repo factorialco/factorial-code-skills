@@ -45,9 +45,10 @@ signing in. The creation flow asks for:
    the customer's own internal API alike):
    - **Outbound** (Factorial → external system): **employee compensation,
      expenses, and employee updates (for example, leaves)**. The App inherits
-     the generic `OutboundSync` orchestrator; webhook delivery, retries and
-     per-customer isolation come with it, so it never polls for changes or
-     keeps its own cursor and idempotency keys.
+     the sync process and the `record-sync` core, and ships only the mapping
+     and delivery of its records (`fcode-examples`); webhook delivery,
+     retries and per-customer isolation come with it, so it never polls for
+     changes or keeps its own cursor and idempotency keys.
    - **Inbound** (external system → Factorial, an import): records Factorial
      tracks as inbound sync rows, today compensations (payroll results),
      expenses, finance vendors and financial documents, and employee updates.
@@ -78,6 +79,15 @@ signing in. The creation flow asks for:
    `https://apidoc.factorialhr.com/docs/integrations-framework`. A standard
    app is free-form: forms, scheduled jobs, webhooks, reports, syncs of any
    other shape.
+
+   **A syncing App also has to be registered with Factorial.** The data types
+   picked at App creation only preselect OAuth scopes. Factorial starts or
+   accepts sync runs only for an integration it has registered, inbound or
+   outbound, and developers can't do that themselves. Before the first sync
+   run, ask for it: internal Factorial developers in Slack
+   `#factorial-code-users`, everyone else through their Factorial contact. This
+   step is temporary and will be removed in a future release, so mention it
+   in the App's setup notes but don't automate around it.
 
 App lifecycle: `active → published → suspended → archived` (`published` is a
 side effect of the first deployed release, never set by hand; suspended and

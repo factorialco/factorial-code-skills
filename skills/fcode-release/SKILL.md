@@ -49,6 +49,12 @@ Gate every release with `fcode-code-validation` — see the procedure.
 - **If `dev-xxx/` already exists locally, don't reuse it silently** — ask
   whether to release from a fresh clone (recommended) or the existing copy,
   and `fcode pull` it first.
+- **Releasing from an existing copy leaves it pointing at prod.**
+  `remote:add prod-xxx` makes prod the active remote in
+  `.fcode/workspace.json`. When the copy is a git checkout (a development
+  team's `app/`), run `fcode remote:set dev-xxx` after the push, before
+  anything is committed — otherwise every teammate who pulls the repository
+  pushes to prod (`fcode-core-concepts` §Workspace structure (CLI)).
 
 ## Procedure
 
@@ -80,5 +86,7 @@ Gate every release with `fcode-code-validation` — see the procedure.
    ```
 
    On a divergence: stop and ask — never `--force` on your own.
-6. **Report the outcome**, reminding the user that the platform release
+6. **Released from an existing copy?** Switch it back with
+   `fcode remote:set dev-xxx` (see Gotchas). A fresh clone can be deleted.
+7. **Report the outcome**, reminding the user that the platform release
    (publish a version, move `stable`) is a separate step (`fcode-ama`).

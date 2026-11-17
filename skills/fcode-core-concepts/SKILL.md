@@ -39,12 +39,12 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
 - **Syncing compensation, expenses or employee updates with an external
   system is an integrations-framework use case, in either direction**: a
-  push out of Factorial (`OutboundSync`) or an import into it
-  (`InboundRecordSync`), even when that system is the customer's own API. The
-  customer sees each item's outcome in Factorial. Recommend it over a
-  hand-built design with polling and idempotency keys. The rule and the
-  opt-in are in `fcode-ama`; the outbound and inbound examples are in
-  `fcode-examples`.
+  push out of Factorial (a `record-sync` vertical and delivery mode) or an
+  import into it (`InboundRecordSync`), even when that system is the
+  customer's own API. The customer sees each item's outcome in Factorial.
+  Recommend it over a hand-built design with polling and idempotency keys.
+  The rule and the opt-in are in `fcode-ama`; the outbound and inbound
+  examples are in `fcode-examples`.
 - **Limits are fixed per workspace** — 12 h per execution, 50 concurrent
   executions, 50 req/s, 500 KB return value, 50 KB per datastore entry. Raising
   one means asking us, not changing a plan. See Plans & limits.
@@ -352,13 +352,14 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ```
 
 A whole development team checks out one level up, one folder per App, with the
-workspace above nested inside it — `fcode team:clone` in `fcode-cli`:
+workspace above nested inside it — `fcode team:clone` in `fcode-cli`. The
+repository is the team root: commit `.fcode/team.json` and every App folder.
 
 ```
 acme-payroll/               # the development team
 ┣ 📂 .fcode/team.json       # the team and the Apps cloned into it
 ┣ 📂 .claude/skills/        # installed once, symlinked into every App
-┗ 📂 payroll-sync/          # one folder per App — a future git repo
+┗ 📂 payroll-sync/          # one folder per App — commit it, `app/.fcode/` included
   ┣ 📜 settings.json        #   the App — name, description (mirror, read-only)
   ┣ 📜 README.md            #   the App's README (editable, `fcode app:push`)
   ┣ 📜 MARKETPLACE.md       #   the marketplace listing (editable, `fcode app:push`)
@@ -366,6 +367,25 @@ acme-payroll/               # the development team
   ┣ 📂 marketplace/logo.*   #   the App logo (read-only)
   ┗ 📂 app/                 #   the workspace laid out above
 ```
+
+**In git, commit `app/.fcode/`, both `workspace.json` and
+`remote.<hash>.json`.** The remote file is the sync baseline: each resource's
+id and content hash as of the last pull or push. Without it `fcode` doesn't
+recognise the folder, so a fresh clone that lacks it fails every
+`fcode status`/`pull` with "not a Factorial Code workspace". It changes whenever
+a resource changes, and can conflict when two people push around the same time.
+Don't hand-merge it, because the ids decide whether a variable is new or removed
+on the next push. Take either side, then run `fcode pull` in `app/`, which
+rewrites it from the cloud. (`fcode team:pull` does the same for every App, but
+only from the development-team root.) The CLI gitignores what must stay out
+(`variables.local.env`, `datastore.json`, `.env`, inherited files,
+`storage/`). Full workflow: `/docs/building-apps/github/`.
+
+**Check `activeTeam` in `workspace.json` before committing it.** It decides
+where every teammate's `fcode push` goes, and `fcode remote:add` makes the
+remote it adds the active one. After a release flow's `fcode remote:add prod-…`,
+switch back with `fcode remote:set dev-…` (`fcode-cli`) before committing, or
+every teammate who pulls the repository pushes to production.
 
 Processes and modules also carry `versions/<tag>/` subfolders (e.g.
 `versions/v1.0.0/`) holding their published version snapshots — see the

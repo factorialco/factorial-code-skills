@@ -227,6 +227,16 @@ guidance on:
 }
 ```
 
+`sync` is different: it is **not a Factorial Action**, so the `sync` the
+`base-integration-app` workspaces ship (and its sibling `validate`) keeps
+`factorial.enabled: false` on purpose. The monolith reaches it through the
+dashboard's `apps/sync` (and `apps/validate`) route, which relays the request to
+the process's **webhook** in the company's `deploy-` workspace (for the team's
+own demo company with no dev installation, the App's shared `dev-` workspace).
+The process is inherited, so an integration doesn't override it. In the base,
+keep `webhook.enabled: true` and `factorial.enabled: false`. Enabling the
+`factorial` block or its `backend` entry point adds nothing to that path.
+
 **Legacy roles.** Older processes may still hold a role in the cloud, such as a
 lifecycle role on a slug that is not reserved (`acme-install`). The role stays
 in the cloud and keeps working; deleting the line from `metadata.json` does not
