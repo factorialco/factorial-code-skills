@@ -426,18 +426,25 @@ The rules:
   can't run without in the entry step.
 
 - **Factorial One fills in each step of a lifecycle flow as it opens.** When
-  One opens an `install`, `settings` or `uninstall` form in the web chat, each
-  `process` step is read only once the user has sent the steps before it, so
-  its pre-render sees what they saved (an API key from step 1 that step 2's
-  pre-render uses to list options, say). The card reads the step once and
-  hands One that schema with what the user asked for; the step opens with
-  One's values over the pre-render's, and the user reviews and sends it. If
-  One cannot propose values, the step opens as the pre-render built it. To
-  make a flow fillable:
+  One opens an `install` or `settings` form in the web chat, each `process`
+  step is read only once the user has sent the steps before it, so its
+  pre-render sees what they saved (an API key from step 1 that step 2's
+  pre-render uses to list options, say). The card hands One the step as it
+  read it, so One adds no read of its own; going back to a step reads it
+  again, as for any user, and One reuses its proposal if the step did not
+  change. One reads the conversation, looks up the Factorial data the step
+  needs, and the step opens with its values over the pre-render's; the user
+  reviews and sends it. If One cannot propose values, the step opens as the
+  pre-render built it. Keep `uninstall` single-process: the App is
+  deprovisioned once its uninstall action succeeds, so a flow can't run past
+  its entry step. To make a flow fillable:
   - Pre-render each step from what the earlier steps saved (draft or
     `variables`), as for a user.
   - Give options human titles: One picks an option by its meaning and
     proposes its value.
+  - Name in a field's title or description the Factorial record it takes
+    ("the Factorial legal entity", "the responsible employee"): One looks it
+    up by that name when the step opens.
   - Say in the lifecycle form's `agentTool.description` what each step holds
     and what to keep — for example that rows are matched by position, or that
     a proposed list replaces the step's whole list.
