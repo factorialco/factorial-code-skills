@@ -45,9 +45,10 @@ signing in. The creation flow asks for:
    the customer's own internal API alike):
    - **Outbound** (Factorial → external system): **employee compensation,
      expenses, and employee updates (for example, leaves)**. The App inherits
-     the generic `OutboundSync` orchestrator; webhook delivery, retries and
-     per-customer isolation come with it, so it never polls for changes or
-     keeps its own cursor and idempotency keys.
+     the sync process and the `record-sync` core, and ships only the mapping
+     and delivery of its records (`fcode-examples`); webhook delivery,
+     retries and per-customer isolation come with it, so it never polls for
+     changes or keeps its own cursor and idempotency keys.
    - **Inbound** (external system → Factorial, an import): records Factorial
      tracks as inbound sync rows, today compensations (payroll results),
      expenses, finance vendors and financial documents, and employee updates.

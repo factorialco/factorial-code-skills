@@ -39,12 +39,12 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 - **Runtimes are pinned:** JavaScript = **Node.js v22**, Python = **3.13**.
 - **Syncing compensation, expenses or employee updates with an external
   system is an integrations-framework use case, in either direction**: a
-  push out of Factorial (`OutboundSync`) or an import into it
-  (`InboundRecordSync`), even when that system is the customer's own API. The
-  customer sees each item's outcome in Factorial. Recommend it over a
-  hand-built design with polling and idempotency keys. The rule and the
-  opt-in are in `fcode-ama`; the outbound and inbound examples are in
-  `fcode-examples`.
+  push out of Factorial (a `record-sync` vertical and delivery mode) or an
+  import into it (`InboundRecordSync`), even when that system is the
+  customer's own API. The customer sees each item's outcome in Factorial.
+  Recommend it over a hand-built design with polling and idempotency keys.
+  The rule and the opt-in are in `fcode-ama`; the outbound and inbound
+  examples are in `fcode-examples`.
 - **Limits are fixed per workspace** — 12 h per execution, 50 concurrent
   executions, 50 req/s, 500 KB return value, 50 KB per datastore entry. Raising
   one means asking us, not changing a plan. See Plans & limits.

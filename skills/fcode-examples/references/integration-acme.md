@@ -1,205 +1,194 @@
 # Reference: marketplace integration ("Acme Payroll")
 
 A complete outbound marketplace integration for an invented vendor, **Acme
-Payroll**. Factorial triggers it per sync run; it delivers compensations and
-leaves to the external system and reports a status per item back to Factorial.
-This is the starting shape for any real payroll/HR integration.
+Payroll**. Factorial starts a sync run; the App reads the run's compensations
+from the public API, delivers them to Acme, and reports a status per item back
+to Factorial. This is the starting shape for any real payroll/HR integration.
 
 ## Architecture
 
 ```
-Factorial ──webhook──▶ processes/sync (entry point)
-                          │  authenticated by the platform, delegates to the sync class
-                          ▼
-              modules/sync-file  OR  modules/sync-api   (pick ONE flavor)
-                          │ extends
-                          ▼
-              outbound-sync (inherited from base-integration-app)
-                          │ fetches syncable items, loops, reports statuses
-                          ▼
-              Factorial (per-item status: success / invalid / failed)
+Factorial ──apps/sync──▶ processes/sync          (inherited from base-integration-app)
+                              │ fcode.import("sync")
+                              ▼
+                        modules/sync             (yours: the ONE module you ship)
+                              │ class AcmeSync extends FileSync(CompensationsSync)
+                              │                    or ApiSync(CompensationsSync)
+                              ▼
+                        record-sync              (inherited core)
+                              │ reads the run, reads each record by id,
+                              │ calls your hooks, reports per-item status
+                              ▼
+                        Factorial (per item: success / invalid / failed)
 ```
+
+The integration is a **vertical** (what it syncs) composed with a **delivery
+mode** (how it delivers), both inherited:
+
+| Vertical | Module | `dataType` |
+|---|---|---|
+| `CompensationsSync` | `compensations-sync` | `compensations` (payroll-run compensations) |
+| `ExpensesSync` | `expenses-sync` | `expenses` |
+| `LeavesSync` | `leaves-sync` | `leaves` |
+| `FinanceVendorSync` | `finance-vendor-sync` | `finance_vendors` |
+| `FinancialDocumentSync` | `financial-document-sync` | `financial_documents` |
+
+| Mode | Module | You implement | Use when |
+|---|---|---|---|
+| `FileSync` | `file-sync` | `mapRecord(item)` → rows, `render(rows)` → file | The vendor ingests files |
+| `ApiSync` | `api-sync` | `process(item)` → deliver one item | The vendor has a live API |
 
 Workspace layout:
 
 ```
-processes/sync/           # webhook entry point (form disabled)
-modules/sync-file/        # flavor A: aggregate items → CSV → uploadOutput()
-modules/sync-api/         # flavor B: push each item to the vendor HTTP API
-modules/acme-client/      # thin vendor HTTP client (flavor B only)
+modules/sync/              # your sync class — module.exports = the class itself
+modules/acme-client/       # thin vendor HTTP client (API mode only)
 ```
 
-## The `OutboundSync` contract (inherited, never reimplement)
+That's all. **Don't add `processes/sync`, `processes/validate` or
+`processes/digests`**: the base ships all three, and a process of your own
+overrides the base's and stops the App from picking up its fixes.
 
-`fcode.import("outbound-sync")` provides the orchestrator. Your integration
-extends it:
+## The inherited entry points (never reimplement)
 
-**Must override**
+- **`processes/sync`** — Factorial's monolith calls the dashboard's
+  `apps/sync`, which relays `{ sync_run_id, integration_uuid, company_id }` to
+  this process's webhook in the company's `deploy-` workspace. It does
+  `new (fcode.import("sync"))().run(parameters)`. Your module must have the
+  exact slug `sync`; the base defines none, so yours always wins.
+- **`processes/validate`** — called before a run is created, while a review
+  modal waits; it runs your optional `validate(item)` hook (below).
+- **`processes/digests`** — lets Factorial detect that a synced record changed.
 
-- `get externalSystem()` — lowercase vendor slug, e.g. `"acme"`
-- `get dataType()` — lowercase data slug, e.g. `"compensations"`
-- `async process(syncableItem)` — called once per syncable item
+None of them is a Factorial Action: they keep `factorial.enabled: false`
+(`fcode-factorial-actions`). The sync webhook carries no challenge header to
+check: the process trusts only the ids in the body and re-reads everything
+through the public API with the company's installation token.
 
-**Optional hooks** (for batch/file-oriented targets)
+`run(parameters)` (from `record-sync`, never override) reads the run's rows,
+resolves each to a Factorial record, reads the records by id with the
+vertical's `fetchPage`, calls `beforeSync`, hands the items to the mode, and
+reports every row. A row it can't resolve or read is reported `invalid` before
+your code sees it.
 
-- `async beforeSync(syncableItems)` — once, before the per-item loop (init
-  clients, aggregation state)
-- `async afterSync(syncableItems, results, parameters)` — once, after the
-  loop; may mutate `results` in place before statuses are reported
+Each item your hooks receive:
 
-**Provided helpers**
-
-- `datastoreKey(key)` → `"externalSystem.dataType.key"`
-- `integrationDatastoreKey(key)` → `"externalSystem.key"`
-- `variableName(key)` → `"EXTERNALSYSTEM__KEY"`
-- `uploadOutput({ content, syncRunId, prefix, extension, contentType })` —
-  uploads a generated file as a sync run output via the SDK
-  (`integrations.syncRunOutputs.create`); throws on non-2xx
-
-**Entry point (never override)**: `async run(parameters)` — fetches the run's
-syncable items, calls the hooks and `process()` per item, and reports one
-status per item back to Factorial.
-
-## Entry process — `processes/sync/index.js`
-
-Factorial calls the webhook with `{ sync_run_id, integration_uuid, company_id }`
-(declared in `parametersSchema.json`). The process is webhook-triggered, not a
-form, so its `metadata.json` enables the webhook and disables the form:
-
-```json
+```javascript
 {
-  "name": "sync",
-  "tags": ["integration", "acme"],
-  "webhook": { "enabled": true, "authMode": "TEAM" },
-  "form": { "enabled": false }
+  syncable_sync_run_id, // the run row
+  syncable_id,          // the Factorial record id
+  resource_syncable_type,
+  external_identifier,  // Acme's id from a previous sync, or null (create vs update)
+  sync_state,
+  record,               // the record as the public API returns it
 }
 ```
 
-`authMode: TEAM` inherits the workspace configuration in `settings.json`, which for a
-Factorial-triggered webhook expects `FACTORIAL_CHALLENGE_TOKEN` in the
-`x-factorial-wh-challenge` header Factorial's sender provides:
+## The compensation record
 
-```json
-{
-  "webhookAuth": {
-    "headerName": "x-factorial-wh-challenge",
-    "variableKey": "FACTORIAL_CHALLENGE_TOKEN"
+`CompensationsSync` reads `compensations/payroll_run_employees_compensations`:
+one aggregated amount per (payroll run, employee, payroll concept), with `id`,
+`payroll_run_id`, `payroll_run_employee_id` (the **employee id**, despite the
+name), `payroll_concept_id`, `result_type`, `amount_strategy_type`, `amount`
+(minor units), `created_at`, `updated_at`.
+
+It has **no payroll codes, unit or period**. Resolve what Acme needs with the
+inherited helpers (lazy and memoized per run):
+
+| Acme needs | Resolve with |
+|---|---|
+| Employee code | `await this.employeeCodes()` → `Map(employeeId → code)` |
+| Legal entity | `await this.employeeLegalEntityIds(ids)` → `Map(employeeId → legalEntityId)` |
+| Legal entity code | `(await this.installationSettings()).legalEntityCodeById` |
+| Payroll concept code | `resolvePayrollConceptCode((await this.installationSettings()).payrollConceptCodes, legalEntityId, conceptId)` |
+| Unit (`money` / `time` / `unit` / `distance`) | `readConceptUnitTypes(this.factorialClient, conceptIds)` → `Map(conceptId → unit)` |
+| Period end (`effective_on`) | `this.factorialClient.compensations.payrollRuns.all({ query: { "ids[]": … } })`, its `ends_on` |
+
+`resolvePayrollConceptCode` and `readConceptUnitTypes` are exported next to the
+class: `const { readConceptUnitTypes, resolvePayrollConceptCode } =
+fcode.import("compensations-sync")`.
+
+`mapRecord` is **synchronous**, so load every lookup once in `beforeSync`,
+which runs before the mode and is awaited:
+
+```javascript
+// modules/sync/sync.js — shared by both modes
+const CompensationsSync = fcode.import("compensations-sync");
+const { readConceptUnitTypes, resolvePayrollConceptCode } = CompensationsSync;
+const RecordSync = fcode.import("record-sync");
+
+async function loadLookups(sync, items) {
+  const employeeIds = items.map((i) => i.record.payroll_run_employee_id);
+  const settings = await sync.installationSettings();
+  return {
+    employeeCodes: await sync.employeeCodes(),
+    legalEntities: await sync.employeeLegalEntityIds(employeeIds),
+    units: await readConceptUnitTypes(
+      sync.factorialClient,
+      items.map((i) => i.record.payroll_concept_id)
+    ),
+    conceptCodes: settings.payrollConceptCodes,
+  };
+}
+
+function toAcmeRecord(record, lookups) {
+  const employeeId = String(record.payroll_run_employee_id);
+  const employeeCode = lookups.employeeCodes.get(employeeId);
+  if (!employeeCode) throw RecordSync.invalid(`Employee ${employeeId} has no Acme code`);
+
+  const legalEntityId = lookups.legalEntities.get(employeeId);
+  const conceptCode = resolvePayrollConceptCode(
+    lookups.conceptCodes, legalEntityId, record.payroll_concept_id
+  );
+  if (!conceptCode) {
+    throw RecordSync.invalid(`Concept ${record.payroll_concept_id} has no Acme code`);
   }
+
+  const unit = lookups.units.get(String(record.payroll_concept_id));
+  return { employeeCode, conceptCode, unit, amount: toAcmeAmount(record.amount, unit) };
 }
 ```
 
-Set `webhookAuth` in **every** app workspace — it is not inherited through
-`parentTeams` (why, and field reference, in `fcode-cli`).
+`toAcmeAmount` and `toCsv` stand for the vendor-specific parts: `amount` is in
+minor units (cents for `money`), and the vendor decides how a `time` amount is
+written (hours, minutes). Modes A and B below are alternatives: keep one
+`AcmeSync` class in `modules/sync/sync.js`, next to these helpers.
 
-`authMode: CUSTOM` is the per-process alternative: the same pair goes in the
-process's own `metadata.json`, and no `webhookAuth` is needed:
+## Mode A — file export (`FileSync`)
 
-```json
-"webhook": {
-  "enabled": true,
-  "authMode": "CUSTOM",
-  "auth": { "headerName": "x-factorial-wh-challenge", "variableKey": "FACTORIAL_CHALLENGE_TOKEN" }
-}
-```
-
-Either way, the platform authenticates the caller before the process runs. A
-missing or wrong header gets a platform 403 and no execution starts. So there
-is nothing to check in code: never read `x-factorial-wh-challenge` or
-`FACTORIAL_CHALLENGE_TOKEN` in the process (the base `factorial-utils`
-helper `checkWebhookChallenge()` is deprecated and logs a warning on every call). The body stays minimal:
+Map each item to rows (`[]` skips it as a no-op success), render all rows into
+one file. The mode uploads it as a sync run output and reports the statuses; no
+`afterSync`, no manual upload.
 
 ```javascript
-const AcmeSync = fcode.import("sync-file"); // ← the ONE line that picks the flavor
+const FileSync = fcode.import("file-sync");
 
-async function main() {
-  const sync = new AcmeSync();
-  return await sync.run(fcode.context.parameters);
-}
-
-module.exports = { main };
-```
-
-## Pick ONE delivery flavor
-
-| Flavor | Module | Delivery | Use when |
-|---|---|---|---|
-| **File export** | `sync-file` | Aggregate items into CSV files, upload via inherited `uploadOutput()` | Target system ingests files |
-| **API push** | `sync-api` + `acme-client` | One HTTP request per item to the vendor API | Target system has a live API |
-
-Build only the flavor the vendor needs; delete the other.
-
-### Flavor A — file export (`modules/sync-file/sync-file.js`)
-
-Accumulate rows in `beforeSync`/`process`, build and upload the file in
-`afterSync`. Track which result slots each file owns so an upload failure marks
-only the affected items failed:
-
-```javascript
-const OutboundSync = fcode.import("outbound-sync");
-
-class AcmeFileSync extends OutboundSync {
+class AcmeSync extends FileSync(CompensationsSync) {
   get externalSystem() { return "acme"; }
-  get dataType() { return "compensations"; }
 
-  async beforeSync() {
-    this.compensationsRows = [];
-    this.compensationsIndices = []; // result slots this file owns
-    this.itemIndex = 0;
+  async beforeSync(items) {
+    this.lookups = await loadLookups(this, items);
   }
 
-  async process(syncableItem) {
-    const idx = this.itemIndex++;
-    const { syncable_type, sync_payload } = syncableItem;
-
-    if (syncable_type === "compensations/compensation") {
-      this.compensationsRows.push(mapCompensationRow(sync_payload));
-      this.compensationsIndices.push(idx);
-    } else {
-      // Unsupported type = configuration problem, not a transient failure.
-      const err = new Error(`Unsupported syncable_type: ${syncable_type}`);
-      err.syncStatus = "invalid";
-      throw err;
-    }
+  mapRecord({ record }) {
+    return [toAcmeRecord(record, this.lookups)];
   }
 
-  async afterSync(syncableItems, results, parameters) {
-    if (this.compensationsRows.length === 0) return;
-    try {
-      await this.uploadOutput({
-        content: buildCsv(HEADER, this.compensationsRows),
-        syncRunId: parameters.sync_run_id,
-        prefix: "acme-compensations",
-        extension: "csv",
-        contentType: "text/csv",
-      });
-    } catch (err) {
-      // File not delivered → every item in this file's group failed.
-      for (const idx of this.compensationsIndices) {
-        results[idx].status = "failed";
-        results[idx].error_messages = { sync_api_error: err.message };
-      }
-    }
+  render(rows) {
+    return { content: toCsv(rows), prefix: "acme-compensations" }; // extension/contentType default to csv
   }
 }
 
-module.exports = AcmeFileSync;
+module.exports = AcmeSync; // the class itself, not { AcmeSync }
 ```
 
-Mapping notes from the sample:
+If the upload fails, every item that contributed rows is reported `failed`.
 
-- Compensation `amount` arrives as **minutes** when `unit === "time"`
-  (`amount / 60` → hours) and **cents** when `unit === "money"`
-  (`amount / 100`).
-- A leave payload is a date **range** (`starts_on`..`ends_on`, inclusive);
-  the file flavor explodes it into one row per calendar day, iterating in UTC
-  to avoid DST drift. Skip when `deleted_at` is set or `leave_type_code` is
-  empty — return no rows, which counts as `success`.
+## Mode B — API push (`ApiSync`)
 
-### Flavor B — API push (`modules/sync-api/sync-api.js` + `modules/acme-client/`)
-
-A thin dependency-free vendor client (global `fetch`, Node 22) plus a sync
-class that pushes per item. The client reads credentials from integration
-Team Variables and fails fast if missing:
+Deliver each item as it's processed. Use `external_identifier` to decide
+between create and update. `afterSync(items, results)` is an optional
+post-loop flush; a throw there fails the rows that had succeeded.
 
 ```javascript
 // modules/acme-client/acme-client.js
@@ -209,85 +198,116 @@ function createAcmeClient() {
   if (!baseUrl) throw new Error("Missing ACME__API_BASE_URL team variable.");
   if (!apiKey) throw new Error("Missing ACME__API_KEY team variable.");
 
-  async function post(path, record) {
+  async function send(method, path, body) {
     const response = await fetch(`${baseUrl.replace(/\/+$/, "")}${path}`, {
-      method: "POST",
+      method,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify(record),
+      body: JSON.stringify(body),
     });
     if (response.ok) {
       const text = await response.text();
       return text ? JSON.parse(text) : {};
     }
-    const err = new Error(`Acme API POST ${path} failed (status ${response.status})`);
-    if (response.status === 400 || response.status === 422) {
-      err.isValidationError = true; // → reported "invalid", not "failed"
-    }
+    const err = new Error(`Acme API ${method} ${path} failed (status ${response.status})`);
+    if (response.status === 400 || response.status === 422) err.syncStatus = "invalid";
     throw err;
   }
 
-  return { pushCompensation: (r) => post("/compensations", r) };
+  return {
+    createCompensation: (r) => send("POST", "/compensations", r),
+    updateCompensation: (id, r) => send("PUT", `/compensations/${id}`, r),
+  };
 }
+
+module.exports = { createAcmeClient };
 ```
 
 ```javascript
-// modules/sync-api/sync-api.js
-class AcmeApiSync extends OutboundSync {
+// modules/sync/sync.js
+const ApiSync = fcode.import("api-sync");
+const { createAcmeClient } = fcode.import("acme-client");
+
+class AcmeSync extends ApiSync(CompensationsSync) {
   get externalSystem() { return "acme"; }
-  get dataType() { return "compensations"; }
 
-  async beforeSync() {
-    // Fail fast on missing credentials, before the per-item loop.
-    this.client = createAcmeClient();
+  async beforeSync(items) {
+    this.acme = createAcmeClient(); // fail fast on missing credentials
+    this.lookups = await loadLookups(this, items);
   }
 
-  async process(syncableItem) {
-    const record = mapCompensationRecord(syncableItem.sync_payload);
-    try {
-      await this.client.pushCompensation(record);
-    } catch (err) {
-      if (err.isValidationError) err.syncStatus = "invalid";
-      throw err; // anything else → "failed"
-    }
+  async process({ record, external_identifier }) {
+    const body = toAcmeRecord(record, this.lookups);
+    if (external_identifier) await this.acme.updateCompensation(external_identifier, body);
+    else await this.acme.createCompensation(body);
   }
+}
+
+module.exports = AcmeSync;
+```
+
+A throwing `beforeSync` fails every item of the run, which is right for missing
+credentials.
+
+**Don't name a module after a base module.** Module slugs resolve up the
+workspace hierarchy, so a module of your own called `sync-api`, `api-sync`,
+`file-sync` or `record-sync` shadows the base's and breaks the framework. Only
+`sync` is meant to be yours.
+
+## Optional: validate before the export
+
+Factorial calls the inherited `validate` process before it creates a run, and
+shows the user what would block the export. Opt in by overriding
+`validate(item)` on the same class; it's never called during a run. Return
+nothing when the record is fine, or error keys:
+
+```javascript
+async validate({ record }) {
+  const codes = await this.employeeCodes();
+  if (!codes.get(String(record.payroll_run_employee_id))) {
+    return [this.missingField("employee_code")]; // → [{ key: "missing_employee_code" }]
+  }
+  return [];
 }
 ```
 
 ## Status semantics
 
-`OutboundSync.run()` reports one status per item:
+`run()` reports one status per item:
 
 | Status | Meaning | How to signal |
 |---|---|---|
-| `success` | Delivered, or intentionally skipped (e.g. deleted leave) | `process()` returns normally |
-| `invalid` | Configuration/validation error — retry won't help | throw with `err.syncStatus = "invalid"` |
+| `success` | Delivered, or intentionally skipped | `process()` returns normally; `mapRecord()` returns rows, or `[]` to skip |
+| `invalid` | Data or configuration problem — retrying won't help | throw `RecordSync.invalid(message)`, or an error with `syncStatus = "invalid"` |
 | `failed` | Transient error (network, 5xx, upload failure) — retryable | throw anything else |
 
 ## Required Team Variables
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `FACTORIAL_TOKEN` | both flavors | Authenticates the Factorial SDK client |
+| `FACTORIAL_TOKEN` | both modes | The company's installation token for the public API; auto-populated in the cloud |
 | `FACTORIAL_BASE_URL` | both | Optional API base URL override |
-| `FACTORIAL_CHALLENGE_TOKEN` | both | The token `setupWebhook` embeds in subscriptions and the workspace `webhookAuth` verifies — the webhook rejects every call without it |
-| `ACME__API_BASE_URL` | API flavor | Vendor API base URL |
-| `ACME__API_KEY` | API flavor | Vendor bearer token (sensitive) |
+| `ACME__API_BASE_URL` | API mode | Vendor API base URL |
+| `ACME__API_KEY` | API mode | Vendor bearer token (sensitive) |
 
 Vendor variables follow the `VENDOR__KEY` convention (matches
-`variableName()`).
+`this.variableName("API_KEY")`). How to obtain `FACTORIAL_TOKEN` locally is in
+`fcode-cli`.
 
-`FACTORIAL_TOKEN` is auto-populated remotely and needed locally only; how to
-obtain it and handle other local secret values is in `fcode-cli`.
+The run needs the API scope of its vertical (`compensations` here) on the
+integration's token, and Factorial must have registered the integration before
+the first run (`fcode-ama`).
 
 ## Adapting to a real vendor — checklist
 
-1. Pick the flavor; set the one-line import in `processes/sync/index.js`.
-2. Rename `externalSystem`, class names, file prefixes, and `ACME__*`
+1. Pick the vertical and the mode; compose them in `modules/sync`.
+2. Rename `externalSystem`, the class, the file prefix and the `ACME__*`
    variables to the vendor.
-3. File flavor: rewrite the CSV layout (columns, separator, header — real
-   vendor formats often omit the header row).
-4. API flavor: rewrite endpoints, auth scheme, and record mapping in the
-   client module.
-5. Delete the unused flavor's modules.
-6. Keep the status semantics: validation errors → `invalid`, transient
-   errors → `failed`, skips → `success`.
+3. Map the record: resolve the codes the vendor needs in `beforeSync`, and
+   throw `RecordSync.invalid` when one is missing.
+4. File mode: rewrite `render` for the vendor's format (columns, separator,
+   header — real vendor formats often omit the header row).
+5. API mode: rewrite the client's endpoints, auth scheme and create/update
+   split.
+6. Add `validate` if the vendor rejects records Factorial could catch first.
+7. Keep the status semantics: data problems → `invalid`, transient errors →
+   `failed`, skips → `success`.
