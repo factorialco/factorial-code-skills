@@ -236,11 +236,27 @@ const info = await fcode.sendMail({
   html: "<b>HTML body</b>",
 });
 // info => { messageId, accepted, rejected }
+
+// Attachments: bytes, or a file in the app's storage
+await fcode.sendMail({
+  to: "inbox@example.com",
+  subject: "Receipts",
+  text: "Attached.",
+  attachments: [
+    { filename: "report.pdf", contentType: "application/pdf", content: pdfBuffer },
+    { filename: "receipt.jpg", storagePath: "fcode.storage://receipts/123.jpg" },
+  ],
+});
 ```
 
 - The `From` address is fixed by the platform; a `from` you pass is ignored.
 - Each execution can send up to 3 emails by default; once the limit is reached, further calls throw.
-- Locally (`fcode run`) there is no manager, so the email is logged, not sent.
+- Each attachment has a `filename`, an optional `contentType`, and exactly one
+  of `content` (Buffer) or `storagePath` (with or without `fcode.storage://`).
+  At most 10 per email, 10 MB each and 10 MB in total; over a limit the call
+  throws before sending (see `fcode-core-concepts` §Plans & limits).
+- Locally (`fcode run`) there is no manager, so the email is logged, not sent;
+  attachments are logged by name and size.
 - Acceptable use — who may be a recipient, what the body may carry — is a
   platform rule that blocks a release when broken; see `fcode-core-concepts`
   §Sending email.
