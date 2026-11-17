@@ -32,7 +32,7 @@ pass and mark the category "N/A — fresh clone" when clean. Code-level checks
 | STRUCT-02 | Process entry file is `index.js` (JS) or `main.py` (Python) inside `processes/<slug>/` | B | `fcode-core-concepts` §Workspace structure |
 | STRUCT-03 | Datastore `set` calls store only strings/numbers (objects serialized first) | B | `fcode-core-concepts` §Gotchas |
 | STRUCT-04 | No parent variables copied into `variables.env` (they shadow the parent — incl. untouched `********` shadowing a secret); flag, don't delete | W | `fcode-cli` §The three variables files |
-| STRUCT-05 | No blank-value keys in `variables.env` (declaring a key overrides the inherited value with `""`) | W | `fcode-cli` §The three variables files |
+| STRUCT-05 | No blank-value keys in `variables.env`: a blank key is unset, not `""`, so it can't switch an inherited value off, and on a key the cloud already has it is `LOCAL_REMOVED`, so the next push deletes the variable or override | W | `fcode-cli` §The three variables files |
 | STRUCT-06 | Naming conventions: kebab-case slugs, SCREAMING_SNAKE_CASE variables, camelCase (JS) / snake_case (Py) functions | W | `fcode-core-concepts` §Naming conventions |
 | STRUCT-07 | `dependencies/package.json` holds only the inner dependencies object; `@add-package` comment present where import name ≠ package name | W | `fcode-core-concepts` §Workspace structure, `fcode-javascript`/`fcode-python` §Dependencies |
 | STRUCT-08 | Local temp files written under `TMP_DATA_DIR`, not arbitrary paths | S | `fcode-javascript`/`fcode-python` §Datastore & storage |

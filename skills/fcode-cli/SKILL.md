@@ -185,6 +185,17 @@ subsequent `fcode pull` / `push` sync with that one instead — how code is
 promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
 promotion procedure is in `fcode-release`.
 
+**`remote:add` makes the added workspace the active one** (`activeTeam` in
+`app/.fcode/workspace.json`), and every later `pull` / `push` goes there.
+
+### `fcode remote:set [workspace-slug]`
+
+Switches the active remote among the ones already added; with no argument it
+lists them. After a release, switch back to the dev workspace
+(`fcode remote:set dev-…`) before committing `workspace.json`, or every
+teammate who pulls the repository pushes to production
+(`fcode-core-concepts` §Workspace structure (CLI)).
+
 ### `fcode team:clone` / `team:pull` / `team:status`
 
 Work on every App a **development team** owns at once — the team of humans in the
@@ -641,24 +652,26 @@ Team variables live in three `.env` files at the workspace root:
 |---|---|---|
 | `variables.env` | The variables this workspace **owns** | Committed; pushed and pulled |
 | `variables.inherited.env` | The variables inherited from **parent workspaces** (`parentTeams`) | Pull-only; **gitignored** (the CLI adds the entry) |
-| `variables.local.env` | Local-only overrides | Never pushed, never pulled |
+| `variables.local.env` | Local-only overrides | Never pushed, never pulled; **gitignored** (`fcode clone` adds the entry) |
 
 **Resolution order for a local run** (highest wins), matching what the cloud
 does: `variables.local.env` → `variables.env` → `variables.inherited.env`.
 
-**A blank value is unset, not empty.** The platform has no empty values — the
-cloud rejects a blank variable — so a key left blank (`KEY=`) in any of the
-three files falls through to the layer below it, and with nothing below it the
-key is missing from the run (`process.env.KEY` / `os.environ` absent,
-`fcode.variables.get` returns `undefined` / `None`). A blank key can't override
-an inherited value with an empty string; to switch an inherited setting off,
-give it an explicit value your code checks for (`false`, `none`).
+**A blank value is unset, not empty.** The platform treats an empty value as no
+value, so a key left blank (`KEY=`) in any of the three files falls through to
+the layer below it, and with nothing below it the key is missing from the run
+(`process.env.KEY` / `os.environ` absent, `fcode.variables.get` returns
+`undefined` / `None`). A blank key can't override an inherited value with an
+empty string, in `variables.env` or in `variables.local.env`; to switch a
+setting off, give it an explicit value your code checks for (`false`, `none`).
+For local runs only, put that value in `variables.local.env`.
 
-**Blanking a key the workspace owns deletes it on the next push.** A blank value
-on a variable the cloud already has (your own, or an override you pushed) is
-`LOCAL_REMOVED`. `fcode push` offers to delete it, and with `--force` does. For
-an override, the parent's value comes back. For an own variable, it's gone. To
-blank a key only for local runs, put `KEY=` in `variables.local.env`.
+**Blanking a key the workspace owns can delete it on the next push.** A blank
+value on a variable the cloud already has (your own, or an override you pushed)
+is `LOCAL_REMOVED`. `fcode push` offers to delete it, and with `--force` deletes
+it without asking. For an override, the parent's value comes back. For an own
+variable, it's gone. The cloud rejects updating a variable to a blank value,
+but not creating one, so give a new key its value before `fcode variables:add`.
 
 ### Overriding an inherited variable
 

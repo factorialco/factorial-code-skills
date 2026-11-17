@@ -171,16 +171,6 @@ hash). `install`, `settings` and `uninstall` are the marketplace lifecycle
 forms; they still take `factorial.form.enabled` like any form. The pre-render
 pattern for re-opened install/settings forms is in `fcode-forms`.
 
-`sync` is different: it is **not a Factorial Action**, so the `sync` the
-`base-integration-app` workspaces ship (and its sibling `validate`) keeps
-`factorial.enabled: false` on purpose. The monolith reaches it through the
-dashboard's `apps/sync` (and `apps/validate`) route, which relays the request to
-the process's **webhook** in the company's `deploy-` workspace (for the team's
-own demo company with no dev installation, the App's shared `dev-` workspace).
-The process is inherited, so an integration doesn't override it. In the base,
-keep `webhook.enabled: true` and `factorial.enabled: false`. Enabling the
-`factorial` block or its `backend` entry point adds nothing to that path.
-
 The rules for lifecycle forms:
 
 - **The slug is the whole rule.** A process slugged `install`, `settings` or
@@ -236,6 +226,16 @@ guidance on:
   }
 }
 ```
+
+`sync` is different: it is **not a Factorial Action**, so the `sync` the
+`base-integration-app` workspaces ship (and its sibling `validate`) keeps
+`factorial.enabled: false` on purpose. The monolith reaches it through the
+dashboard's `apps/sync` (and `apps/validate`) route, which relays the request to
+the process's **webhook** in the company's `deploy-` workspace (for the team's
+own demo company with no dev installation, the App's shared `dev-` workspace).
+The process is inherited, so an integration doesn't override it. In the base,
+keep `webhook.enabled: true` and `factorial.enabled: false`. Enabling the
+`factorial` block or its `backend` entry point adds nothing to that path.
 
 **Legacy roles.** Older processes may still hold a role in the cloud, such as a
 lifecycle role on a slug that is not reserved (`acme-install`). The role stays
