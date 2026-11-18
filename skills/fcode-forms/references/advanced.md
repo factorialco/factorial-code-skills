@@ -154,6 +154,72 @@ either by hand (see `SKILL.md` "Connect an external account").
 The form is only served once the pre-render finishes, so set `loadingContent`
 (above).
 
+#### Who is opening the form (`fcode.context.factorial`)
+
+**`fcode.context.parameters` are never trusted** in a pre-render: on a form
+opened from Factorial they are the form's context as the browser chose it, and
+on a public or embedded URL they are the query string. An `access_id` or
+`company_id` there proves nothing.
+
+**When Factorial reads the schema for a person** (an action form, a
+form-backed UI trigger, Factorial One), the pre-render also gets
+`fcode.context.factorial`, the same trusted object the form's submit process
+gets when Factorial invokes it: `{ company_id, access_id, entry_point: { type,
+location_id? }, product, actor: { service?, type: "user", access_id } }`. The
+platform sets it from Factorial's own authenticated request, never from the
+parameters, and the actor is always a person (`type: "user"`). It is **absent**
+(`undefined` in JavaScript, `None` in Python) when the form is served from its
+public or embedded URL, and when a service reads the schema without naming a
+person's access. Treat absence as "unknown viewer" and render the restrictive
+version.
+
+Use it to adapt the form to the person, e.g. only let the teams picked in the
+App's settings see the edit field. **Leave the field out instead of hiding it
+with `ui`**: Factorial One (`entry_point.type` `agent_tool`) gets the schema
+without `ui`, `ui:*` and `markdown`, so a `ui:widget: hidden` field is still a
+plain, fillable field there. A property whose `#/variables` reference resolves
+to `null` is dropped on every surface, One included:
+
+```json
+{
+  "type": "object",
+  "preRenderProcess": "menu-edit-prerender",
+  "variables": { "notice": { "before": "" } },
+  "markdown": { "$ref": "#/variables/notice" },
+  "properties": {
+    "menu": { "$ref": "#/variables/menuField" }
+  }
+}
+```
+
+Keep such a field out of `required`. The notice sits on the root schema, so the
+form still shows it when the field is gone (One never shows `markdown`).
+
+```javascript
+// processes/menu-edit-prerender/index.js
+async function main() {
+  const factorial = fcode.context.factorial; // never fcode.context.parameters
+  // Access ids of the teams chosen in settings, resolved and stored by the settings process.
+  const allowed = JSON.parse((await fcode.datastore.get("menu.editorAccessIds")) || "[]");
+  const canEdit = factorial !== undefined && allowed.includes(String(factorial.access_id));
+
+  return {
+    variables: {
+      menuField: canEdit ? { type: "string", title: "Today's menu" } : null,
+      notice: { before: canEdit ? "" : "Only the menu team can update the menu." },
+    },
+  };
+}
+```
+
+Two limits to state in the App, not work around:
+
+- **Leaving a field out is UX only.** Anyone can still submit the form with
+  any values, so the **submit process re-checks** the same rule against *its own*
+  `fcode.context.factorial` and refuses the rest.
+- **The form is still listed for everyone** on the App page in Factorial. A
+  pre-render can change what the form shows, not who sees it in the list.
+
 ### Pre-filling current values (install & settings forms)
 
 An `install` or `settings` form (the reserved lifecycle slugs) re-opened later should **show what is configured
