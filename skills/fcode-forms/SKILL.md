@@ -652,8 +652,9 @@ absence types to an official code list. One dropdown per record turns hundreds
 of records into a form nobody can review. Mark the section
 `"ui:field": "pairing"` and Factorial draws it as one table: per row the
 Factorial record, a searchable picker of the other system's records, and a
-status — **Confirmed** (has a value), **Suggested: <record>** (the app's
-reason on hover) or **Needs a choice** — plus, above the table, **Accept N
+status — **Confirmed** (has a value), **Suggested** (the picker shows the
+proposal, marked as not chosen yet; the app's reason on hover) or **Needs a
+choice** — plus, above the table, **Accept N
 suggestions** and a **Needs a choice (N)** filter that narrows the list to the
 open rows (a row paired meanwhile stays listed until the filter is turned off),
 and **Accept** on each suggested row.
@@ -705,7 +706,9 @@ The contract:
   that is not a string choice is left out of the table with a console warning.
 - **`default` is the stored pair** and shows as Confirmed.
 - **`x-fcode-suggestion: { value, reason }` is a proposal**, never submitted
-  until the user accepts it: saving without accepting leaves the row unpaired.
+  until the user accepts it or picks another record: saving without accepting
+  leaves the row unpaired. Clearing a shown suggestion dismisses it, and the
+  row then needs a choice.
   A `value` that is not one of the row's choices is ignored.
 - **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
   marked, the table lists only those plus rows paired or suggested, and

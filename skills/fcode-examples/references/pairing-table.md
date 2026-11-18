@@ -187,6 +187,6 @@ exactly what was reviewed.
   row key prefixed so ids that start with a digit stay valid keys.
 - **Better matching**: compute `x-fcode-suggestion` from whatever the app knows
   (same code, same number, a previous customer's choice) and say why in
-  `reason`. The admin sees that reason on hover over the suggestion.
+  `reason`. The admin sees it on hover over the suggested row.
 - **Grouping**: put several pairing sections in one form (one per legal entity,
   say), each its own `object` with `"ui:field": "pairing"`.
