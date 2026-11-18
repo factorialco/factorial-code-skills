@@ -111,7 +111,8 @@ Every app sends through the same fixed Factorial address, so abuse of
 `fcode.sendMail` / `fcode.send_mail` is a phishing vector for recipients and a
 domain-reputation problem for every other app. Every row is a Blocker. Trusted
 recipient sources are: employee/company records read through `factorial-sdk`,
-team variables an admin set through an `INSTALL`/`SETTINGS` form, and a
+team variables an admin set through an `INSTALL`/`SETTINGS` form (including a
+system inbox address, such as an accounting tool's OCR scanner), and a
 submitted address only after it is resolved against one of those. When a
 recipient's or a body's provenance cannot be traced statically, still report
 the Blocker and state what evidence would clear it. Mark the category
@@ -123,6 +124,7 @@ the Blocker and state what evidence would clear it. Mark the category
 | MAIL-02 | Subject and body are authored by the app: no verbatim free text from a public entry point, and every link targets Factorial, the app's own vendor, or a signed Storage URL — never a caller-supplied URL | B | `fcode-core-concepts` §Sending email |
 | MAIL-03 | Mail is transactional — tied to an event in the customer's account; no newsletters, campaigns, external mailing lists, or fan-out (`fcode.processes.run`, schedules, large `to` arrays) that exists to get past the 3-per-execution cap | B | `fcode-core-concepts` §Sending email |
 | MAIL-04 | Content never poses as Factorial system mail (password reset, login alert, billing), as another company, or as a person; the app is named in the subject or heading | B | `fcode-core-concepts` §Sending email |
+| MAIL-05 | Attachments are files the app produced, read from Factorial, or read from the app's own storage for a reason the app owns; a file uploaded through a public entry point (`authMode: NONE` webhook, public form) is never forwarded to a recipient the caller can influence. Sending documents to an admin-configured system inbox (for example an OCR scanner) is legitimate. The code stays within 10 attachments, 10 MB each and 10 MB per email by construction, not by catching the error. This row does not relax MAIL-03: a batch that does not fit the per-execution cap is not split across executions | B | `fcode-core-concepts` §Sending email |
 
 ## REUSE — base-app reuse
 

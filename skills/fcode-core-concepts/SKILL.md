@@ -61,7 +61,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 | **Datastore** | Persistent key-value store | **Strings and numbers only**; a value can be encrypted at rest on request |
 | **Storage** | File storage | Binary files, documents, large payloads |
 | **Locales** | Per-language translation files (`i18n/<locale>.yaml`) | Resolved by `fcode.i18n`; inherited key by key from parents — see `fcode-i18n` |
-| **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager |
+| **Email** | Built-in transactional email | `fcode.sendMail` / `send_mail`; no SMTP setup, credentials live in the manager; file attachments up to 10 MB per email |
 
 ### Processes
 
@@ -205,18 +205,24 @@ helpers. See `fcode-javascript` / `fcode-python`.
 Send email with the built-in `fcode.sendMail` (`fcode.send_mail` in Python) —
 pre-authenticated, no SMTP configuration. The mail server and credentials live in
 the executor manager, never in your process. Each execution can send up to 3
-emails by default. See `fcode-javascript` / `fcode-python` for usage.
+emails by default. Each email carries at most 10 attachments, 10 MB each and
+10 MB in total; a send over a limit throws before anything is sent. See
+`fcode-javascript` / `fcode-python` for usage.
 
 Every app sends from the same fixed Factorial address, so one abusive app is a
 phishing vector for its recipients and a deliverability problem for every other
 app. The built-in mailer is reserved for **transactional mail to people the
-customer's Factorial account already knows**; app validation
-(`fcode-code-validation`) blocks a release on anything else.
+customer's Factorial account already knows, or to a system inbox an admin
+configured for the installation** (for example an accounting tool's
+OCR/scanner address); app validation (`fcode-code-validation`) blocks a release
+on anything else. Sending a batch of documents to such an inbox stays inside
+the envelope only within the per-execution cap — splitting a batch across
+executions is still forbidden.
 
 Mail outside that envelope — customer-facing campaigns, volume, a custom
 sender — needs a dedicated email provider called with the app's own
-credentials (`fcode-agent` shows the choice); never work around the cap with
-the built-in mailer.
+credentials (`fcode-agent` shows the choice) or a request to raise the cap;
+never work around the cap with the built-in mailer.
 
 ### Versioning & aliases
 
@@ -289,6 +295,7 @@ one job across many executions or chaining datastore keys to dodge a cap.
 | Datastore entry size | 50 KB | The write fails (HTTP 413) |
 | Storage files | 1,000 files, 50 MB each | The upload fails |
 | Emails per execution | 3 (see Sending email) | Further sends throw |
+| Email attachments | 10 per email, 10 MB each, 10 MB per email | The send throws |
 | Processes, forms, dependencies, executions per day/month | Unlimited | — |
 
 ## Decision guidelines
