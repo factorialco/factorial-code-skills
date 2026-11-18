@@ -652,9 +652,11 @@ absence types to an official code list. One dropdown per record turns hundreds
 of records into a form nobody can review. Mark the section
 `"ui:field": "pairing"` and Factorial draws it as one table: per row the
 Factorial record, a searchable picker of the other system's records, and a
-status — **Confirmed** (has a value), **Suggested** (with the app's reason) or
-**Needs a choice** — plus **Accept N suggestions** above the table and
-**Accept** on each suggested row.
+status — **Confirmed** (has a value), **Suggested: <record>** (the app's
+reason on hover) or **Needs a choice** — plus, above the table, **Accept N
+suggestions** and a **Needs a choice (N)** filter that narrows the list to the
+open rows (a row paired meanwhile stays listed until the filter is turned off),
+and **Accept** on each suggested row.
 
 ```json
 "accounts": {
@@ -706,8 +708,8 @@ The contract:
   until the user accepts it: saving without accepting leaves the row unpaired.
   A `value` that is not one of the row's choices is ignored.
 - **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
-  marked, the table lists only those plus rows paired or suggested; **Show all**
-  and **Add row** bring in the rest. Mark them on long lists: each edit
+  marked, the table lists only those plus rows paired or suggested, and
+  **Add row** brings in any other row. Mark them on long lists: each edit
   re-renders every listed row, and a few hundred listed rows make every change
   lag noticeably.
 - **"Not mapped".** A `""` choice is not listed as a record; clearing such a row
@@ -720,7 +722,7 @@ The contract:
 - **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
   `labels` overriding the table text — `status`, `confirmed`, `suggested`,
   `needsChoice`, `accept`, `acceptAll` (`{count}`), `summary` (`{confirmed}`,
-  `{toReview}`), `placeholder`, `addRow`, `showAll`, `showInUse`, `empty`.
+  `{toReview}`), `placeholder`, `addRow`, `needsChoiceFilter` (`{count}`), `empty`.
   Translate them with `fcode.i18n` tokens (`fcode-i18n`). A bad option falls
   back to its default with a console warning.
 - **Validation** works per row: a row listed in the section's `required` must be
