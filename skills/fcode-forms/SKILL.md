@@ -438,16 +438,27 @@ The rules:
   pre-render built it. Keep `uninstall` single-process: the App is
   deprovisioned once its uninstall action succeeds, so a flow can't run past
   its entry step. To make a flow fillable:
-  - Pre-render each step from what the earlier steps saved (draft or
-    `variables`), as for a user.
+  - Have each step's process store what the next step needs (a team variable
+    or the datastore) and read it back in the next step's pre-render, as the
+    Linear setup does with its API key: a pre-render only receives the form's
+    query-string parameters (`fcode.context.parameters`), and the `variables`
+    a step returns resolve the next step's `$ref`s without reaching its
+    pre-render.
+  - Hidden fields are never proposed: they keep their default or the
+    pre-render's value.
   - Give options human titles: One picks an option by its meaning and
     proposes its value.
   - Name in a field's title or description the Factorial record it takes
     ("the Factorial legal entity", "the responsible employee"): One looks it
     up by that name when the step opens.
-  - Say in the lifecycle form's `agentTool.description` what each step holds
+  - Say in the entry process's `agentTool.description` what each step holds
     and what to keep — for example that rows are matched by position, or that
-    a proposed list replaces the step's whole list.
+    a proposed list replaces the step's whole list. One reads only the entry
+    process's contract, and only with `agentTool.enabled` on; a `process`
+    step's own contract is not read. Enabling it also makes `install` or
+    `settings` a One tool: the web chat still opens the card, but on clients
+    without it (mobile, external assistants) One may run the process from the
+    chat once the user approves.
 
 **Overriding the next step.** A process may still return `nextProcessId`:
 
