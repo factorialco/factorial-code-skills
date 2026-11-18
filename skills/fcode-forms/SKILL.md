@@ -652,12 +652,13 @@ absence types to an official code list. One dropdown per record turns hundreds
 of records into a form nobody can review. Mark the section
 `"ui:field": "pairing"` and Factorial draws it as one table: per row the
 Factorial record, a searchable picker of the other system's records, and a
-status — **Confirmed** (has a value), **Suggested** (the picker shows the
-proposal, marked as not chosen yet; the app's reason on hover) or **Needs a
-choice** — plus, above the table, **Accept N
-suggestions** and a **Needs a choice (N)** filter that narrows the list to the
-open rows (a row paired meanwhile stays listed until the filter is turned off),
-and **Accept** on each suggested row.
+status — **Confirmed** (has a value, including an explicit "Not mapped"),
+**Suggested** (the picker shows the proposal, marked as not chosen yet; the
+app's reason on hover), **No longer available** (the stored pair is no longer a
+choice) or **Needs a choice** — plus, above the table, **Accept N suggestions**
+and a **Needs a choice (N)** filter that narrows the list to the open rows (a
+row paired meanwhile stays listed until the filter is turned off), and
+**Accept** on each row showing a suggestion.
 
 ```json
 "accounts": {
@@ -671,25 +672,16 @@ and **Accept** on each suggested row.
       "labels": { "addRow": "Add account" }
     }
   },
+  "x-fcode-choices": [
+    { "const": "", "title": "Not mapped" },
+    { "const": "6100", "title": "6100 · Travel" },
+    { "const": "6200", "title": "6200 · Meals" }
+  ],
   "properties": {
-    "acc_12": {
-      "type": "string",
-      "title": "Travel",
-      "oneOf": [
-        { "const": "", "title": "Not mapped" },
-        { "const": "6100", "title": "6100 · Travel" },
-        { "const": "6200", "title": "6200 · Meals" }
-      ],
-      "default": "6100"
-    },
+    "acc_12": { "type": "string", "title": "Travel", "default": "6100" },
     "acc_13": {
       "type": "string",
       "title": "Meals",
-      "oneOf": [
-        { "const": "", "title": "Not mapped" },
-        { "const": "6100", "title": "6100 · Travel" },
-        { "const": "6200", "title": "6200 · Meals" }
-      ],
       "x-fcode-suggestion": { "value": "6200", "reason": "Same name" },
       "x-fcode-in-use": true
     }
@@ -701,41 +693,52 @@ The contract:
 
 - **One property per row.** The property name is the key the submission
   carries (use the Factorial record's id, prefixed so it is a valid key:
-  `acc_12`), `title` is the Factorial side, the choices (`oneOf` of
-  `{ const, title }`, or `enum`) are the other system's records. A property
-  that is not a string choice is left out of the table with a console warning.
-- **`default` is the stored pair** and shows as Confirmed.
+  `acc_12`), `title` is the Factorial side. A property that is not a string
+  choice is left out of the table with a console warning. The section may be
+  marked on its own `ui` or from the root `ui` / `uiSchema` map by name.
+- **Choices once per section.** `x-fcode-choices` (a list of
+  `{ const, title }`) on the section is used by every row without its own
+  `oneOf` / `enum`. Repeating a long list on every row makes the schema grow
+  with rows × records; a row that needs a different list keeps its own.
+- **`default` is the stored pair** and shows as Confirmed. A stored pair that
+  is no longer among the choices (deleted or deactivated on the other side) is
+  set aside: the row reads **No longer available: <value>**, needs a new
+  choice, and the old value is not submitted.
 - **`x-fcode-suggestion: { value, reason }` is a proposal**, never submitted
   until the user accepts it or picks another record: saving without accepting
-  leaves the row unpaired. Clearing a shown suggestion dismisses it, and the
-  row then needs a choice.
-  A `value` that is not one of the row's choices is ignored.
+  leaves the row unpaired. Clearing a row dismisses its suggestion. A `value`
+  that is not one of the row's choices is ignored.
 - **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
   marked, the table lists only those plus rows paired or suggested, and
   **Add row** brings in any other row. Mark them on long lists: each edit
   re-renders every listed row, and a few hundred listed rows make every change
   lag noticeably.
-- **"Not mapped".** A `""` choice is not listed as a record; clearing such a row
-  submits `""`. Clearing a row without one leaves its key out of the
-  submission.
+- **"Not mapped" is an explicit choice.** A `""` choice is offered in the
+  picker under its own title; picking it submits `""`. A stored `""` is
+  Confirmed and a suggestion never replaces it, so only send `"default": ""`
+  when the admin chose "not mapped" (not as a blank for every row). Clearing a
+  row (✕) leaves its key out of the submission.
 - **Submission** is the same flat `{ "acc_12": "6100", … }` object a section of
   ordinary dropdowns submits, so the handler reads it as it always did; the
   process must still check every value against the other system's records
   (parameters are untrusted, §What a form may trust).
 - **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
   `labels` overriding the table text — `status`, `confirmed`, `suggested`,
-  `needsChoice`, `accept`, `acceptAll` (`{count}`), `summary` (`{confirmed}`,
-  `{toReview}`), `placeholder`, `addRow`, `needsChoiceFilter` (`{count}`), `empty`.
-  Translate them with `fcode.i18n` tokens (`fcode-i18n`). A bad option falls
-  back to its default with a console warning.
+  `needsChoice`, `unavailable` (`{value}`), `accept`, `acceptAll` (`{count}`),
+  `summary` (`{confirmed}`, `{toReview}`), `placeholder`, `addRow`,
+  `needsChoiceFilter` (`{count}`), `empty`. Translate them with `fcode.i18n`
+  tokens (`fcode-i18n`). A bad option falls back to its default with a console
+  warning.
 - **Validation** works per row: a row listed in the section's `required` must be
-  paired, and the error shows on that row.
+  paired, and the error shows on that row, which is always listed, even when
+  the in-use list or the filter would leave it out.
 
 Build the section in a `preRenderProcess` (`references/advanced.md`): rows from
-the Factorial records, choices from the other system, `default` from what the
-app stored, `x-fcode-suggestion` from the app's own matching (same number, same
-name…), `x-fcode-in-use` from what Factorial actually uses. Inject the whole
-section as one variable (`"accounts": { "$ref": "#/variables/accountsField" }`).
+the Factorial records, `x-fcode-choices` from the other system, `default` from
+what the app stored, `x-fcode-suggestion` from the app's own matching (same
+number, same name…), `x-fcode-in-use` from what Factorial actually uses. Inject
+the whole section as one variable
+(`"accounts": { "$ref": "#/variables/accountsField" }`).
 
 The table is drawn inside Factorial (`@factorialco/fcode-react-forms` ≥ 3.8.0
 with `@factorialco/rjsf-f0` ≥ 3.0.0). The hosted `forms.js` and any host without

@@ -90,11 +90,11 @@ async function main() {
       const row = {
         type: "string",
         title: team.name,
-        oneOf: choices,
-        // The stored pair is the default: it shows as Confirmed.
-        ...(stored ? { default: stored } : {}),
+        // The stored pair is the default: it shows as Confirmed. A stored ""
+        // is the admin's explicit "Not mapped".
+        ...(stored !== undefined ? { default: stored } : {}),
         // A proposal is never a default: it is submitted only once accepted.
-        ...(!stored && match
+        ...(stored === undefined && match
           ? { "x-fcode-suggestion": { value: match.code, reason: "Same name" } }
           : {}),
         // Teams with people are the ones worth reviewing first.
@@ -118,6 +118,8 @@ async function main() {
             labels: { addRow: "Add team" },
           },
         },
+        // One list for the whole section: rows without their own choices use it.
+        "x-fcode-choices": choices,
         properties: rows,
       },
     },
@@ -129,15 +131,17 @@ module.exports = { main };
 
 Notes on the pre-render:
 
-- **Every row offers `""` ("Not mapped")**, so clearing a stored pair submits
-  `""` (an explicit "unpair") instead of dropping the key. A row nobody touched
-  and that has no stored pair is simply absent from the submission.
+- **`""` is the explicit "Not mapped" choice.** The admin picks it in the table,
+  it is stored as `""`, and it comes back as the row's `default`, Confirmed.
+  Never send `"default": ""` as a blank: a row with nothing stored has no
+  `default`.
 - **The suggestion only exists when nothing is stored.** A row with both shows
   as Confirmed anyway, but leaving it out keeps the schema honest for Factorial
   One, which reads `x-fcode-*` keys.
-- **The choices array is shared by reference.** Every row carries it once the
-  schema is serialised, so 300 teams × 300 departments is a large schema. Keep
-  the vendor list to what can be paired (active departments only, say).
+- **The choices are sent once, as the section's `x-fcode-choices`**, not on
+  every row, so 300 teams and 300 departments stay a small schema. Keep the
+  list to what can be paired (active departments only, say): a stored pair that
+  falls out of it shows as **No longer available** and asks for a new choice.
 - **Catch vendor errors if the form must still open.** An error thrown out of a
   pre-render makes the form unopenable (`fcode-forms`, `references/advanced.md`).
 
@@ -157,8 +161,9 @@ async function main() {
   );
   const map = {};
   for (const [key, code] of Object.entries(submitted)) {
-    if (!key.startsWith(ROW_PREFIX) || code === "") continue;
-    if (!known.has(code)) {
+    if (!key.startsWith(ROW_PREFIX) || typeof code !== "string") continue;
+    // "" is the admin's explicit "Not mapped": stored like any other choice.
+    if (code !== "" && !known.has(code)) {
       return {
         status: 400,
         body: { errorMessage: `Unknown Acme department **${code}**. Reload the form and try again.` },
@@ -175,10 +180,10 @@ module.exports = { main };
 ```
 
 The submission is a flat `{ team_12: "D-40", team_13: "" }` object, the same
-shape as a section of plain dropdowns: confirmed rows carry their code, cleared
-rows carry `""`, and rows never paired (including suggestions nobody accepted)
-are absent. Rebuilding the map from the submission alone therefore stores
-exactly what was reviewed.
+shape as a section of plain dropdowns: confirmed rows carry their code, rows
+set to "Not mapped" carry `""`, and rows cleared or never paired (including
+suggestions nobody accepted) are absent. Rebuilding the map from the submission
+alone therefore stores exactly what was reviewed.
 
 ## Adapting it
 

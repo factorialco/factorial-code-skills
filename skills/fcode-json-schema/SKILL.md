@@ -64,8 +64,9 @@ so its `ui:` options apply.
   and callback in `fcode-forms` §Connect an external account.
 - **Pair records with another system** — an `object` with
   `"ui": { "ui:field": "pairing" }` whose properties are one row each (a
-  `string` with `oneOf` / `enum` choices: the other system's records) renders
-  as one reviewable table instead of a dropdown per record. Per row,
+  `string`; the other system's records as choices, once for the section in
+  `x-fcode-choices` or per row as `oneOf` / `enum`) renders as one reviewable
+  table instead of a dropdown per record. Per row,
   `"x-fcode-suggestion": { "value", "reason" }` proposes a match and
   `"x-fcode-in-use": true` narrows the default list; `default` is the stored
   pair. Use it for any mapping of more than a handful of Factorial records
@@ -111,8 +112,9 @@ so its `ui:` options apply.
 - **A pairing row's suggestion is not its `default`.** Put a proposal in
   `x-fcode-suggestion`, never in `default`: a `default` is a stored pair, shown
   as confirmed and submitted as it is, while a suggestion is only submitted
-  once the user accepts it. Keep both on the row (`x-fcode-*` is what
-  Factorial One reads; `ui` only draws the table).
+  once the user accepts it. A `"default": ""` is an explicit "not mapped",
+  never a blank. Keep both on the row (`x-fcode-*` is what Factorial One
+  reads; `ui` only draws the table).
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
 - **An oauth field's `authorizationUrl` must be injected with
