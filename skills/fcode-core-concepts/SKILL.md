@@ -233,19 +233,33 @@ entity's outcome (created / skipped / failed) is recorded in the version's
 **manifest**, so re-creating the same tag after a partial failure only publishes
 what is still missing.
 
-When a workspace version is published, bare `fcode.import("mod")` /
-`fcode.import_module("mod")` calls of workspace-owned modules are pinned to the
-tag **inside the published snapshots only** — the working copy is never
-modified, and imports that already carry a tag or alias are left untouched.
-A workspace version also publishes every owned **locale** and pins
-`fcode.i18n` calls the same way — calls already naming a `version` are left
-untouched, everything else (bare calls, locale-only options) gets the tag —
-in code and in form schemas, so a release ships with its translations frozen —
-see `fcode-i18n`.
+A workspace version also publishes every owned **locale**. It snapshots the
+source exactly as written: imports, `fcode.i18n` calls and form schema tokens
+are never rewritten. What makes a release reproducible is how an **execution at
+that version** (a tag, or an alias such as `stable`) reads them:
+
+- The workspace's **own** modules and locales resolve at that version, at every
+  nesting level (a module imported by a module, an `fcode.i18n` call inside a
+  module). A module the version does not contain is looked up in the parents;
+  a locale the version does not contain contributes nothing of its own.
+- **Parent workspaces** keep following their parent-link version pin, or their
+  current content when the link is not pinned. An inherited process run at the
+  executing workspace's version resolves the same way.
+- A form or action schema served at a version resolves its `fcode.i18n` tokens
+  at that version.
+- When the workspace has no version under that tag, and in executions without a
+  version, everything resolves against the current content.
+
+So **write imports and `fcode.i18n` calls without a version** — your code then
+follows the version it runs at, and a release needs no source change. The
+explicit version argument (`fcode.import("m", "v1")`, `{ version: ... }`) still
+works only so old snapshots keep running; never write it. Inside a module
+imported with an explicit version, its own bare imports and `fcode.i18n` calls
+follow the caller's execution version, not the module's tag.
 
 A **version alias** is a movable pointer to a version. The `stable` alias
-always exists and points at the workspace's stable version. Webhooks, forms,
-schedules, and module imports accept an alias wherever they accept a tag, so
+always exists and points at the workspace's stable version. Webhooks, forms and
+schedules accept an alias wherever they accept a tag, so
 moving `stable` to another version re-points the whole workspace in one
 operation — **rollout and rollback are a single alias change**. Always pin
 consumers (webhook URLs, form embeds) to `stable`; how in `fcode-cli` and

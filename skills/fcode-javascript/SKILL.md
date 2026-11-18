@@ -73,8 +73,7 @@ const teamSlug = fcode.team.slug;
 const apiKey = process.env.API_KEY; // or fcode.env.API_KEY
 
 // Import a Factorial Code module (hardcoded name only)
-const { myFunc } = fcode.import("module-name");
-const { myFunc: v1 } = fcode.import("module-name", "v1.0.0"); // pinned version tag or alias
+const { myFunc } = fcode.import("module-name"); // no version: follows the execution's workspace version
 
 // Run another process
 await fcode.processes.run("process-identifier", options);

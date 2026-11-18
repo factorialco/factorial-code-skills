@@ -304,10 +304,10 @@ overwrite a `settings.json` with unpushed local edits.
 ### `fcode settings:versions:*` / `fcode settings:aliases:*`
 
 Workspace versioning publishes a version of the **whole workspace**: every
-process and module the team owns gets a version with the same tag, and bare
-module imports are pinned to it inside the published snapshots (model in
-`fcode-core-concepts`). Releases normally happen from the web UI (team
-settings → **Versions** tab) — these commands are the imperative equivalent, and
+process, module and locale the team owns gets a version with the same tag. The
+source is snapshotted as written; executions at the tag resolve the workspace's
+own modules and locales at it (model in `fcode-core-concepts`). Releases
+normally happen from the web UI (team settings → **Versions** tab) — these commands are the imperative equivalent, and
 editing `settings.json`'s `versions` / `aliases` then pushing is the declarative one.
 **Don't create versions or move `stable` unless explicitly asked.**
 
