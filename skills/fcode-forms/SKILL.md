@@ -429,6 +429,41 @@ The rules:
   and a user who abandons the flow there leaves it active. Do the setup the App
   can't run without in the entry step.
 
+- **Factorial One fills in each step of a lifecycle flow as it opens.** When
+  One opens an `install` or `settings` form in the web chat, each `process`
+  step is read only once the user has sent the steps before it, so its
+  pre-render sees what they saved (an API key from step 1 that step 2's
+  pre-render uses to list options, say). The card hands One the step as it
+  read it, so One adds no read of its own; going back to a step reads it
+  again, as for any user, and One reuses its proposal if the step did not
+  change. One reads the conversation, looks up the Factorial data the step
+  needs, and the step opens with its values over the pre-render's; the user
+  reviews and sends it. If One cannot propose values, the step opens as the
+  pre-render built it. Keep `uninstall` single-process: the App is
+  deprovisioned once its uninstall action succeeds, so a flow can't run past
+  its entry step. To make a flow fillable:
+  - Have each step's process store what the next step needs (a team variable
+    or the datastore) and read it back in the next step's pre-render, as the
+    Linear setup does with its API key: a pre-render only receives the form's
+    query-string parameters (`fcode.context.parameters`), and the `variables`
+    a step returns resolve the next step's `$ref`s without reaching its
+    pre-render.
+  - Hidden fields are never proposed: they keep their default or the
+    pre-render's value.
+  - Give options human titles: One picks an option by its meaning and
+    proposes its value.
+  - Name in a field's title or description the Factorial record it takes
+    ("the Factorial legal entity", "the responsible employee"): One looks it
+    up by that name when the step opens.
+  - Say in the entry process's `agentTool.description` what each step holds
+    and what to keep — for example that rows are matched by position, or that
+    a proposed list replaces the step's whole list. One reads only the entry
+    process's contract, and only with `agentTool.enabled` on; a `process`
+    step's own contract is not read. Enabling it also makes `install` or
+    `settings` a One tool: the web chat still opens the card, but on clients
+    without it (mobile, external assistants) One may run the process from the
+    chat once the user approves.
+
 **Overriding the next step.** A process may still return `nextProcessId`:
 
 - naming a **later declared step**, the flow jumps there and the steps in
