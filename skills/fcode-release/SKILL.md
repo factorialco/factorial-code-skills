@@ -1,6 +1,6 @@
 ---
 name: fcode-release
-description: Promote a Factorial Code app's code from its dev workspace to its prod workspace — clone the dev- workspace, remote:add the prod- workspace and pull, put dev's code back over what the pull wrote, then push and delete what dev removed. Use when releasing, promoting, or deploying a Factorial Code (fcode) app's dev workspace to production, or pushing a dev- workspace's code to its prod- counterpart.
+description: Release a Factorial Code app to production — validate it, then request the release with `fcode app:releases:request <version>` (or the console's Request release dialog), which copies the dev workspace into prod; follow it with `fcode app:releases:list`. Use when releasing, promoting, or deploying a Factorial Code (fcode) app's dev workspace to production, requesting or checking a release, or pushing a dev- workspace's code to its prod- counterpart.
 license: MIT
 metadata:
   category: factorial-code
@@ -8,228 +8,122 @@ metadata:
 
 # Factorial Code — Release
 
-Promotes an app's code from its `dev-…` workspace to its `prod-…` workspace
-using CLI remotes. Input: the two workspace slugs. This updates prod's
-**current** (unversioned) code only — publishing a workspace version and moving
-the `stable` alias is the separate platform release (model in
-`fcode-core-concepts`, journey in `fcode-ama`): don't run `settings:versions:*` or
-move `stable` in this flow unless explicitly asked.
+A release copies an App's `dev-…` workspace into its `prod-…` workspace. You
+**request** it; the dashboard does the copy. Nobody pushes code to `prod-…` by
+hand: no `remote:add`, no clone pointed at prod.
+
+Requesting a release, for version `X`:
+
+1. tags the dev workspace with `X` (a workspace version, see
+   `fcode-core-concepts`);
+2. copies that version into `prod-…` — created on the App's first release —
+   and deletes from prod what dev no longer has;
+3. tags prod with `X`.
+
+The copy runs in the background and retries on its own when the platform
+fails. The release then stays `requested` until an operator or a Factorial
+admin of the team marks it `deployed` (or `failed`). Who does what: `fcode-ama`.
 
 Gate every release with `fcode-code-validation` — see the procedure.
 
 ## Gotchas
 
-- **Prod write access is required.** Only operators and the app's Factorial
-  team admins can push to a `prod-…` workspace; the admin's grant lands when
-  a release is requested and rides in the access token — if prod access is
-  refused right after requesting, run `fcode login` and retry. Who promotes
-  and why: `fcode-ama`.
-- **A ✅ validation is required before pushing.** Run `fcode-code-validation`
-  on the dev workspace first; while the report has Blockers, refuse to push.
-  Only an explicit user override ("push anyway despite the Blockers")
-  proceeds — record that the gate was overridden.
-- **Always confirm before pushing.** Summarize what will change in the prod
-  workspace (uploads, creations and deletions) and wait for an explicit yes
-  — prod code serves live installations.
-- **Never a blanket `--force`.** Not on `fcode push`, `fcode pull`, or a
-  `<kind>:push` without a slug. The one allowed `--force` deletes a single
-  resource: `fcode processes:push <slug> --force` (or `modules:push <slug>`,
-  `i18n:push <locale>`). Use one slug per command, only for a slug in the
-  deletion list the user confirmed, and only while
-  `fcode <kind>:status <slug>` shows it `🗑️💻 (removed-local)` — on any other
-  status the same command overwrites prod. Any other divergence between
-  local and prod (a `🔥 (conflict)`): stop, show it with `fcode diff`, and
-  ask (`fcode-cli`).
-- **The prod pull overwrites dev's code.** The first `fcode pull` after
-  `remote:add` saves every process, module, own locale and dependency
-  manifest prod has over the local files (logged `[✨ new]`), and
-  `fcode status` then reads them as up to date, so a push would release
-  nothing. The pull is still mandatory: it records prod's ids, and without
-  them every push of a slug prod already has fails as a duplicate. So the
-  procedure puts dev's code back from a reference copy after the pull
-  (`fcode-cli` §`fcode remote:add`).
-- **Only dev's own live resources are dev's code.** The clone also writes,
-  read-only, what dev inherits (`🔗 <parent>` in `*:status --showInherited`)
-  and what dev deleted but a workspace version keeps (`🪦 kept by <tags>`).
-  A row with neither mark is dev-owned live. Nothing else may reach prod: if
-  prod doesn't have one of these, `fcode add` would register it and
-  `fcode push` would create it.
-- **Workspace settings and variables are not copied from dev.** Never
-  restore `settings.json` or the variables files from the reference: prod
-  keeps its own values. A key prod doesn't own keeps dev's line in
-  `variables.env` after the pull, and the push would create it in prod with
-  that value (the `********` placeholder for a sensitive one): step 6
-  settles each one. Customers read the App's description for Factorial
-  One (`factorial` in `settings.json`) from prod: if prod's is missing or
-  stale, edit it after the pull and before the push, and include it in the
-  confirmation summary (`fcode-cli` §Workspace settings).
-- **Both slugs are encoded tokens** (`dev-…` / `prod-…`), not the app's
-  UUID (see `fcode-cli`). Verify the prefixes: cloning target and push
-  target must not be swapped.
-- **A failing `fcode clone`** usually means a mistyped token or missing
-  access (see `fcode-ama`) — don't retry blindly.
-- **Always release from a fresh clone in a new, empty folder outside any
-  git repository**, even when `dev-xxx/` or a development team's `app/`
-  checkout already exists, and never `remote:add` prod in an existing copy.
-  The folder holds a copy pointed at prod and prod's variables: delete it
-  when the release ends or stops. An existing copy's old prod sync record
-  hides what changed in prod, and a checkout left pointing at prod sends
-  every teammate's push to production (`fcode-core-concepts` §Workspace
-  structure (CLI)). Unpushed changes in an existing copy are not in dev and
-  not validated, so they are not released: tell the user.
+- **A ✅ validation is required before requesting.** Run
+  `fcode-code-validation` on the dev workspace first; while the report has
+  Blockers, refuse to request. Only an explicit user override ("release
+  anyway despite the Blockers") proceeds — record that the gate was
+  overridden.
+- **The release copies the cloud, not your files.** It copies dev as it is in
+  the cloud. Changes only in a local checkout are not released: push them to
+  dev (`fcode push`) and validate again first.
+- **Variables and workspace settings are never copied.** The copy takes
+  processes, modules, locales and dependency manifests. A variable dev owns
+  that prod lacks must be set in prod by hand, in the prod workspace's
+  variables page; the request lists them, so tell the user before they
+  confirm. Settings such as the App's description for Factorial One are
+  prod's own: edit them in the prod workspace's **Settings › Factorial** tab
+  (`fcode-cli` §Workspace settings).
+- **The copy deletes from prod.** Every process, module and locale prod has
+  and dev doesn't is deleted, including a hotfix made only in prod. The
+  request lists them; read the list to the user before they confirm.
+- **One release in progress per App.** While a release is `requested` or
+  `deploying`, a new request is refused. An operator or a Factorial admin of
+  the team marks it `deployed` or `failed` first.
+- **Versions are semver, without `v`,** and higher than the last deployed
+  release (`1.4.0`, `1.4.0-rc.1`). A version already used is refused, except a
+  `failed` one, which can be requested again once its cause is fixed.
+- **Always confirm before requesting.** Summarize what the release changes
+  in prod (the deletions and the missing variables) and wait for an explicit
+  yes — prod code serves live installations.
 
 ## Procedure
 
-1. **Collect the two slugs.** One `dev-…` (source) and one `prod-…`
-   (target). Wrong prefix or any ambiguity about which app they belong to:
-   stop and ask.
-2. **Validation gate.** Ensure a current ✅ `APP_VALIDATION_REPORT.md`
-   exists for the dev workspace — run `fcode-code-validation` when it is
-   missing or stale. On ❌, list the Blockers and refuse; proceed only on
-   an explicit user override.
-3. **Clone dev, and keep an untouched copy as the reference:**
+1. **Find the App folder.** The release commands run from a development
+   team checkout (`fcode team:clone`, see `fcode-cli`): the App's folder, or
+   anywhere inside its `app/`. Without one, clone the team first, or have the
+   user use the console's **Request release** dialog (App page → Production
+   tab), which shows the same checks.
+2. **Validation gate.** Ensure a current ✅ `APP_VALIDATION_REPORT.md` exists
+   for the dev workspace — run `fcode-code-validation` when it is missing or
+   stale. On ❌, list the Blockers and refuse; proceed only on an explicit
+   user override.
+3. **Check the state:**
 
    ```sh
-   cd "$(mktemp -d)"                      # new, empty folder
-   git rev-parse --show-toplevel          # must fail: no repository here
-   fcode clone --skipSkillsSetup dev-xxx
-   cp -R dev-xxx dev-ref                  # dev's code; never re-pointed
-   cd dev-ref
-   fcode processes:status --showInherited
-   fcode modules:status --showInherited
-   fcode i18n:status --showInherited
-   cd ..
+   fcode app:releases:list
    ```
 
-   Note dev's own live processes, modules and locales: the rows with no
-   `🔗` and no `🪦`.
-4. **Wire prod and pull:**
+   A release still `requested` or `deploying` blocks a new one: stop and tell
+   the user who can close it. Pick the version: the next one above every
+   release listed, as the user wants it (patch, minor or major).
+4. **Preview:**
 
    ```sh
-   cd dev-xxx
-   fcode remote:add prod-xxx
-   fcode pull          # mandatory; overwrites what prod has with prod's code
+   fcode app:releases:request <version> --notes "<what changed>" --dry-run
    ```
 
-   - On a divergence reported by `fcode pull`: stop and ask.
-   - Run the same three `status --showInherited` commands here to note
-     prod's own live resources, and `fcode status` for its "only existing
-     in local" lines.
-   - If a dev-owned live process or module shows in prod as `🔗` or `🪦`,
-     stop and ask: this flow can't replace it. A dev-owned locale next to
-     one prod inherits (`🔗` in that locale's column) is not a blocker: it
-     is an override to create.
-5. **Put dev's code back:** every dev-owned live process and module without
-   its `versions/` folder (prod's read-only snapshots stay), dev's own
-   locale files (never `*.inherited.yaml`), and each own dependency
-   manifest `dev-ref` has (never `*.inherited.*`):
+   It prints what the copy does, and requests nothing:
+   - **deleted from production**: processes, modules and locales prod has and
+     dev doesn't;
+   - **missing in production**: variables to set in prod by hand, with the
+     link to prod's variables page;
+   - **your local `app/` differs from dev**: local edits, or dev changes not
+     pulled yet. Only the first matters, and they are not released.
+5. **Confirm.** Show the user the version, the notes and the lists from
+   step 4, and wait for an explicit yes.
+6. **Request:**
 
    ```sh
-   rsync -a --checksum --delete --exclude versions/ \
-     ../dev-ref/processes/<slug>/ processes/<slug>/
-   rsync -a --checksum --delete --exclude versions/ \
-     ../dev-ref/modules/<slug>/ modules/<slug>/
-   cp ../dev-ref/i18n/<locale>.yaml i18n/
-   cp ../dev-ref/dependencies/package.json dependencies/
-   cp ../dev-ref/dependencies/requirements.txt dependencies/
+   fcode app:releases:request <version> --notes "<what changed>" --yes
    ```
 
-   Never `settings.json` or the variables files. A manifest prod owns that
-   dev doesn't can't be deleted: report it in step 7.
-6. **Remove what must not reach prod, settle variables, then register what
-   is new:**
-   - **Leftovers:** a process, module or locale in the "only existing in
-     local" lines that `dev-ref` shows as `🔗` or `🪦`. Delete its folder
-     (`rm -rf processes/<slug>`, `modules/<slug>`) or file
-     (`rm i18n/<locale>.yaml`). One that is neither dev-owned live nor
-     `🔗`/`🪦` in `dev-ref`: stop and ask. Variables and manifests
-     (`JAVASCRIPT`, `PYTHON`) in those lines are not leftovers.
-   - **Variables:** each key in the variables "only existing in local"
-     line is dev's line, not dev's code:
-     - prod inherits it (it is in `variables.inherited.env`): remove dev's
-       line from `variables.env`, unless the user asks for a prod override;
-     - sensitive (`variables.meta.json`): its value is the `********`
-       placeholder, and a push would create a prod secret with that
-       literal value that no later push can change. Remove the key from
-       `variables.env` and `variables.meta.json`, and ask the user to
-       create it in prod;
-     - otherwise ask the user for prod's value and write it, or remove the
-       key from both files.
-   - **Deletions:** each process, module and locale prod owns live that
-     dev doesn't, sorted by what `dev-ref` shows:
-     - `🪦`: deleted in dev;
-     - no trace: deleted in dev, or it only ever existed in prod (a
-       hotfix, an operator's process) — the user confirms each one by
-       itself;
-     - `🔗`: dev's parent now provides it, and prod only inherits it if
-       prod's parent does too: stop and ask, and keep it until the user
-       confirms prod's parent has it.
+   The command requests the release, waits up to five minutes for the copy,
+   then pulls `app/` so the new version appears under each `versions/`. It
+   ends in one of three ways:
+   - `✅ Release X requested and copied to production` (exit `0`): done.
+   - `⚠️ … copy to production is still running` (exit `0`): the copy keeps
+     retrying in the background. Follow it with `fcode app:releases:list`
+     (`requested (copying)` until it ends), then `fcode pull` in `app/`.
+   - `Release X failed: its copy to production gave up (<error>)` (exit
+     `1`): read the error, fix the cause, and request the same version again.
 
-     If prod's `settings.json` names a slug on the list (such as
-     `errorHandlerConfig.processSlug`), ask before going on. Delete each
-     the same way as a leftover. This is the deletion list.
+   `--json` (with `--yes` or `--dry-run`) prints the same as one JSON object:
+   `copy` is `copied`, `running` or `failed`, `followError` says why the
+   command stopped following the copy (exit `1`), and `pulled` whether `app/`
+   was refreshed.
+7. **Report the outcome:** the version, what was deleted from prod, and the
+   variables the user still has to set there. Remind the user that the
+   release awaits being marked `deployed` by an operator or a Factorial admin
+   of the team, and that customers' installations get it through the
+   `stable` alias (`fcode-ama`).
 
-   ```sh
-   fcode add           # registers dev's new resources prod doesn't have yet
-   ```
+## Errors
 
-7. **Confirm.** Run `fcode status` and summarize for the user what will
-   change in `prod-xxx`:
-   - uploads (`🔺 (modified)`): dev's version replaces prod's. Read the
-     `-` (prod) side of `fcode diff` and warn about any change only prod
-     has: the upload loses it;
-   - creations (`✨ (new-local)`), with the values step 6 settled for
-     variables new to prod, and each prod override of an inherited
-     variable the user asked for (shown `🔥 (conflict)`);
-   - deletions (`🗑️💻 (removed-local)`), listing apart the ones that may
-     exist only in prod — one a prod workspace version contains stays
-     there as deleted;
-   - manifests prod keeps although dev has none;
-   - settings changes.
-
-   Wait for an explicit yes. If the user doesn't confirm a deletion, bring
-   it back with `fcode <kind>:reset <slug>`, always with the slug: without
-   it, reset also overwrites every restored (modified or conflicting)
-   resource with prod's code and drops the added-but-unpushed ones.
-8. **Push, then delete one slug at a time:**
-
-   ```sh
-   fcode push </dev/null
-   fcode processes:push <slug> --force    # per deleted process
-   fcode modules:push <slug> --force      # per deleted module
-   fcode i18n:push <locale> --force       # per deleted locale
-   ```
-
-   - `fcode push` uploads and creates. With stdin closed it answers no to
-     each pending deletion, reports those slugs as skipped and exits `1`
-     (`fcode-cli` §`fcode push`), which is expected for the confirmed
-     deletions only. Any other skipped slug: stop and ask. Never pipe
-     `yes` into it.
-   - Then run the deletions: processes first, modules after (a module a
-     prod process still imports can't be deleted), locales last. Run each
-     only once `fcode <kind>:status <slug>` shows `🗑️💻 (removed-local)`.
-   - Each deletion prints `[🗑️  removed]` and exits `0`.
-     `📌 '<slug>' is kept as deleted: …` means a prod workspace version
-     holds it, which is expected.
-   - A failed upload or deletion prints `🚨` without changing the exit
-     code (`fcode-cli`). Read the output; on any `🚨`, stop and report.
-9. **Check prod matches dev:**
-
-   ```sh
-   fcode pull          # brings kept-as-deleted ones back read-only
-   fcode diff          # exits 0 when local and prod match
-   diff -r -x versions -x parameters.json \
-     ../dev-ref/processes/<slug> processes/<slug>
-   ```
-
-   - `fcode status` must list no change and no "only existing in local"
-     line.
-   - The `diff -r` must print nothing for every dev-owned live process,
-     and the same for modules, dev's own locale files and manifests: a
-     difference is dev code that didn't reach prod.
-   - Every slug on the confirmed deletion list is gone or `🪦` in
-     `*:status --showInherited`.
-10. **Report the outcome:** uploads, creations, deletions (and the ones
-    kept as deleted). Remind the user that the platform release (publish a
-    version, move `stable`) is a separate step (`fcode-ama`). Delete the
-    temporary folder.
+- **`Release X is still requested/deploying`**: another release is in
+  progress (step 3).
+- **`Version X is not higher than Y`** or **`already exists`**: pick another
+  version; `fcode app:releases:list` shows the ones in use.
+- **`You are not a member of this App`**: the user's session predates their
+  team membership — `fcode login`, then retry.
+- **`app/ kept N local change(s) the pull would overwrite or remove`**: the
+  release went through; the user runs `fcode pull` in `app/` to choose.

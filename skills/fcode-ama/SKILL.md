@@ -93,7 +93,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace (or `fcode team:clone` for every App of your team at once), code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
 | 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
 | 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the install / settings / uninstall forms and any UI trigger buttons inside the demo company's Factorial |
-| 8 | Release | App detail → Production tab | Request a release (semver + notes); after validation it's promoted to the prod workspace — self-service for a Factorial admin of the owning team, by an operator otherwise (`references/journey.md` §8) |
+| 8 | Release | App detail → Production tab, or `fcode app:releases:request` | Request a release (semver + notes); the dashboard copies dev into the prod workspace, then a Factorial admin of the owning team or an operator marks it deployed (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab; workspace Settings › Factorial tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields; the agent description One reads to pick the App (set on the prod workspace) |
 | 10 | Production | Marketplace | Visible and installable; each install gets its own isolated workspace |
 
@@ -188,7 +188,7 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | OAuth app for a Partner / Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
 | Demo company (Partner / IC) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
-| Promote a release to production | A Factorial admin of the owning team does it themselves (the App detail page's "How to promote" dialog has the commands); everyone else's route is an operator — `references/journey.md` §8 |
+| Promote a release to production | Request it (Production tab or `fcode app:releases:request`, `fcode-release`): the copy into prod is automatic; a Factorial admin of the owning team or an operator marks it deployed — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
 | Need a higher limit (execution time, concurrency, datastore, rate, …) | Every workspace is on the same fixed plan — there is no self-service upgrade. Ask us: internal Factorial users in Slack `#factorial-code-users`, others through their Factorial contact. Current values: `fcode-core-concepts` › Plans & limits |
 | Anything not covered | Internal Factorial users: Slack `#factorial-code-users`. Others: the in-platform request flows above |
