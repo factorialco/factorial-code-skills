@@ -716,7 +716,9 @@ The contract:
 - **"Not mapped" is an explicit choice.** A `""` choice is offered in the
   picker under its own title; picking it submits `""`. A stored `""` is
   Confirmed and a suggestion never replaces it, so only send `"default": ""`
-  when the admin chose "not mapped" (not as a blank for every row). Clearing a
+  when the admin chose "not mapped" (not as a blank for every row). This holds
+  only when the row's choices include a `""` option: without one, a stored `""`
+  is dropped, the row reads Needs a choice, and the next save leaves the key out. Clearing a
   row (✕) leaves its key out of the submission.
 - **Submission** is the same flat `{ "acc_12": "6100", … }` object a section of
   ordinary dropdowns submits, so the handler reads it as it always did; the
@@ -741,9 +743,12 @@ the whole section as one variable
 (`"accounts": { "$ref": "#/variables/accountsField" }`).
 
 The table is drawn inside Factorial (`@factorialco/fcode-react-forms` ≥ 3.8.0
-with `@factorialco/rjsf-f0` ≥ 3.0.0). The hosted `forms.js` and any host without
-the f0 theme render the same section as ordinary dropdowns, which submit the
-same values. A complete app — pre-render building the section, settings process
+with `@factorialco/rjsf-f0` ≥ 3.0.0). On fcode-react-forms ≥ 3.8.0, the hosted
+`forms.js` and any host without the f0 theme render the same section as ordinary
+dropdowns, which submit the same values. Older versions don't know the pairing
+contract: rows that rely on `x-fcode-choices` render as free text, and rows with
+their own `oneOf` are pre-filled with its first choice, so don't ship a pairing
+section to a host on fcode-react-forms 3.7 or earlier. A complete app — pre-render building the section, settings process
 storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
 
 ## Automatic file uploads

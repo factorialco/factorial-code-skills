@@ -112,7 +112,8 @@ so its `ui:` options apply.
 - **A pairing row's suggestion is not its `default`.** Put a proposal in
   `x-fcode-suggestion`, never in `default`: a `default` is a stored pair, shown
   as confirmed and submitted as it is, while a suggestion is only submitted
-  once the user accepts it. A `"default": ""` is an explicit "not mapped",
+  once the user accepts it. A `"default": ""` is an explicit "not mapped"
+  when the choices include a `""` option (without one the SDK drops it), and
   never a blank. Keep both on the row (`x-fcode-*` is what Factorial One
   reads; `ui` only draws the table).
 - **`isSensitive: true`** only affects display/masking — still read the value

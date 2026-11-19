@@ -74,8 +74,24 @@ async function main() {
   // Teams stay in the tens or hundreds even for large accounts, which a pairing
   // table handles. Never pair every employee this way (fcode-json-schema §Gotchas).
   const teams = await createFactorialClient().teams.teams.all();
-  const departments = await new AcmeClient(fcode.env.ACME_API_KEY).listDepartments();
-  const saved = JSON.parse((await fcode.datastore.get(MAP_KEY)) || "{}");
+
+  // The form must open even when Acme can't be reached (no API key yet right
+  // after install, Acme down): that is where the admin fixes the setup.
+  let departments = [];
+  let unreachable = false;
+  try {
+    departments = await new AcmeClient(fcode.env.ACME_API_KEY).listDepartments();
+  } catch (error) {
+    console.error("Acme departments unavailable", error);
+    unreachable = true;
+  }
+
+  let saved = {};
+  try {
+    saved = JSON.parse((await fcode.datastore.get(MAP_KEY)) || "{}");
+  } catch (error) {
+    console.error(`Stored ${MAP_KEY} is not valid JSON; starting from an empty map`, error);
+  }
 
   const choices = [
     { const: "", title: "Not mapped" },
@@ -109,12 +125,15 @@ async function main() {
       departmentsField: {
         type: "object",
         title: "Departments",
-        description: "Pair each Factorial team with its Acme department.",
+        description: unreachable
+          ? "Acme couldn't be reached, so its departments can't be listed. Check the API key and try again."
+          : "Pair each Factorial team with its Acme department.",
         ui: {
           "ui:field": "pairing",
           "ui:options": {
             columns: ["Factorial team", "Acme department"],
-            inUseNote: "Only the teams with people are listed. Add any other team below.",
+            inUseNote:
+              "Teams with people, and any team already paired or with a suggestion, are listed. Add any other team below.",
             labels: { addRow: "Add team" },
           },
         },
@@ -142,8 +161,12 @@ Notes on the pre-render:
   every row, so 300 teams and 300 departments stay a small schema. Keep the
   list to what can be paired (active departments only, say): a stored pair that
   falls out of it shows as **No longer available** and asks for a new choice.
-- **Catch vendor errors if the form must still open.** An error thrown out of a
-  pre-render makes the form unopenable (`fcode-forms`, `references/advanced.md`).
+- **Vendor and datastore errors are caught.** An error thrown out of a
+  pre-render makes the form unopenable (`fcode-forms`, `references/advanced.md`),
+  and the settings form is where the admin fixes a missing API key. With Acme
+  unreachable, the section has no choices and its description says why.
+- **The in-use list also shows paired, suggested and no-longer-available rows**,
+  so the note says so: a team with no people but a matching name is listed too.
 
 ## Save — `processes/settings/index.js`
 
