@@ -228,13 +228,13 @@ never work around the cap with the built-in mailer.
 
 Processes, modules and locales can be versioned individually, and a
 **workspace version** publishes one tag (e.g. `v1.0.0`) on **every process,
-module and locale the team owns** at once — resources inherited through `parentTeams` are never touched. Each
-entity's outcome (created / skipped / failed) is recorded in the version's
+module and locale the team owns** at once — resources inherited through
+`parentTeams` are never touched. Each entity's outcome (created / skipped / failed) is recorded in the version's
 **manifest**, so re-creating the same tag after a partial failure only publishes
 what is still missing.
 
-A workspace version snapshots the source exactly as written: imports, `fcode.i18n` calls and form schema tokens
-are never rewritten. What makes a release reproducible is how an **execution at
+A workspace version snapshots the source exactly as written: imports,
+`fcode.i18n` calls and form schema tokens are never rewritten. What makes a release reproducible is how an **execution at
 that version** (a tag, or an alias such as `stable`) reads them:
 
 - The workspace's **own** modules and locales resolve at that version, at every
@@ -277,8 +277,8 @@ Two consequences of that model:
   the current (unversioned) code; pinned consumers keep running the released
   version until the alias moves.
 - **Deleting a workspace version cascades** — every owned process, module,
-  locale and dependency version carrying the tag is deleted, together with the aliases, executions,
-  and schedules referencing them.
+  locale and dependency version carrying the tag is deleted, together with the
+  aliases, executions, and schedules referencing them.
 - **A version or alias another workspace pins is protected.** Deleting it is
   rejected, naming the workspaces that would break; they have to unpin first.
   Re-pointing an alias stays allowed — that is how a release is promoted.
