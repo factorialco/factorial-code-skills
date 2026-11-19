@@ -269,7 +269,9 @@ A form or action schema served at a version resolves its tokens the same way.
 When the workspace has no version under that tag, and in executions without a
 version, the own locales answer with their current files. A release keeps the
 text it shipped with: fixing a released typo means publishing again — snapshots
-are immutable.
+are immutable. Deleting a locale (`fcode i18n:remove`) deletes the versions
+published for that locale alone with it; the versions a workspace version
+contains survive, and the locale keeps answering executions at those versions.
 
 Write `fcode.i18n` calls **without** a version. The `{ version: ... }` option
 exists only so old snapshots keep running; never write it.

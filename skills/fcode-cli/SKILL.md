@@ -326,8 +326,8 @@ fcode settings:aliases:delete stable
   manifest), then pulls so the `versions/<tag>/` folders and `settings.json` refresh
   locally. Re-running the same tag after a partial failure only publishes what
   is still missing.
-- **`settings:versions:delete` cascades**: every owned process/module version with
-  the tag is deleted, together with the aliases, executions, and schedules
+- **`settings:versions:delete` cascades**: every owned process, module, locale and
+  dependency version with the tag is deleted, together with the aliases, executions, and schedules
   referencing them.
 - **`settings:aliases:set` upserts** — it creates the alias or re-points an existing
   one on every owned entity that has the target tag published (entities without

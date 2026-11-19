@@ -55,7 +55,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 |---|---|---|
 | **Process** | The unit of execution (business logic) | Defines input parameters, returns structured results |
 | **Module** | Reusable code library | Shared across processes, can be versioned |
-| **Workspace version** | One tag (e.g. `v1.0.0`) published on every process and module the team owns | Published from the web UI; retrying the same tag is safe |
+| **Workspace version** | One tag (e.g. `v1.0.0`) published on every process, module and locale the team owns | Published from the web UI; retrying the same tag is safe |
 | **Version alias** | Movable pointer to a version | `stable` always exists — pin consumers to it; moving it is rollout/rollback |
 | **Variables** | Configuration & secrets | Env vars; inherited from parent workspaces; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only**; a value can be encrypted at rest on request |
@@ -226,15 +226,14 @@ never work around the cap with the built-in mailer.
 
 ### Versioning & aliases
 
-Processes and modules can be versioned individually, and a **workspace version**
-publishes one tag (e.g. `v1.0.0`) on **every process and module the team owns**
-at once — resources inherited through `parentTeams` are never touched. Each
+Processes, modules and locales can be versioned individually, and a
+**workspace version** publishes one tag (e.g. `v1.0.0`) on **every process,
+module and locale the team owns** at once — resources inherited through `parentTeams` are never touched. Each
 entity's outcome (created / skipped / failed) is recorded in the version's
 **manifest**, so re-creating the same tag after a partial failure only publishes
 what is still missing.
 
-A workspace version also publishes every owned **locale**. It snapshots the
-source exactly as written: imports, `fcode.i18n` calls and form schema tokens
+A workspace version snapshots the source exactly as written: imports, `fcode.i18n` calls and form schema tokens
 are never rewritten. What makes a release reproducible is how an **execution at
 that version** (a tag, or an alias such as `stable`) reads them:
 
@@ -247,8 +246,15 @@ that version** (a tag, or an alias such as `stable`) reads them:
   executing workspace's version resolves the same way.
 - A form or action schema served at a version resolves its `fcode.i18n` tokens
   at that version.
-- When the workspace has no version under that tag, and in executions without a
-  version, everything resolves against the current content.
+- When the workspace has no version under that tag, only its **own modules and
+  locales** fall back to their current content. A process published on its own
+  under that tag still runs its own snapshot, and parents still follow their
+  pin. Executions without a version read everything live.
+- **Sub-processes do not inherit the version.** `fcode.processes.run("b")` runs
+  `b` live unless the call passes `tag` (`{ tag: "stable" }`). A released
+  process that calls another one without `tag` runs that process's working
+  copy after the next push. Keep passing `tag` to sub-process runs: the
+  "no version" rule is for imports and `fcode.i18n` only.
 
 So **write imports and `fcode.i18n` calls without a version** — your code then
 follows the version it runs at, and a release needs no source change. The
@@ -270,8 +276,8 @@ Two consequences of that model:
 - **`fcode push` never affects consumers pinned to `stable`.** Pushing updates
   the current (unversioned) code; pinned consumers keep running the released
   version until the alias moves.
-- **Deleting a workspace version cascades** — every owned process/module
-  version carrying the tag is deleted, together with the aliases, executions,
+- **Deleting a workspace version cascades** — every owned process, module,
+  locale and dependency version carrying the tag is deleted, together with the aliases, executions,
   and schedules referencing them.
 - **A version or alias another workspace pins is protected.** Deleting it is
   rejected, naming the workspaces that would break; they have to unpin first.

@@ -51,6 +51,7 @@ own rules and note the mix in the report header.
 | LANG-04 | Return values match a supported shape: `{message}`, `{status, headers, body}`, `{transient: true, data}`, `{nextProcessId}`, `{redirect}` | W | `fcode-javascript`/`fcode-python` §Return values |
 | LANG-05 | Main flow wrapped in `try/catch` (`try/except`); code doesn't read `fcode.env` expecting a value it `fcode.variables.set` in the same run (snapshot at start) | W | `fcode-javascript`/`fcode-python` §Gotchas, §Variables, schedules & OAuth |
 | LANG-06 | Idiom: `const`/`let` never `var`; `async/await` for async work; PEP 8 + type hints in Python | S | `fcode-javascript`/`fcode-python` §Gotchas |
+| LANG-07 | No explicit version on imports or translations: `fcode.import`/`fcode.import_module` take only the module name, and `fcode.i18n` options never carry `version` (calls follow the workspace version the execution runs at) | W | `fcode-core-concepts` §Versioning & aliases, `fcode-i18n` §Versioning locales |
 
 ## FORM — forms & lifecycle
 
