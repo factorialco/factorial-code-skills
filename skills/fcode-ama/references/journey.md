@@ -272,8 +272,10 @@ workspace and marking the release deployed — takes one of:
   Prod workspace write access is granted when the release is **requested**,
   and access rides in the access token — if a push into `prod-…` is refused
   right after requesting, run `fcode login` to pick up the grant. The App
-  detail page shows the release actions and a **"How to promote"** dialog
-  with the exact `fcode` commands (procedure in `fcode-release`).
+  detail page shows the release actions and a **"How to promote"** dialog.
+  Promote with the procedure in `fcode-release`, not the dialog's short
+  command list, which skips putting dev's code back and deleting what dev
+  removed.
 - **An operator** (the Factorial Code platform team) — the route for
   Partner / Individual Contributor teams and for members holding the
   developer role.

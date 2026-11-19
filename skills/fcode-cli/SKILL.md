@@ -45,7 +45,8 @@ web UI (see below).
   resource) was *just created* — you'll hit "Local process not found".
 - **`fcode add` is only for NEW resources.** For edits to existing process/module
   code or variables, go straight to `fcode push`.
-- **`--force` (on `push`/`pull`) overwrites the other side.** Both commands fail
+- **`--force` (on `push`/`pull`) overwrites the other side.** On `push` it also
+  deletes, without asking, everything removed locally. Both commands fail
   when local and cloud diverge — `settings:pull` included, which refuses to wipe an
   unpushed `settings.json`. Run `fcode diff` first to show the user exactly what
   would be discarded, and only use `--force` with explicit user confirmation.
@@ -122,15 +123,32 @@ Two things to watch locally:
 ### `fcode pull`
 
 Downloads the latest processes, modules, variables, and dependencies from the
-cloud, overwriting local files to match. Run before starting work if others may
-have changed cloud resources, or to discard local changes. `--force` only with
-user confirmation.
+cloud, overwriting local files to match. It also writes the processes, modules
+and locales the workspace deleted but a workspace version still keeps,
+read-only, shown as `🪦 kept by <tags>` in `*:status`; `push` never uploads
+them. Run before starting work if others may have changed cloud resources, or
+to discard local changes. `--force` only with user confirmation.
 
 ### `fcode push`
 
 Uploads local changes to the cloud. Run after local changes (run `fcode add`
 first only if you created new resources); recommended to `fcode run` first.
 `--force` only with user confirmation.
+
+A process or module whose folder you deleted (or a locale whose file you
+deleted) is `🗑️💻 (removed-local)`, and `push` asks before deleting it in the
+cloud. When nobody can answer (stdin is not a terminal and has ended, as for an
+agent or CI) the answer is no: it reports the slug as skipped
+(``⏭️  '<slug>' skipped. To remove it from the cloud: fcode <kind>:push <slug> --force``)
+and exits `1`. An open, non-terminal stdin makes the prompt wait instead.
+`fcode <kind>:push <slug> --force` acts on that one resource only, and `--force`
+confirms whatever it finds there: it deletes a removed-local resource, but it
+also overwrites the cloud side of a `🔥 (conflict)`, so check
+`fcode <kind>:status <slug>` first. A process or module that a workspace version
+still contains is kept as deleted (`📌 … kept as deleted`) and comes back
+read-only on the next pull. A dependency manifest can't be deleted. A resource
+that fails to push or delete prints `🚨` without changing the exit code, so read
+the output.
 
 ### `fcode status`
 
@@ -188,13 +206,27 @@ promotion procedure is in `fcode-release`.
 **`remote:add` makes the added workspace the active one** (`activeTeam` in
 `app/.fcode/workspace.json`), and every later `pull` / `push` goes there.
 
+**The first `fcode pull` from a newly added remote rewrites your files.** The
+folder has no sync record for that workspace yet, so every process, module, own
+locale and dependency manifest the remote has is saved over the local one
+(logged `[✨ new]`), and it then reads as up to date. `settings.json` is
+replaced too, and `variables.env` takes the remote's value for every key the
+remote owns. A key the remote inherits goes to `variables.inherited.env`, and
+the local line left in `variables.env` then counts as an override: `status`
+shows it `🔥 (conflict)` and `push` creates it in the remote. What the remote
+lacks stays on disk and shows as only existing in local; a sensitive one holds
+the `********` placeholder, and a push would create it with that literal value.
+Re-adding a remote the folder already had keeps its old record. The
+release procedure that copes with this is in `fcode-release`.
+
 ### `fcode remote:set [workspace-slug]`
 
 Switches the active remote among the ones already added; with no argument it
-lists them. After a release, switch back to the dev workspace
-(`fcode remote:set dev-…`) before committing `workspace.json`, or every
-teammate who pulls the repository pushes to production
-(`fcode-core-concepts` §Workspace structure (CLI)).
+lists them. Check which one is active before committing `workspace.json`: if a
+folder that teammates pull from is left pointing at prod, every teammate who
+pulls the repository pushes to production (`fcode-core-concepts` §Workspace
+structure (CLI)). Releases never re-point such a folder; they work in a fresh
+clone (`fcode-release`).
 
 ### `fcode team:clone` / `team:pull` / `team:status`
 
@@ -225,9 +257,10 @@ acme-payroll/
 ```
 
 The checkout is called `app`, never the `dev-<token>` slug it came from: the slug
-is in the metadata, and the directory is only a checkout — `fcode remote:add` can
-re-point it at the prod workspace. Each level's `settings.json` describes the
-thing that level holds, and they never collide, being one directory apart.
+is in the metadata, and the directory is only a checkout. Releases never
+re-point it at prod: they run from a fresh clone (`fcode-release`). Each level's
+`settings.json` describes the thing that level holds, and they never collide,
+being one directory apart.
 
 Inside an App's workspace every ordinary command works as usual; the team
 commands only add the ones that span Apps:
