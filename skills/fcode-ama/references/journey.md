@@ -251,8 +251,8 @@ the user is notified of the changes required; fix them and request again
 with a higher version.
 
 Release lifecycle: `requested → deploying → deployed | failed`. Requesting a
-release snapshots every process, module, and i18n file into a **pinned
-workspace version** in the dev environment and creates the **prod workspace**
+release snapshots every process, module, and i18n file, as written, into a
+**workspace version** in the dev environment and creates the **prod workspace**
 (`prod-{appId}`) when it doesn't exist yet. A deployed release:
 
 - has that version copied into the prod workspace (treat its code as

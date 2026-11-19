@@ -43,14 +43,12 @@ embedding in `fcode-forms`.
 - **Form-token arguments must be a flat object of scalars** —
   `{ "max": "500" }` works, `{ "max": { "chars": "500" } }` does not; a token
   with nested braces is left untouched in the served schema.
-- **A mistyped `version` tag resolves against the current files silently** —
-  it never blanks output. When released text looks un-frozen, check the pinned
-  tag before anything else. Same shape for a per-call `{ locale }` naming a
-  locale that doesn't exist: the lookup behaves as if no locale was named.
-- **A pinned `version` must be an inline literal string** — the snapshot to
-  ship is read from the source, so `{ version: chosenTag }` resolves against
-  the current files. The `locale` option has no such rule: its value may be any
-  runtime expression, and options built elsewhere still work.
+- **A per-call `{ locale }` naming a locale that doesn't exist fails
+  silently** — the lookup behaves as if no locale was named, it never blanks
+  output. Its value may be any runtime expression.
+- **Don't pass a `version` option** — calls follow the workspace version the
+  execution runs at (see "Versioning locales"). The option exists only so old
+  snapshots keep running.
 - **A YAML key written without a value counts as untranslated** — it falls
   through to the fallback locale rather than resolving to an empty string.
 
@@ -95,27 +93,23 @@ through a module still gets its translations):
 ```javascript
 const greeting = fcode.i18n("greetings.hello", { name: "Ada" }); // "Hi Ada" in `en`
 fcode.i18n("greetings.farewell");                    // no placeholders → no args
-fcode.i18n("legal.terms", null, { version: "v1.0.0" }); // pinned to a published version
 fcode.i18n("greetings.hello", { name: "Ada" }, { locale: "es" }); // another locale, this lookup only
 const recipient = { name: "Ada", locale: "pt-BR" };               // ...and the value may be dynamic,
 fcode.i18n("greetings.hello", { name: recipient.name }, { locale: recipient.locale }); // per recipient
-fcode.i18n("legal.terms", null, { version: "v1.0.0", locale: "es" }); // both combine
 const locale = fcode.i18n.locale;                    // the execution's locale
 ```
 
 ```python
 greeting = fcode.i18n("greetings.hello", {"name": "Ada"})
 fcode.i18n("greetings.farewell")
-fcode.i18n("legal.terms", None, {"version": "v1.0.0"})
 fcode.i18n("greetings.hello", {"name": "Ada"}, {"locale": "es"})
 recipient = {"name": "Ada", "locale": "pt-BR"}
 fcode.i18n("greetings.hello", {"name": recipient["name"]}, {"locale": recipient["locale"]})
-fcode.i18n("legal.terms", None, {"version": "v1.0.0", "locale": "es"})
 locale = fcode.i18n.locale
 ```
 
-- `version` — a locale version tag or alias, as an **inline literal string**
-  (see Gotchas); versioning below.
+- `version` — exists only for compatibility with old snapshots; never write
+  it. Calls follow the execution's workspace version (versioning below).
 - `locale` — reads **that lookup** in another locale, and the value may be
   dynamic (an employee's language), so one execution can speak several
   languages. A key the named locale hasn't translated falls back to the
@@ -258,48 +252,30 @@ Locales are versioned like processes and modules (model in
 and aliases are movable pointers — but **per locale**: `production` on `en`
 and `production` on `es` are two different aliases.
 
-A pinned call (`{ version: "v1.0.0" }`) resolves **per file** in the
-inheritance chain: each locale file answers with its snapshot at that tag, or
-with its current content when it has no snapshot at that tag, layered key by
-key as usual. So a locale created after the version was cut still contributes
-its keys, a parent that never published the tag still contributes its text,
-and a mistyped tag resolves everything against the current files rather than
-blanking output. `{ version: "v1.0.0", locale: "es" }` combine: the snapshot is
-read in the requested locale, with the same fallbacks. Deleting a version sends
-the calls pinned to it back to the current files; deleting a locale deletes its
-versions with it.
-
-One layer resolves differently: a **parent workspace pinned to one of its
-versions** answers with its snapshot at the pin, and falls back to that snapshot
-rather than to its current file when the call names a tag it never published.
-Its live translations never reach the child — see `fcode-core-concepts`.
-
-**A workspace version freezes translations with the release.** Creating one
+**Translations follow the workspace version.** Creating one
 (`fcode settings:versions:create`, see `fcode-cli`) publishes a version of every
-owned locale — locales first, so the pins below have a target — and rewrites
-the **published snapshots** so bare `fcode.i18n` calls pin the tag, in process
-code, module code, and form schemas:
+owned locale and leaves `fcode.i18n` calls and form schema tokens as written.
+An execution at a workspace version (a tag, or an alias such as `stable`) reads
+the workspace's own locales as they were published at that version, layered key
+by key along the inheritance chain:
 
-```javascript
-// Working copy (never modified)
-fcode.i18n("greetings.hello", { name: "Ada" });
-fcode.i18n("welcome", { name: "Ada" }, { locale: "es" });
+- each own locale the version contains answers with its snapshot at that version;
+- an own locale the version does not contain contributes nothing, so the
+  parents' text shows through;
+- each parent workspace answers at its parent-link version pin, or with its
+  current files when the link is not pinned (see `fcode-core-concepts`).
 
-// Published v1.0.0 snapshot
-fcode.i18n("greetings.hello", { name: "Ada" }, { version: "v1.0.0" });
-fcode.i18n("welcome", { name: "Ada" }, { version: "v1.0.0", locale: "es" });
-```
+A form or action schema served at a version resolves its tokens the same way.
+When the workspace has no version under that tag, and in executions without a
+version, the own locales answer with their current files. A release keeps the
+text it shipped with: fixing a released typo means publishing again — snapshots
+are immutable. Deleting a locale (`DELETE /{team}/rest/locales/{locale}`,
+`delete_locale`) deletes the versions published for that locale alone with it;
+the versions a workspace version contains survive, and the locale keeps
+answering executions at those versions.
 
-A call whose options already name a `version` — even a dynamic one — is
-considered intentional and left untouched; options naming none (only a
-`locale`, an empty object, an explicit `null`/`None`) get the tag spliced in,
-so a localized call freezes with the release while its locale stays as
-written — a dynamic value (`{ locale: employee.locale }`) is preserved
-verbatim too.
-(Note the asymmetry with module imports, which are pinned in the string form —
-`fcode.import("m", "v1.0.0")` — for compatibility with older executors; don't
-"fix" one to look like the other.) Fixing a released typo means publishing
-again — snapshots are immutable.
+Write `fcode.i18n` calls **without** a version. The `{ version: ... }` option
+exists only so old snapshots keep running; never write it.
 
 ## REST API, SDKs & MCP tools
 

@@ -55,7 +55,7 @@ These defy reasonable assumptions — get them wrong and the process breaks:
 |---|---|---|
 | **Process** | The unit of execution (business logic) | Defines input parameters, returns structured results |
 | **Module** | Reusable code library | Shared across processes, can be versioned |
-| **Workspace version** | One tag (e.g. `v1.0.0`) published on every process and module the team owns | Published from the web UI; retrying the same tag is safe |
+| **Workspace version** | One tag (e.g. `v1.0.0`) published on every process, module and locale the team owns | Published from the web UI; retrying the same tag is safe |
 | **Version alias** | Movable pointer to a version | `stable` always exists — pin consumers to it; moving it is rollout/rollback |
 | **Variables** | Configuration & secrets | Env vars; inherited from parent workspaces; never hardcode secrets |
 | **Datastore** | Persistent key-value store | **Strings and numbers only**; a value can be encrypted at rest on request |
@@ -226,26 +226,46 @@ never work around the cap with the built-in mailer.
 
 ### Versioning & aliases
 
-Processes and modules can be versioned individually, and a **workspace version**
-publishes one tag (e.g. `v1.0.0`) on **every process and module the team owns**
-at once — resources inherited through `parentTeams` are never touched. Each
-entity's outcome (created / skipped / failed) is recorded in the version's
+Processes, modules and locales can be versioned individually, and a
+**workspace version** publishes one tag (e.g. `v1.0.0`) on **every process,
+module and locale the team owns** at once — resources inherited through
+`parentTeams` are never touched. Each entity's outcome (created / skipped / failed) is recorded in the version's
 **manifest**, so re-creating the same tag after a partial failure only publishes
 what is still missing.
 
-When a workspace version is published, bare `fcode.import("mod")` /
-`fcode.import_module("mod")` calls of workspace-owned modules are pinned to the
-tag **inside the published snapshots only** — the working copy is never
-modified, and imports that already carry a tag or alias are left untouched.
-A workspace version also publishes every owned **locale** and pins
-`fcode.i18n` calls the same way — calls already naming a `version` are left
-untouched, everything else (bare calls, locale-only options) gets the tag —
-in code and in form schemas, so a release ships with its translations frozen —
-see `fcode-i18n`.
+A workspace version snapshots the source exactly as written: imports,
+`fcode.i18n` calls and form schema tokens are never rewritten. What makes a release reproducible is how an **execution at
+that version** (a tag, or an alias such as `stable`) reads them:
+
+- The workspace's **own** modules and locales resolve at that version, at every
+  nesting level (a module imported by a module, an `fcode.i18n` call inside a
+  module). A module the version does not contain is looked up in the parents;
+  a locale the version does not contain contributes nothing of its own.
+- **Parent workspaces** keep following their parent-link version pin, or their
+  current content when the link is not pinned. An inherited process run at the
+  executing workspace's version resolves the same way.
+- A form or action schema served at a version resolves its `fcode.i18n` tokens
+  at that version.
+- When the workspace has no version under that tag, only its **own modules and
+  locales** fall back to their current content. A process published on its own
+  under that tag still runs its own snapshot, and parents still follow their
+  pin. Executions without a version read everything live.
+- **Sub-processes do not inherit the version.** `fcode.processes.run("b")` runs
+  `b` live unless the call passes `tag` (`{ tag: "stable" }`). A released
+  process that calls another one without `tag` runs that process's working
+  copy after the next push. Keep passing `tag` to sub-process runs: the
+  "no version" rule is for imports and `fcode.i18n` only.
+
+So **write imports and `fcode.i18n` calls without a version** — your code then
+follows the version it runs at, and a release needs no source change. The
+explicit version argument (`fcode.import("m", "v1")`, `{ version: ... }`) still
+works only so old snapshots keep running; never write it. Inside a module
+imported with an explicit version, its own bare imports and `fcode.i18n` calls
+follow the caller's execution version, not the module's tag.
 
 A **version alias** is a movable pointer to a version. The `stable` alias
-always exists and points at the workspace's stable version. Webhooks, forms,
-schedules, and module imports accept an alias wherever they accept a tag, so
+always exists and points at the workspace's stable version. Webhooks, forms and
+schedules accept an alias wherever they accept a tag, so
 moving `stable` to another version re-points the whole workspace in one
 operation — **rollout and rollback are a single alias change**. Always pin
 consumers (webhook URLs, form embeds) to `stable`; how in `fcode-cli` and
@@ -256,9 +276,9 @@ Two consequences of that model:
 - **`fcode push` never affects consumers pinned to `stable`.** Pushing updates
   the current (unversioned) code; pinned consumers keep running the released
   version until the alias moves.
-- **Deleting a workspace version cascades** — every owned process/module
-  version carrying the tag is deleted, together with the aliases, executions,
-  and schedules referencing them.
+- **Deleting a workspace version cascades** — every owned process, module,
+  locale and dependency version carrying the tag is deleted, together with the
+  aliases, executions, and schedules referencing them.
 - **A version or alias another workspace pins is protected.** Deleting it is
   rejected, naming the workspaces that would break; they have to unpin first.
   Re-pointing an alias stays allowed — that is how a release is promoted.
