@@ -54,7 +54,7 @@ fallback: an empty pairing object, used when the pre-render does not run.
   },
   "properties": {
     "pairWithOne": {
-      "type": "null",
+      "type": "object",
       "ui": {
         "ui:field": "launch-one",
         "ui:options": {

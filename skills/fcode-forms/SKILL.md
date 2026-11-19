@@ -58,8 +58,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **Mapping many Factorial records to another system is a pairing table**
   (`"ui:field": "pairing"`), not a dropdown per record. A row's proposal goes in
   `x-fcode-suggestion`, never in `default`. See "Pairing tables".
-- **A "Set up with One" button is a `"ui:field": "launch-one"` property of
-  `"type": "null"`** that hands the form to One to fill in, never to save. Its
+- **A "Set up with One" button is a `"type": "object"` property drawn by
+  `"ui:field": "launch-one"`** that hands the form to One to fill in, never to
+  save. Its
   `prompt` and `context` are sent to One: never put secrets in them. See "Set up
   with One".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
@@ -749,14 +750,13 @@ storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
 ## Set up with One
 
 A long setup, or a pairing table with hundreds of rows, can be handed to One
-(Factorial's AI assistant) from the form itself. Add a property of
-`"type": "null"` drawn by `"ui:field": "launch-one"`: it submits nothing, and
-inside Factorial it renders a button that opens a new conversation with One
-about this form.
+(Factorial's AI assistant) from the form itself. Add a `"type": "object"`
+property drawn by `"ui:field": "launch-one"`: it shows only the button, submits
+nothing, and inside Factorial opens a new conversation with One about this form.
 
 ```json
 "setupWithOne": {
-  "type": "null",
+  "type": "object",
   "ui": {
     "ui:field": "launch-one",
     "ui:options": {
