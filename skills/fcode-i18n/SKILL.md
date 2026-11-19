@@ -270,8 +270,9 @@ When the workspace has no version under that tag, and in executions without a
 version, the own locales answer with their current files. A release keeps the
 text it shipped with: fixing a released typo means publishing again — snapshots
 are immutable. Deleting a locale (`DELETE /{team}/rest/locales/{locale}`,
-`delete_locale`) deletes the versions published for that locale alone with it; the versions a workspace version
-contains survive, and the locale keeps answering executions at those versions.
+`delete_locale`) deletes the versions published for that locale alone with it;
+the versions a workspace version contains survive, and the locale keeps
+answering executions at those versions.
 
 Write `fcode.i18n` calls **without** a version. The `{ version: ... }` option
 exists only so old snapshots keep running; never write it.
