@@ -26,9 +26,10 @@ instead — see the routing table in `SKILL.md`.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the App settings' OAuth tab and the setup steps reappear.
-- **"I'm not at Factorial and have no OAuth application."** It's
-  preconfigured by an administrator and appears on the App settings' OAuth
-  tab once done — if it's blocking you, escalate.
+- **"I have no OAuth application / my OAuth credentials are missing."**
+  They're created automatically, for every role: development when the App is
+  created, production with its first release, on the App settings' OAuth
+  tab. If one hasn't appeared by then, escalate.
 - **"My integrations-framework app doesn't show up / installs oddly."**
   Framework apps must be linked to their Factorial integration (checklist
   step "Link the Factorial integration", on the app's Settings page) —

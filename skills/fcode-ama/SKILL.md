@@ -25,10 +25,20 @@ early — several flows diverge by role:
 
 | Role | Who | Key differences |
 |---|---|---|
-| **Factorial internal** | Developers at Factorial | Create their own OAuth apps in the **Factorial Backoffice**; create demo companies directly (using the Demo generator); Slack `#factorial-code-users` available |
-| **Partner** | External companies building apps/integrations with Factorial | OAuth app preconfigured by an administrator; demo companies by request |
-| **Factorial Customer** | A company that uses Factorial, building its own app or automation | Same as Partner |
-| **Individual Contributor** | Someone working on their own rather than for a partner or customer company — e.g. a security auditor | Same as Partner |
+| **Factorial internal** | Developers at Factorial | Create demo companies directly (using the Demo generator); Slack `#factorial-code-users` available |
+| **Partner** | External companies building apps/integrations with Factorial | Demo companies by request |
+| **Factorial Customer** | A company that uses Factorial, building an app or automation for its own Factorial account — even when one person (say, an HR admin) does it alone | Same as Partner; usually wants a private installation in its own company rather than a marketplace listing (see "Private app installed for a specific company" under Escalation) |
+| **Individual Contributor** | Anyone else building outside a partner or a company that uses Factorial — e.g. someone doing a security audit | Same as Partner |
+
+To tell the last two apart: building for the company that uses Factorial →
+Factorial Customer; otherwise → Individual Contributor.
+
+"Factorial Customer" is a builder's team type. Everywhere else in this skill,
+**customers** are the companies that install an App. Never call a builder an
+"end customer".
+
+OAuth credentials are created automatically for every role (stage 4 in
+`references/journey.md`).
 
 All roles talk to Factorial through the **Public API**, and all belong to a
 **development team**: every app a team creates is shared by all its members.
@@ -45,8 +55,8 @@ already has a team on the platform, they are added to that existing team.
   checklist on the App detail page"), not by exact button pixels — labels
   change; flows are stable.
 - **Admin actions: outcome only.** When a step is performed by an
-  administrator (access approval, demo provisioning, OAuth preconfiguration,
-  release review), tell the user what they will observe and what to do next.
+  administrator (access approval, demo provisioning, release review), tell
+  the user what they will observe and what to do next.
   Never describe admin-side mechanics or how credentials are delivered.
 - **Answer in the user's language.**
 - **Fetch before deep-diving.** When you have web access, read the linked
@@ -186,7 +196,7 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | Need | What to do |
 |---|---|
 | Access request pending | It's under review; you'll be notified of the outcome |
-| OAuth app for a Partner, Factorial Customer or Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
+| OAuth credentials missing | Created automatically: development when the App is created, production with its first release. If one hasn't appeared by then, escalate |
 | Demo company (not Factorial internal) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
 | Promote a release to production | A Factorial admin of the owning team does it themselves (the App detail page's "How to promote" dialog has the commands); everyone else's route is an operator — `references/journey.md` §8 |
