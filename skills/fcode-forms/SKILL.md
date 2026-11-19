@@ -775,6 +775,13 @@ nothing, and inside Factorial opens a new conversation with One about this form.
   works on; without it, the whole form. A form may have several buttons, for
   example one per pairing table with its own `section`, placed where it should
   appear.
+- **`collapse: true`** (off by default) starts the fields the button can fill
+  collapsed under a "Show the full form" toggle: its `section`, or without one
+  every field except secret, file and hidden ones, which always stay visible.
+  Collapsed fields stay in the form: they keep their values, validate and are
+  saved, and one with an error opens. Change the toggle's text with
+  `labels.showForm` and `labels.hideForm`. Where the button isn't shown, nothing
+  collapses.
 - **`{{field}}` and `{{variable}}`** in `prompt` and `context` are filled in
   from the form's current values when the user clicks. Only plain names, no
   Mustache sections. Secret, file and hidden fields (and anything holding one),
