@@ -73,6 +73,10 @@ so its `ui:` options apply.
   (accounts, tax codes, cost centers, wage types, absence codes, positions).
   Contract and semantics in `fcode-forms` §Pairing tables; see `accountPairing`
   in the sample.
+- **Let One fill the form** — a `"type": "null"` property with
+  `"ui": { "ui:field": "launch-one", "ui:options": { "label", "prompt", … } }`
+  renders a "Set up with One" button inside Factorial and submits nothing; see
+  `fcode-forms` §Set up with One.
 - **Employees** — Factorial's employee picker (search, filters, avatars). An
   `array` of `string` picks several people and a `string` picks one; mark it with
   `"x-fcode-entity": "employee"` and draw it with `"ui:widget": "employee"`. The
@@ -132,10 +136,7 @@ so its `ui:` options apply.
   `selectField` / `multiSelectField` ships inside the schema, so a list fed
   from a directory that grows with the company (every employee, every
   manager, all projects or cost centers) turns into thousands of options for
-  a large account. Nobody can pick from that, and hosts on a forms SDK older
-  than `@factorialco/fcode-react-forms` 3.7.1 fail validation with "Maximum
-  call stack size exceeded" from about 1,000 options: the submit button
-  silently does nothing. Small organisational lists (teams, legal entities,
+  a large account. Nobody can pick from that. Small organisational lists (teams, legal entities,
   locations, roles) stay in the tens even for large accounts and are fine to
   list whole. The forms SDK has no searchable or remote-loading picker, so for
   people, projects or cost centers ask for something bounded instead: a team,
