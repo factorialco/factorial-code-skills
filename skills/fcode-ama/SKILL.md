@@ -187,7 +187,7 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | Access request pending | It's under review; you'll be notified of the outcome |
 | OAuth app for a Partner / Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
 | Demo company (Partner / IC) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
-| Release review outcome | The release either deploys or you're notified of required changes; fix and request again with a higher version |
+| Release review outcome | The release either deploys or you're notified of required changes; fix and request again (the same version, once the release is marked failed) |
 | Promote a release to production | Request it (Production tab or `fcode app:releases:request`, `fcode-release`): the copy into prod is automatic; a Factorial admin of the owning team or an operator marks it deployed — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
 | Need a higher limit (execution time, concurrency, datastore, rate, …) | Every workspace is on the same fixed plan — there is no self-service upgrade. Ask us: internal Factorial users in Slack `#factorial-code-users`, others through their Factorial contact. Current values: `fcode-core-concepts` › Plans & limits |

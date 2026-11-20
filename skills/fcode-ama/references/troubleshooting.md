@@ -134,7 +134,8 @@ instead — see the routing table in `SKILL.md`.
   it deployed takes a **Factorial admin of the app's owning team** or an
   **operator**. See `journey.md` §8 and `/docs/building-apps/permissions`.
 - **"My release failed."** The copy into prod retried and gave up; the
-  release's error says why. Fix the cause and request the same version
+  release's error says why (on the App page, or in `error` from
+  `fcode app:releases:list --json`). Fix the cause and request the same version
   again (`fcode-release`).
 - **"I edited the base app but the workspace inheriting it still runs the old
   code."** / **"A process I just added to the base app isn't visible in the

@@ -241,16 +241,15 @@ When development is done, request a **release**: a semver version plus
 release notes, from the app's Production tab (**Request release**) or with
 `fcode app:releases:request` from the App folder (`fcode-release`). Any
 member of the app's team can request one, and an App has one release in
-progress at a time. The platform enforces that the app is live, the version is
-strictly greater than the latest deployed one and unused, and the workspace
-snapshot is clean (a snapshot containing failed entities can never become a
-release).
+progress at a time. The platform enforces that the app is live and that the
+version is strictly greater than the latest deployed one and unused (the
+version of a `failed` release can be requested again).
 
 The release is then validated — best practices, correct use of the Factorial
 Code templates (not reinventing what the base workspaces provide), and
 correct handling of secrets and credentials. The release either proceeds or
 the user is notified of the changes required; fix them and request again
-with a higher version.
+(the same version, once the release is marked `failed`).
 
 Release lifecycle: `requested → deploying → deployed | failed`. Requesting a
 release starts a background copy: it tags the dev workspace with the version
@@ -261,7 +260,8 @@ prod. The request dialog and the CLI list those deletions, and the variables
 prod lacks, before you confirm: a release never copies variables or
 workspace settings. The copy retries on its own; when it gives up, the
 release turns `failed` with the error and the same version can be requested
-again.
+again. A snapshot containing failed entities never becomes a release: the
+copy retries until it is clean or gives up.
 
 Treat prod's code as read-only: changes belong in dev and reach production
 through a release (shared variables and credentials are still managed
