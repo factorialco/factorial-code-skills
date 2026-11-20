@@ -65,8 +65,9 @@ so its `ui:` options apply.
 - **Pair records with another system** — an `object` with
   `"ui": { "ui:field": "pairing" }` whose properties are one row each (a
   `string`; the other system's records as choices, once for the section in
-  `x-fcode-choices` or per row as `oneOf` / `enum`, or no choices at all for a
-  row the admin types, when those records can't be listed) renders as one reviewable
+  `x-fcode-choices` or per row as `oneOf` / `enum`, or, in a section that sets
+  `ui:options.freeText: true`, no choices at all for a row the admin types, when
+  those records can't be listed; without the flag such a row is dropped) renders as one reviewable
   table instead of a dropdown per record. Per row,
   `"x-fcode-suggestion": { "value", "reason" }` proposes a match and
   `"x-fcode-in-use": true` narrows the default list; `default` is the stored

@@ -710,25 +710,30 @@ The contract:
   that is not one of the row's choices is ignored (on a typed row any text
   goes). Leave its `source` out: your
   app's suggestions are `"app"`, and `"one"` marks One's (see "Set up with One").
-- **Typed rows, when the other system can't be listed.** A row with no
-  `oneOf`, no `enum` and no section `x-fcode-choices` is typed: the admin types
+- **Typed rows, when the other system can't be listed.** A section that
+  sets `"ui:options": { "freeText": true }` types its rows: there, a string row
+  with no `oneOf`, no `enum` and no section `x-fcode-choices` is a text input, the admin types
   the other system's value into a text input, and the submission carries what
-  was typed. Use it when the vendor has no API to list the records or the app
-  has no access to it — don't invent a fake choice list. It reads Needs a
+  was typed. Without `freeText`, a row with no choices is left out of the table
+  (with a console warning), so a pre-render that fails to fetch the vendor's list
+  gives an empty table, not silent free text. Opt in only when the vendor has no
+  API to list the records or the app has no access to it — don't invent a fake
+  choice list. It reads Needs a
   value (not Needs a choice) until something is typed, then Confirmed; blanking
   it clears the row. When every row of a section is typed, the filter reads
   Needs a value (N).
   Suggestions and `default` work as on any row. Typed rows have no "Not
   mapped" and never read No longer available. Since anything can be typed,
   constrain the row (`pattern`, `maxLength`: the error shows on that row) and
-  check the values again in the process. A section can mix typed rows and
-  rows with choices.
+  check the values again in the process. In an opted-in section, rows with
+  choices stay selects, so typed rows and rows with choices mix. `freeText`
+  must be a boolean; anything else warns and counts as off.
 
   ```json
   "codes": {
     "type": "object",
     "title": "Wage type codes",
-    "ui": { "ui:field": "pairing", "ui:options": { "columns": ["Factorial", "Payroll code"] } },
+    "ui": { "ui:field": "pairing", "ui:options": { "freeText": true, "columns": ["Factorial", "Payroll code"] } },
     "properties": {
       "concept_4": { "type": "string", "title": "Base salary", "pattern": "^[0-9]{4}$", "default": "1000" },
       "concept_7": { "type": "string", "title": "Overtime", "pattern": "^[0-9]{4}$" }
