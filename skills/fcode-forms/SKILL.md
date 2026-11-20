@@ -768,6 +768,27 @@ nothing, and inside Factorial opens a new conversation with One about this form.
 }
 ```
 
+- **Add it only where One can work the values out**: records to match by
+  meaning (a mapping, a pairing table), values in the company's own data or
+  documents (a policy, the handbook), or a setup the `context` can describe in
+  words. Leave it off a form only the admin can answer (credentials, choices
+  that are theirs to make) and off a short form that is quicker to fill in by
+  hand: a button that leaves most fields empty costs the admin more than it
+  saves.
+- **When the values live in another system, have One ask for them.** A form may
+  need identifiers or codes that only another tool holds, so One cannot find
+  them in Factorial. If that tool can export them (a CSV) or show them on one
+  screen (a screenshot), the `context` tells One to ask the admin for exactly
+  that export, then fill the form in from it: name the export or screen as the
+  other tool calls it, and say which column or label goes to which field. One
+  asks in the conversation, reads the file the admin attaches and proposes the
+  values. What it read reaches the form as part of a short note (about 8,000
+  characters), so this suits dozens of rows, not thousands: for those, have the
+  app read the other system itself and fill a pairing table.
+
+  ```json
+  "context": "The NetSuite internal ids of the subsidiaries are not in Factorial. Ask the admin for the CSV export of Setup > Company > Subsidiaries in NetSuite (or a screenshot of that list), then fill in each subsidiary's internal id from its Internal ID column, matching rows by name."
+  ```
 - **`label`** (required) is the button text and **`prompt`** (required) the
   short message shown in the conversation as the user's. **`context`** is
   longer instructions sent along unseen: how this app is set up, what to match
