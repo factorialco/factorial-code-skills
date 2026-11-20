@@ -136,7 +136,10 @@ so its `ui:` options apply.
   `selectField` / `multiSelectField` ships inside the schema, so a list fed
   from a directory that grows with the company (every employee, every
   manager, all projects or cost centers) turns into thousands of options for
-  a large account. Nobody can pick from that. Small organisational lists (teams, legal entities,
+  a large account. Nobody can pick from that, and hosts on a forms SDK older
+  than `@factorialco/fcode-react-forms` 3.7.1 fail validation with "Maximum
+  call stack size exceeded" from about 1,000 options: the submit button
+  silently does nothing. Small organisational lists (teams, legal entities,
   locations, roles) stay in the tens even for large accounts and are fine to
   list whole. The forms SDK has no searchable or remote-loading picker, so for
   people, projects or cost centers ask for something bounded instead: a team,

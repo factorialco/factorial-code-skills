@@ -747,6 +747,11 @@ the f0 theme render the same section as ordinary dropdowns, which submit the
 same values. A complete app — pre-render building the section, settings process
 storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
 
+A host on an old forms SDK (`@factorialco/fcode-react-forms` 3.7 or earlier)
+doesn't know the pairing contract: rows that rely on `x-fcode-choices` render as
+free text, and rows with their own `oneOf` are pre-filled with its first choice,
+so don't ship a pairing section to such a host.
+
 ## Set up with One
 
 A long setup, or a pairing table with hundreds of rows, can be handed to One
@@ -828,7 +833,7 @@ nothing, and inside Factorial opens a new conversation with One about this form.
   a conversation, in the hosted `forms.js`, and in any host that doesn't offer
   One, so the schema stays valid everywhere.
 
-A complete sample, a whole-form button and one for a pairing table, is in `fcode-examples` (`references/pairing-table.md`).
+A complete sample, with a button for a pairing table, is in `fcode-examples` (`references/pairing-table.md`).
 
 ## Automatic file uploads
 
