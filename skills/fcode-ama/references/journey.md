@@ -249,11 +249,13 @@ progress at a time. The platform enforces that the app is live and that the
 version is strictly greater than the latest deployed one and unused (the
 version of a `failed` release can be requested again).
 
-The release is then validated — best practices, correct use of the Factorial
+The release is then reviewed — best practices, correct use of the Factorial
 Code templates (not reinventing what the base workspaces provide), and
-correct handling of secrets and credentials. The release either proceeds or
-the user is notified of the changes required; fix them and request again
-(the same version, once the release is marked `failed`).
+correct handling of secrets and credentials. The review runs after the copy,
+so the code is already in the prod workspace: it decides whether the release
+is marked `deployed` or `failed`. When it fails, the user is notified of the
+changes required; fix them and request again (the same version, once the
+release is marked `failed`).
 
 Release lifecycle: `requested → deploying → deployed | failed`. Requesting a
 release starts a background copy: it tags the dev workspace with the version

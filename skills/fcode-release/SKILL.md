@@ -134,10 +134,11 @@ Gate every release with `fcode-code-validation` — see the procedure.
 7. **Report the outcome:** the version, what was deleted from prod, and the
    variables the user still has to set there. Remind the user that the
    release awaits being marked `deployed` by an operator or a Factorial admin
-   of the team. Customers' installations follow the `stable` alias: only the
-   App's first deployed release becomes stable on its own; a later one
-   reaches them when an operator or a team admin moves `stable` to it
-   (`fcode-ama`).
+   of the team. Installations pinned to the `stable` alias get it when it
+   becomes stable: only the App's first deployed release does so on its own;
+   a later one reaches them when an operator or a team admin moves `stable`
+   to it (`fcode-ama`). Installations that follow the prod workspace live,
+   rather than `stable`, run the copied code as soon as the copy ends.
 
 ## Errors
 
