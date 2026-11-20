@@ -26,9 +26,10 @@ instead — see the routing table in `SKILL.md`.
 - **"There are no OAuth steps in my checklist."** An app that requests no
   OAuth scopes never runs the OAuth flow, so the steps are hidden. Request
   scopes from the App settings' OAuth tab and the setup steps reappear.
-- **"I'm a Partner/IC and have no OAuth application."** It's preconfigured by
-  an administrator and appears on the App settings' OAuth tab once done — if
-  it's blocking you, escalate.
+- **"I have no OAuth application / my OAuth credentials are missing."**
+  They're created automatically, for every role: development when the App is
+  created, production with its first release, on the App settings' OAuth
+  tab. If one hasn't appeared by then, escalate.
 - **"My integrations-framework app doesn't show up / installs oddly."**
   Framework apps must be linked to their Factorial integration (checklist
   step "Link the Factorial integration", on the app's Settings page) —
@@ -62,8 +63,8 @@ instead — see the routing table in `SKILL.md`.
 ## Demo companies & Test marketplace
 
 - **"I can't create a demo company, only request one."** Direct creation
-  (and the Demo generator) is for Factorial internal users; Partners and
-  Individual Contributors request one and get an email when it's provisioned.
+  (and the Demo generator) is for Factorial internal users; everyone else
+  requests one and gets an email when it's provisioned.
 - **"My app isn't listed in the Test marketplace."** It lists the apps in
   *your team's* development environment — check you're in the right team and
   the app is live.

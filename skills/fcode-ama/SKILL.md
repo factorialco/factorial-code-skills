@@ -20,14 +20,25 @@ problems and fixes are in `references/troubleshooting.md`.
 
 ## Who you're helping
 
-Three user roles use the platform. Establish which one you're talking to
+Four user roles use the platform. Establish which one you're talking to
 early — several flows diverge by role:
 
 | Role | Who | Key differences |
 |---|---|---|
-| **Factorial internal** | Developers at Factorial | Create their own OAuth apps in the **Factorial Backoffice**; create demo companies directly (using the Demo generator); Slack `#factorial-code-users` available |
-| **Partner** | External companies building apps/integrations with Factorial | OAuth app preconfigured by an administrator; demo companies by request |
-| **Individual Contributor** | Someone building their own app or automation (may be a customer, but not always — never call this role "end customer") | Same as Partner |
+| **Factorial internal** | Developers at Factorial | Create demo companies directly (using the Demo generator); Slack `#factorial-code-users` available |
+| **Partner** | External companies building apps/integrations with Factorial | Demo companies by request |
+| **Factorial Customer** | A company that uses Factorial, building an app or automation for its own Factorial account — even when one person (say, an HR admin) does it alone | Same as Partner; usually wants a private installation in its own company rather than a marketplace listing (see "Private app installed for a specific company" under Escalation) |
+| **Individual Contributor** | Anyone else building outside a partner or a company that uses Factorial — e.g. someone doing a security audit | Same as Partner |
+
+To tell the last two apart: building for the company that uses Factorial →
+Factorial Customer; otherwise → Individual Contributor.
+
+"Factorial Customer" is a builder's team type. Everywhere else in this skill,
+**customers** are the companies that install an App. Never call a builder an
+"end customer".
+
+OAuth credentials are created automatically for every role (stage 4 in
+`references/journey.md`).
 
 All roles talk to Factorial through the **Public API**, and all belong to a
 **development team**: every app a team creates is shared by all its members.
@@ -44,8 +55,8 @@ already has a team on the platform, they are added to that existing team.
   checklist on the App detail page"), not by exact button pixels — labels
   change; flows are stable.
 - **Admin actions: outcome only.** When a step is performed by an
-  administrator (access approval, demo provisioning, OAuth preconfiguration,
-  release review), tell the user what they will observe and what to do next.
+  administrator (access approval, demo provisioning, release review), tell
+  the user what they will observe and what to do next.
   Never describe admin-side mechanics or how credentials are delivered.
 - **Answer in the user's language.**
 - **Fetch before deep-diving.** When you have web access, read the linked
@@ -91,7 +102,7 @@ Plus the self-describing **Marketplace**, **Team**, and **Installations** areas.
 | 3 | Getting started | App detail page checklist | Ordered setup steps: build locally, link the Factorial integration (framework apps only), configure OAuth (when scopes were requested), publish a release, add marketplace metadata |
 | 4 | Configure OAuth | App settings → OAuth tab | Per-environment client credentials for the OAuth flow (per-role setup in `references/journey.md`) |
 | 5 | Build locally | Your machine | Install the CLI, `fcode clone` the dev workspace (or `fcode team:clone` for every App of your team at once), code with your own agent + the `fcode-*` skills, test locally, `fcode push` |
-| 6 | Demo company | Demo companies page | Internal: create directly. Partner/IC: request one; you're notified by email |
+| 6 | Demo company | Demo companies page | Internal: create directly. Everyone else: request one; you're notified by email |
 | 7 | Test installs | Test marketplace | Run the real OAuth flow with the demo company's credentials, install, exercise the install / settings / uninstall forms and any UI trigger buttons inside the demo company's Factorial |
 | 8 | Release | App detail → Production tab, or `fcode app:releases:request` | Request a release (semver + notes); the dashboard copies dev into the prod workspace, then a Factorial admin of the owning team or an operator marks it deployed (`references/journey.md` §8) |
 | 9 | Publish listing | App detail → Publication tab; workspace Settings › Factorial tab | Marketplace listing metadata: a linked DatoCMS record and/or the fallback fields; the agent description One reads to pick the App (set on the prod workspace) |
@@ -185,8 +196,8 @@ Doc paths are relative to `https://code.factorialhr.com`.
 | Need | What to do |
 |---|---|
 | Access request pending | It's under review; you'll be notified of the outcome |
-| OAuth app for a Partner / Individual Contributor | Preconfigured by an administrator — visible on the App settings' OAuth tab once done |
-| Demo company (Partner / IC) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
+| OAuth credentials missing | Created automatically: development when the App is created, production with its first release. If one hasn't appeared by then, escalate |
+| Demo company (not Factorial internal) | "Request a demo company" on the Demo companies page; you're emailed when it's ready |
 | Release review outcome | The release either deploys or you're notified of required changes; fix and request again (the same version, once the release is marked failed) |
 | Promote a release to production | Request it (Production tab or `fcode app:releases:request`, `fcode-release`): the copy into prod is automatic; a Factorial admin of the owning team or an operator marks it deployed — `references/journey.md` §8 |
 | Private app installed for a specific company | A production installation created from the App detail page — by an administrator **or by a developer** who provides the Factorial company ID (e.g. how Factorial's Forward Deployed Engineers roll out private apps) |
