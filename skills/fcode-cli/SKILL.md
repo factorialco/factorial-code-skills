@@ -257,9 +257,8 @@ acme-payroll/
 The checkout is called `app`, never the `dev-<token>` slug it came from: the slug
 is in the metadata, and the directory is only a checkout. Releases never
 re-point it at prod: they are requested with `fcode app:releases:request`
-(`fcode-release`). Each level's
-`settings.json` describes the thing that level holds, and they never collide,
-being one directory apart.
+(`fcode-release`). Each level's `settings.json` describes the thing that
+level holds, and they never collide, being one directory apart.
 
 Inside an App's workspace every ordinary command works as usual; the team
 commands only add the ones that span Apps:
@@ -338,19 +337,21 @@ fcode app:releases:request 1.4.0 --notes "Adds the payroll export" --yes
   without `v`, higher than the last deployed, unused unless `failed`, no
   other release in progress), prints what the copy does to prod (deletions,
   variables prod lacks, whether `app/` differs from dev), asks, requests,
-  waits up to five minutes for the copy, then pulls `app/`.
+  waits up to five minutes for the copy, then, once the copy is done, pulls
+  `app/`.
   - Without a version in a terminal it asks for one, suggesting the next
     patch.
   - `--notes` become the release notes in `CHANGELOG.md`.
   - `--dry-run` prints the summary and requests nothing; `--yes` skips the
     question; `--json` needs one of them and prints one JSON object
-    (`preflight`, `localChanges`, `release`, `copy`, `followError`,
-    `pulled`).
+    (`preflight`, `preflightError`, `localChanges`, `release`, `copy`,
+    `followError`, `pulled`).
   - The pull never stops on a question: a local change it would overwrite or
     remove is kept and reported — run `fcode pull` in `app/` to choose.
   - Exit `1` when the copy gave up (`failed`), when the command stopped
-    following the copy on a dashboard error, or on any refusal; exit `0`
-    when the copy is done or still running.
+    following the copy on a dashboard error, or on any refusal, including
+    answering no at the prompt (`Release not requested.`); exit `0` when the
+    copy is done or still running.
 
 ### `fcode settings:pull` / `settings:push` / `settings:status`
 

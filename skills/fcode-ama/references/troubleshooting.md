@@ -129,7 +129,7 @@ instead — see the routing table in `SKILL.md`.
 - **"I can't request a release."** The app must be `active` or `published`;
   suspended/archived apps can't release.
 - **"My release failed validation."** Fix what the notification lists and
-  request the same version again; the gate's criteria are in `journey.md` §8.
+  request the same version again once the release is marked `failed`; the gate's criteria are in `journey.md` §8.
 - **"Who promotes my release to production?"** Nobody pushes it: requesting
   a release (open to any member) copies dev into the prod workspace. Marking
   it deployed takes a **Factorial admin of the app's owning team** or an
@@ -137,7 +137,8 @@ instead — see the routing table in `SKILL.md`.
 - **"My release failed."** The copy into prod retried and gave up; the
   release's error says why (on the App page, or in `error` from
   `fcode app:releases:list --json`). Fix the cause and request the same version
-  again (`fcode-release`).
+  again, while it is still higher than the last deployed release
+  (`fcode-release`).
 - **"I edited the base app but the workspace inheriting it still runs the old
   code."** / **"A process I just added to the base app isn't visible in the
   child."** The parent link is pinned to one of the base app's versions, so the

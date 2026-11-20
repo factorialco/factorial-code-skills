@@ -411,8 +411,8 @@ only from the development-team root.) The CLI gitignores what must stay out
 **Check `activeTeam` in `workspace.json` before committing it.** It decides
 where every teammate's `fcode push` goes, and `fcode remote:add` makes the
 remote it adds the active one. Never `fcode remote:add prod-…` in a checkout
-teammates pull: releases are requested, never pushed to prod (`fcode-release`). If a checkout
-was re-pointed anyway, switch back with `fcode remote:set dev-…` (`fcode-cli`)
+teammates pull: releases are requested, never pushed to prod
+(`fcode-release`). If a checkout was re-pointed anyway, switch back with `fcode remote:set dev-…` (`fcode-cli`)
 before committing, or every teammate who pulls the repository pushes to
 production.
 

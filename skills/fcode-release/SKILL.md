@@ -58,13 +58,15 @@ Gate every release with `fcode-code-validation` — see the procedure.
 - **"Could not check production" means unknown, not empty.** When the request
   cannot read prod, it says so and still lets you request: the deletions and
   missing variables are unknown. Retry the dry run; request only if the user
-  confirms knowing that.
+  confirms knowing that. With `--json`, `preflight` is `null` and
+  `preflightError` says why.
 - **One release in progress per App.** While a release is `requested` or
   `deploying`, a new request is refused. An operator or a Factorial admin of
   the team marks it `deployed` or `failed` first.
 - **Versions are semver, without `v`,** and higher than the last deployed
   release (`1.4.0`, `1.4.0-rc.1`). A version already used is refused, except a
-  `failed` one, which can be requested again once its cause is fixed.
+  `failed` one, which can be requested again once its cause is fixed, while it
+  is still higher than the last deployed release.
 - **Always confirm before requesting.** Summarize what the release changes
   in prod (the deletions and the missing variables) and wait for an explicit
   yes — prod code serves live installations.
@@ -89,7 +91,8 @@ Gate every release with `fcode-code-validation` — see the procedure.
    A release still `requested` or `deploying` blocks a new one: stop and tell
    the user who can close it. Pick the version: the next one above every
    release listed, as the user wants it (patch, minor or major), or the
-   version of a `failed` release to retry it.
+   version of a `failed` release to retry it, while it is still higher than
+   the last deployed release.
 4. **Preview:**
 
    ```sh
@@ -116,10 +119,12 @@ Gate every release with `fcode-code-validation` — see the procedure.
    ```
 
    The command requests the release, waits up to five minutes for the copy,
-   then pulls `app/` so the new version appears under each `versions/`. It
-   ends in one of three ways:
+   then, once the copy is done, pulls `app/` so the new version appears under
+   each `versions/`. It ends in one of three ways:
    - `✅ Release X requested and copied to production` (exit `0`): done.
-   - `⚠️ … copy to production is still running` (exit `0`): the copy keeps
+   - `⚠️ … copy to production is still running` (exit `0`, or `1` with a
+     `Could not follow the copy…` prefix when the command stopped following
+     it on a dashboard error): the copy keeps
      retrying in the background. Follow it with `fcode app:releases:list`
      (`requested (copying)` until it ends), then `fcode pull` in `app/`. If
      it ends `failed`, the table does not show why:
