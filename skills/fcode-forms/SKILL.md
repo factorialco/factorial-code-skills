@@ -715,7 +715,9 @@ The contract:
   the other system's value into a text input, and the submission carries what
   was typed. Use it when the vendor has no API to list the records or the app
   has no access to it — don't invent a fake choice list. It reads Needs a
-  choice until something is typed, then Confirmed; blanking it clears the row.
+  value (not Needs a choice) until something is typed, then Confirmed; blanking
+  it clears the row. When every row of a section is typed, the filter reads
+  Needs a value (N).
   Suggestions and `default` work as on any row. Typed rows have no "Not
   mapped" and never read No longer available. Since anything can be typed,
   constrain the row (`pattern`, `maxLength`: the error shows on that row) and
@@ -751,9 +753,11 @@ The contract:
   (parameters are untrusted, §What a form may trust).
 - **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
   `labels` overriding the table text — `status`, `confirmed`, `suggested`,
-  `suggestedByOne`, `oneSuggests` (`{value}`), `use`, `needsChoice`, `unavailable` (`{value}`), `accept`, `acceptAll` (`{count}`),
+  `suggestedByOne`, `oneSuggests` (`{value}`), `use`, `needsChoice`, `needsValue`, `unavailable` (`{value}`), `accept`,
+  `acceptAll` (`{count}`),
   `summary` (`{confirmed}`, `{toReview}`), `placeholder`, `addRow`,
-  `needsChoiceFilter` (`{count}`), `empty`. Translate them with `fcode.i18n`
+  `needsChoiceFilter` (`{count}`), `needsValueFilter` (`{count}`), `empty`.
+  Translate them with `fcode.i18n`
   tokens (`fcode-i18n`). A bad option falls back to its default with a console
   warning.
 - **Validation** works per row: a row listed in the section's `required` must be
