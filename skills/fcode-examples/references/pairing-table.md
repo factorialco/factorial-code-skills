@@ -167,6 +167,16 @@ module.exports = { main };
 
 Notes on the pre-render:
 
+- **No list to choose from?** If the vendor can't list its departments (no
+  API for them, or no access), set `ui:options.freeText: true`, leave out
+  `x-fcode-choices` and the name matching: each row becomes a text input the admin types the department code
+  into (`fcode-forms` §Pairing tables, typed rows). Give the rows a `pattern`
+  for the code's format, and in the save process check the format instead of
+  membership in the vendor's list. Without the flag those rows are dropped, so
+  opt in only when there really is no list, not because the vendor is unreachable
+  right now: that is the case below, where the admin fixes the connection
+  instead.
+
 - **`""` is the explicit "Not mapped" choice.** The admin picks it in the table,
   it is stored as `""`, and it comes back as the row's `default`, Confirmed.
   Never send `"default": ""` as a blank: a row with nothing stored has no

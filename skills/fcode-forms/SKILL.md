@@ -650,7 +650,8 @@ accounts to a NetSuite chart of accounts, payroll concepts to DATEV wage types,
 absence types to an official code list. One dropdown per record turns hundreds
 of records into a form nobody can review. Mark the section
 `"ui:field": "pairing"` and Factorial draws it as one table: per row the
-Factorial record, a searchable picker of the other system's records, and a
+Factorial record, a searchable picker of the other system's records (a text
+input where they can't be listed, see "Typed rows" below), and a
 status — **Confirmed** (has a value, including an explicit "Not mapped"),
 **Suggested** (the picker shows the proposal, marked as not chosen yet; the
 app's reason on hover), **No longer available** (the stored pair is no longer a
@@ -692,8 +693,8 @@ The contract:
 
 - **One property per row.** The property name is the key the submission
   carries (use the Factorial record's id, prefixed so it is a valid key:
-  `acc_12`), `title` is the Factorial side. A property that is not a string
-  choice is left out of the table with a console warning. The section may be
+  `acc_12`), `title` is the Factorial side. A property that is not a `string`
+  is left out of the table with a console warning. The section may be
   marked on its own `ui` or from the root `ui` / `uiSchema` map by name.
 - **Choices once per section.** `x-fcode-choices` (a list of
   `{ const, title }`) on the section is used by every row without its own
@@ -706,8 +707,39 @@ The contract:
 - **`x-fcode-suggestion: { value, reason }` is a proposal**, never submitted
   until the user accepts it or picks another record: saving without accepting
   leaves the row unpaired. Clearing a row dismisses its suggestion. A `value`
-  that is not one of the row's choices is ignored. Leave its `source` out: your
+  that is not one of the row's choices is ignored (on a typed row any text
+  goes). Leave its `source` out: your
   app's suggestions are `"app"`, and `"one"` marks One's (see "Set up with One").
+- **Typed rows, when the other system can't be listed.** A section that
+  sets `"ui:options": { "freeText": true }` types its rows: there, a string row
+  with no `oneOf`, no `enum` and no section `x-fcode-choices` is a text input, the admin types
+  the other system's value into a text input, and the submission carries what
+  was typed. Without `freeText`, a row with no choices is left out of the table
+  (with a console warning), so a pre-render that fails to fetch the vendor's list
+  gives an empty table, not silent free text. Opt in only when the vendor has no
+  API to list the records or the app has no access to it — don't invent a fake
+  choice list. It reads Needs a
+  value (not Needs a choice) until something is typed, then Confirmed; blanking
+  it clears the row. When every row of a section is typed, the filter reads
+  Needs a value (N).
+  Suggestions and `default` work as on any row. Typed rows have no "Not
+  mapped" and never read No longer available. Since anything can be typed,
+  constrain the row (`pattern`, `maxLength`: the error shows on that row) and
+  check the values again in the process. In an opted-in section, rows with
+  choices stay selects, so typed rows and rows with choices mix. `freeText`
+  must be a boolean; anything else warns and counts as off.
+
+  ```json
+  "codes": {
+    "type": "object",
+    "title": "Wage type codes",
+    "ui": { "ui:field": "pairing", "ui:options": { "freeText": true, "columns": ["Factorial", "Payroll code"] } },
+    "properties": {
+      "concept_4": { "type": "string", "title": "Base salary", "pattern": "^[0-9]{4}$", "default": "1000" },
+      "concept_7": { "type": "string", "title": "Overtime", "pattern": "^[0-9]{4}$" }
+    }
+  }
+  ```
 - **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
   marked, the table lists only those plus rows paired or suggested, and
   **Add row** brings in any other row. Mark them on long lists: each edit
@@ -726,9 +758,11 @@ The contract:
   (parameters are untrusted, §What a form may trust).
 - **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
   `labels` overriding the table text — `status`, `confirmed`, `suggested`,
-  `suggestedByOne`, `oneSuggests` (`{value}`), `use`, `needsChoice`, `unavailable` (`{value}`), `accept`, `acceptAll` (`{count}`),
+  `suggestedByOne`, `oneSuggests` (`{value}`), `use`, `needsChoice`, `needsValue`, `unavailable` (`{value}`), `accept`,
+  `acceptAll` (`{count}`),
   `summary` (`{confirmed}`, `{toReview}`), `placeholder`, `addRow`,
-  `needsChoiceFilter` (`{count}`), `empty`. Translate them with `fcode.i18n`
+  `needsChoiceFilter` (`{count}`), `needsValueFilter` (`{count}`), `empty`.
+  Translate them with `fcode.i18n`
   tokens (`fcode-i18n`). A bad option falls back to its default with a console
   warning.
 - **Validation** works per row: a row listed in the section's `required` must be
@@ -743,8 +777,8 @@ the whole section as one variable
 (`"accounts": { "$ref": "#/variables/accountsField" }`).
 
 The table is drawn inside Factorial. The hosted `forms.js` and any host without
-the f0 theme render the same section as ordinary dropdowns, which submit the
-same values. A complete app — pre-render building the section, settings process
+the f0 theme render the same section as ordinary dropdowns (text inputs for
+typed rows), which submit the same values. A complete app — pre-render building the section, settings process
 storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
 
 A host on an old forms SDK (`@factorialco/fcode-react-forms` 3.7 or earlier)
