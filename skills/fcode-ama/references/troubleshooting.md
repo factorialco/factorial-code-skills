@@ -121,21 +121,24 @@ instead — see the routing table in `SKILL.md`.
 ## Releases
 
 - **"Version must be greater than the latest deployed release."** Releases
-  are strict semver, always increasing. Note a **failed release keeps its
-  version reserved** — resubmit with a higher version, not the same one.
+  are strict semver, always increasing. A **failed** release's version can be
+  requested again once its cause is fixed; any other used version cannot.
+- **"Another release is in progress."** An App has one release `requested` or
+  `deploying` at a time: a Factorial admin of the team or an operator marks it
+  deployed or failed before the next request.
 - **"I can't request a release."** The app must be `active` or `published`;
   suspended/archived apps can't release.
 - **"My release failed validation."** Fix what the notification lists and
-  request a new, higher version; the gate's criteria are in `journey.md` §8.
-- **"Who promotes my release to production?"** Requesting a release is open
-  to any member; promoting it (pushing to prod and marking it deployed) takes
-  a **Factorial admin of the app's owning team** — self-service, the App
-  detail page's "How to promote" dialog has the commands — or an **operator**
-  for everyone else. See `journey.md` §8 and `/docs/building-apps/permissions`.
-- **"I'm a team admin but my push into `prod-…` is refused."** Prod write is
-  granted when the release is requested, and access rides in the access
-  token — a session opened before the grant doesn't have it. Run
-  `fcode login` (or sign out and back in) and retry.
+  request the same version again once the release is marked `failed`; the gate's criteria are in `journey.md` §8.
+- **"Who promotes my release to production?"** Nobody pushes it: requesting
+  a release (open to any member) copies dev into the prod workspace. Marking
+  it deployed takes a **Factorial admin of the app's owning team** or an
+  **operator**. See `journey.md` §8 and `/docs/building-apps/permissions`.
+- **"My release failed."** The copy into prod retried and gave up; the
+  release's error says why (on the App page, or in `error` from
+  `fcode app:releases:list --json`). Fix the cause and request the same version
+  again, while it is still higher than the last deployed release
+  (`fcode-release`).
 - **"I edited the base app but the workspace inheriting it still runs the old
   code."** / **"A process I just added to the base app isn't visible in the
   child."** The parent link is pinned to one of the base app's versions, so the

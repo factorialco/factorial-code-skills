@@ -241,45 +241,52 @@ Everything exercised here behaves identically in the production marketplace.
 
 ## 8. Release and promotion to production
 
-When development is done, request a **release** from the app's Production
-tab: a semver version plus release notes. Any member of the app's team can
-request one. The platform enforces that the app is live, the version is
-strictly greater than the latest deployed one and unused, and the workspace
-snapshot is clean (a snapshot containing failed entities can never become a
-release).
+When development is done, request a **release**: a semver version plus
+release notes, from the app's Production tab (**Request release**) or with
+`fcode app:releases:request` from the App folder (`fcode-release`). Any
+member of the app's team can request one, and an App has one release in
+progress at a time. The platform enforces that the app is live and that the
+version is strictly greater than the latest deployed one and unused (the
+version of a `failed` release can be requested again).
 
-The release is then validated — best practices, correct use of the Factorial
+The release is then reviewed — best practices, correct use of the Factorial
 Code templates (not reinventing what the base workspaces provide), and
-correct handling of secrets and credentials. The release either proceeds or
-the user is notified of the changes required; fix them and request again
-with a higher version.
+correct handling of secrets and credentials. The review runs after the copy,
+so the code is already in the prod workspace: it decides whether the release
+is marked `deployed` or `failed`. When it fails, the user is notified of the
+changes required; fix them and request again (the same version, once the
+release is marked `failed`).
 
 Release lifecycle: `requested → deploying → deployed | failed`. Requesting a
-release snapshots every process, module, and i18n file, as written, into a
-**workspace version** in the dev environment and creates the **prod workspace**
-(`prod-{appId}`) when it doesn't exist yet. A deployed release:
+release starts a background copy: it tags the dev workspace with the version
+(a **workspace version** of every process, module, and i18n file, as
+written), copies that version into the **prod workspace** (`prod-{appId}`,
+created on the first release), deleting what dev no longer has, and tags
+prod. The request dialog and the CLI list those deletions, and the variables
+prod lacks, before you confirm: a release never copies variables or
+workspace settings. The copy retries on its own; when it gives up, the
+release turns `failed` with the error and the same version can be requested
+again. A snapshot containing failed entities never becomes a release: the
+copy retries until it is clean or gives up.
 
-- has that version copied into the prod workspace (treat its code as
-  read-only: changes belong in dev and reach production through a release —
-  shared variables and credentials are still managed there);
-- points the **`stable` alias** at it, so external consumers roll out (or
-  back) by alias moves (mechanics in `fcode-core-concepts`);
+Treat prod's code as read-only: changes belong in dev and reach production
+through a release (shared variables and credentials are still managed
+there). A deployed release:
+
+- is the one the **`stable` alias** can point at, so external consumers roll
+  out (or back) by alias moves (mechanics in `fcode-core-concepts`); the
+  first deployed release becomes stable on its own;
 - on the first success, flips the app to **published**.
 
-### Who promotes
+### Who marks it deployed
 
-Promoting the released version into production — pushing it to the prod
-workspace and marking the release deployed — takes one of:
+Nobody pushes code to the prod workspace: the release request copies it.
+Marking the release **deployed** (or **failed**) once the copy is done takes
+one of:
 
 - **A Factorial team admin**: a member with a Factorial address holding the
-  admin role on the app's owning development team, end to end by themselves.
-  Prod workspace write access is granted when the release is **requested**,
-  and access rides in the access token — if a push into `prod-…` is refused
-  right after requesting, run `fcode login` to pick up the grant. The App
-  detail page shows the release actions and a **"How to promote"** dialog.
-  Promote with the procedure in `fcode-release`, not the dialog's short
-  command list, which skips putting dev's code back and deleting what dev
-  removed.
+  admin role on the app's owning development team, from the App detail
+  page's release actions.
 - **An operator** (the Factorial Code platform team) — the route for
   Partner, Factorial Customer and IC teams and for members holding the
   developer role.
@@ -331,7 +338,7 @@ Publication tab: `factorial.agentDescription` in the App workspace's
 `settings.json`, uploaded by `fcode push`, or the workspace's **Settings ›
 Factorial** tab in the platform web client (field reference: Workspace
 settings in `fcode-cli`). Customers get the **production** workspace's
-(`prod-…`) value; promotion does not copy it from `dev-…`, so set it there
+(`prod-…`) value; a release does not copy it from `dev-…`, so set it there
 too.
 
 It is not a process's `agentTool.description` (`fcode-factorial-actions`):

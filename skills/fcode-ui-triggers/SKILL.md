@@ -270,5 +270,5 @@ contract from the team that owns the page.
    the button is open to anyone who can reach it.
 4. A form-backed trigger declares the pre-filled keys it reads, and any file
    parameter carries `x-fcode-file`.
-5. Tested from a dev installation in Factorial, then promoted to `prod-` and
-   released so the deploy workspaces pick it up (`fcode-release`, `fcode-ama`).
+5. Tested from a dev installation in Factorial, then released to `prod-` so
+   the deploy workspaces pick it up (`fcode-release`, `fcode-ama`).

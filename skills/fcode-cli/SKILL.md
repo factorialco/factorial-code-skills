@@ -199,9 +199,9 @@ what each side would lose before choosing. Notes:
 ### `fcode remote:add <workspace-slug>`
 
 Points an already-cloned workspace folder at a different cloud workspace, so
-subsequent `fcode pull` / `push` sync with that one instead — how code is
-promoted between workspaces (e.g. dev → prod). Don't use it ad hoc: the gated
-promotion procedure is in `fcode-release`.
+subsequent `fcode pull` / `push` sync with that one instead. Releases don't
+use it: `fcode app:releases:request` has the dashboard copy dev into prod
+(`fcode-release`).
 
 **`remote:add` makes the added workspace the active one** (`activeTeam` in
 `app/.fcode/workspace.json`), and every later `pull` / `push` goes there.
@@ -216,8 +216,7 @@ the local line left in `variables.env` then counts as an override: `status`
 shows it `🔥 (conflict)` and `push` creates it in the remote. What the remote
 lacks stays on disk and shows as only existing in local; a sensitive one holds
 the `********` placeholder, and a push would create it with that literal value.
-Re-adding a remote the folder already had keeps its old record. The
-release procedure that copes with this is in `fcode-release`.
+Re-adding a remote the folder already had keeps its old record.
 
 ### `fcode remote:set [workspace-slug]`
 
@@ -225,8 +224,7 @@ Switches the active remote among the ones already added; with no argument it
 lists them. Check which one is active before committing `workspace.json`: if a
 folder that teammates pull from is left pointing at prod, every teammate who
 pulls the repository pushes to production (`fcode-core-concepts` §Workspace
-structure (CLI)). Releases never re-point such a folder; they work in a fresh
-clone (`fcode-release`).
+structure (CLI)). Releases never re-point a folder at prod (`fcode-release`).
 
 ### `fcode team:clone` / `team:pull` / `team:status`
 
@@ -258,9 +256,9 @@ acme-payroll/
 
 The checkout is called `app`, never the `dev-<token>` slug it came from: the slug
 is in the metadata, and the directory is only a checkout. Releases never
-re-point it at prod: they run from a fresh clone (`fcode-release`). Each level's
-`settings.json` describes the thing that level holds, and they never collide,
-being one directory apart.
+re-point it at prod: they are requested with `fcode app:releases:request`
+(`fcode-release`). Each level's `settings.json` describes the thing that
+level holds, and they never collide, being one directory apart.
 
 Inside an App's workspace every ordinary command works as usual; the team
 commands only add the ones that span Apps:
@@ -317,6 +315,43 @@ fcode app:push --force    # local wins over a cloud edit
   exits non-zero.
 - After a push the local file is rewritten in the canonical form a pull would
   produce, so `team:status` reads it as up to date.
+
+### `fcode app:releases:request` / `app:releases:list`
+
+Request a release of the App and follow its releases, from the App folder or
+anywhere inside its `app/` (CLI 3.12.0 or later). The release procedure,
+validation gate included, is in `fcode-release`.
+
+```sh
+fcode app:releases:list                        # newest first; --status, --json
+fcode app:releases:request 1.4.0 --notes "Adds the payroll export" --dry-run
+fcode app:releases:request 1.4.0 --notes "Adds the payroll export" --yes
+```
+
+- **`app:releases:list`** reads the dashboard live: version, status
+  (`requested`, `deploying`, `deployed`, `failed`), who requested it, dates,
+  and the `stable` one. `requested (copying)` means the copy to prod is still
+  running. `CHANGELOG.md` in the App folder shows the same releases but only
+  changes on `team:pull` or after a request.
+- **`app:releases:request <version>`** checks the version locally (semver
+  without `v`, higher than the last deployed, unused unless `failed`, no
+  other release in progress), prints what the copy does to prod (deletions,
+  variables prod lacks, whether `app/` differs from dev), asks, requests,
+  waits up to five minutes for the copy, then, once the copy is done, pulls
+  `app/`.
+  - Without a version in a terminal it asks for one, suggesting the next
+    patch.
+  - `--notes` become the release notes in `CHANGELOG.md`.
+  - `--dry-run` prints the summary and requests nothing; `--yes` skips the
+    question; `--json` needs one of them and prints one JSON object
+    (`preflight`, `preflightError`, `localChanges`, `release`, `copy`,
+    `followError`, `pulled`).
+  - The pull never stops on a question: a local change it would overwrite or
+    remove is kept and reported — run `fcode pull` in `app/` to choose.
+  - Exit `1` when the copy gave up (`failed`), when the command stopped
+    following the copy on a dashboard error, or on any refusal, including
+    answering no at the prompt (`Release not requested.`); exit `0` when the
+    copy is done or still running.
 
 ### `fcode settings:pull` / `settings:push` / `settings:status`
 
@@ -645,11 +680,10 @@ set in the App workspace's `settings.json` (`app/settings.json` in a team clone)
   while "Available in Factorial One" is on).
 - **Customers get the production workspace's values.** The marketplace
   catalogue reads them from the App's `prod-…` workspace; only the team's own
-  demo companies read `dev-…`. Promotion does not copy workspace settings, so set
-  them on `prod-…` too — edit `settings.json` after the release flow's
-  `fcode pull` and before its `fcode push` (`fcode-release`), or in the prod
-  workspace's Settings › Factorial tab. A change may take about a minute to show
-  in the catalogue.
+  demo companies read `dev-…`. A release does not copy workspace settings, so
+  set them on `prod-…` too, in the prod workspace's Settings › Factorial tab
+  (`fcode-release`). A change may take about a minute to show in the
+  catalogue.
 
 ## Inherited resources on disk
 
