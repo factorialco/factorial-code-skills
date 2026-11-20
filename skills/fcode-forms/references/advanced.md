@@ -90,25 +90,21 @@ import "@factorialco/rjsf-f0/styles.css";
 />;
 ```
 
-`markdownComponents` (since `@factorialco/rjsf-f0` 2.0.0) makes result messages
+`markdownComponents` makes result messages
 and a schema's `markdown` blocks render with f0 components too — a GFM table in
 a `message` becomes the f0 table card, export included. Omit the prop and the
 same markdown renders as plain elements.
 
 - The host app must already render f0's `F0Provider` above the form and import
   `@factorialco/f0-react/dist/styles.css`. Peers: `react`, `react-dom`,
-  `@rjsf/core` 6, `@rjsf/utils` 6, `@factorialco/f0-react` 4.39+.
+  `@rjsf/core`, `@rjsf/utils`, `@factorialco/f0-react`.
 - `rjsfTheme` swaps the theme wholesale; explicit `templates`/`widgets`/`fields`
   props still win. Merge order: default theme < `rjsfTheme` < individual props.
-- `ui:steps` (see `SKILL.md`) needs the hosted SDK or
-  `@factorialco/fcode-react-forms` ≥ 3.2.0; since `@factorialco/rjsf-f0` 2.1.0
-  the theme renders its navigation with f0 components (sidebar → table of
+- With `ui:steps` (see `SKILL.md`) the theme renders the navigation with f0
+  components (sidebar → table of
   contents, tabs → button strip) — `rjsfTheme={Theme}` brings it along.
-- Multi-process flows (`process` steps in `ui:steps`, see `SKILL.md`) need
-  the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.6.0.
-- The OAuth connect button (`ui:widget: "oauth"`, see `SKILL.md`) needs
-  `@factorialco/fcode-react-forms` ≥ 3.3.0; `@factorialco/rjsf-f0` ≥ 2.3.0
-  renders it as an `F0Button` — the flow itself (popup, completion, form
+- The f0 theme renders the OAuth connect button (`ui:widget: "oauth"`, see
+  `SKILL.md`) as an `F0Button` — the flow itself (popup, completion, form
   reaction) lives in the SDK, the theme only draws the control.
 
 **Never pull the f0 theme into a hosted-embed page** — f0 cannot be tree-shaken

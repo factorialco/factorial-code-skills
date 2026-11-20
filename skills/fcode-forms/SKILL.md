@@ -58,6 +58,11 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **Mapping many Factorial records to another system is a pairing table**
   (`"ui:field": "pairing"`), not a dropdown per record. A row's proposal goes in
   `x-fcode-suggestion`, never in `default`. See "Pairing tables".
+- **A "Set up with One" button is a `"type": "object"` property drawn by
+  `"ui:field": "launch-one"`** that hands the form to One to fill in, never to
+  save. Its
+  `prompt` and `context` are sent to One: never put secrets in them. See "Set up
+  with One".
 - **Form text is translated with `fcode.i18n("key")` tokens in the schema**,
   substituted server-side before the schema is served. See `fcode-i18n`.
 - **Form submissions run under a request timeout** (about a minute) — keep the
@@ -328,8 +333,7 @@ parameter exactly as a one-page form would — process code needs no changes.
 - Properties not listed in any step are appended to the last one; an unusable
   `ui:steps` falls back to the ordinary one-page form with a console warning.
 - Supports root-level `properties` + `required` + `dependencies`; root-level
-  `oneOf`/`allOf` compositions are not split into steps. SDK version
-  requirements in `references/advanced.md`.
+  `oneOf`/`allOf` compositions are not split into steps.
 
 ### Multi-process flows (`process` steps)
 
@@ -476,9 +480,6 @@ The rules:
   honouring its own `ui:steps`. `steps` and `variables` still carry forward,
   and the console warns. Treat this as an exit from the wizard, not a branch
   inside it.
-
-Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.6.0
-(`references/advanced.md`).
 
 ### Chaining processes (`nextProcessId`)
 
@@ -637,8 +638,6 @@ popup blockers let it through — a browser set to block *all* pop-ups gets a
 message under the button instead; a `Cross-Origin-Opener-Policy` header on the
 embedding page or the provider can sever the link with the popup, in which case
 the flow ends as cancelled and `onComplete: "reload"` is the recovery path.
-Needs the hosted SDK or `@factorialco/fcode-react-forms` ≥ 3.3.0 (f0 control:
-`@factorialco/rjsf-f0` ≥ 2.3.0).
 
 A complete sample — pre-render starting the flow, the completion process, the form
 process verifying the connection — is in `fcode-examples`
@@ -707,7 +706,8 @@ The contract:
 - **`x-fcode-suggestion: { value, reason }` is a proposal**, never submitted
   until the user accepts it or picks another record: saving without accepting
   leaves the row unpaired. Clearing a row dismisses its suggestion. A `value`
-  that is not one of the row's choices is ignored.
+  that is not one of the row's choices is ignored. Leave its `source` out: your
+  app's suggestions are `"app"`, and `"one"` marks One's (see "Set up with One").
 - **`x-fcode-in-use: true`** marks Factorial records in use. While any row is
   marked, the table lists only those plus rows paired or suggested, and
   **Add row** brings in any other row. Mark them on long lists: each edit
@@ -726,7 +726,7 @@ The contract:
   (parameters are untrusted, §What a form may trust).
 - **`ui:options`** (all optional): `columns` (two headers), `inUseNote`, and
   `labels` overriding the table text — `status`, `confirmed`, `suggested`,
-  `needsChoice`, `unavailable` (`{value}`), `accept`, `acceptAll` (`{count}`),
+  `suggestedByOne`, `oneSuggests` (`{value}`), `use`, `needsChoice`, `unavailable` (`{value}`), `accept`, `acceptAll` (`{count}`),
   `summary` (`{confirmed}`, `{toReview}`), `placeholder`, `addRow`,
   `needsChoiceFilter` (`{count}`), `empty`. Translate them with `fcode.i18n`
   tokens (`fcode-i18n`). A bad option falls back to its default with a console
@@ -742,14 +742,98 @@ number, same name…), `x-fcode-in-use` from what Factorial actually uses. Injec
 the whole section as one variable
 (`"accounts": { "$ref": "#/variables/accountsField" }`).
 
-The table is drawn inside Factorial (`@factorialco/fcode-react-forms` ≥ 3.8.0
-with `@factorialco/rjsf-f0` ≥ 3.0.0). On fcode-react-forms ≥ 3.8.0, the hosted
-`forms.js` and any host without the f0 theme render the same section as ordinary
-dropdowns, which submit the same values. Older versions don't know the pairing
-contract: rows that rely on `x-fcode-choices` render as free text, and rows with
-their own `oneOf` are pre-filled with its first choice, so don't ship a pairing
-section to a host on fcode-react-forms 3.7 or earlier. A complete app — pre-render building the section, settings process
+The table is drawn inside Factorial. The hosted `forms.js` and any host without
+the f0 theme render the same section as ordinary dropdowns, which submit the
+same values. A complete app — pre-render building the section, settings process
 storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
+
+A host on an old forms SDK (`@factorialco/fcode-react-forms` 3.7 or earlier)
+doesn't know the pairing contract: rows that rely on `x-fcode-choices` render as
+free text, and rows with their own `oneOf` are pre-filled with its first choice,
+so don't ship a pairing section to such a host.
+
+## Set up with One
+
+A long setup, or a pairing table with hundreds of rows, can be handed to One
+(Factorial's AI assistant) from the form itself. Add a `"type": "object"`
+property drawn by `"ui:field": "launch-one"`: it shows only the button, submits
+nothing, and inside Factorial opens a new conversation with One about this form.
+
+```json
+"setupWithOne": {
+  "type": "object",
+  "ui": {
+    "ui:field": "launch-one",
+    "ui:options": {
+      "label": "Set up with One",
+      "prompt": "Set up the NetSuite integration",
+      "context": "The subsidiary chosen so far: \"{{subsidiary}}\". Use the subsidiary of the company's main legal entity. Match accounts by number first, then by meaning; never pick a parent account."
+    }
+  }
+}
+```
+
+- **Add it only where One can work the values out**: records to match by
+  meaning (a mapping, a pairing table), values in the company's own data or
+  documents (a policy, the handbook), or a setup the `context` can describe in
+  words. Leave it off a form only the admin can answer (credentials, choices
+  that are theirs to make) and off a short form that is quicker to fill in by
+  hand: a button that leaves most fields empty costs the admin more than it
+  saves.
+- **When the values live in another system, have One ask for them.** A form may
+  need identifiers or codes that only another tool holds, so One cannot find
+  them in Factorial. If that tool can export them (a CSV) or show them on one
+  screen (a screenshot), the `context` tells One to ask the admin for exactly
+  that export, then fill the form in from it: name the export or screen as the
+  other tool calls it, and say which column or label goes to which field. One
+  asks in the conversation, reads the file the admin attaches and proposes the
+  values. What it read reaches the form as part of a short note (about 8,000
+  characters), so this suits dozens of rows, not thousands: for those, have the
+  app read the other system itself and fill a pairing table.
+
+  ```json
+  "context": "The NetSuite internal ids of the subsidiaries are not in Factorial. Ask the admin for the CSV export of Setup > Company > Subsidiaries in NetSuite (or a screenshot of that list), then fill in each subsidiary's internal id from its Internal ID column, matching rows by name."
+  ```
+- **`label`** (required) is the button text and **`prompt`** (required) the
+  short message shown in the conversation as the user's. **`context`** is
+  longer instructions sent along unseen: how this app is set up, what to match
+  by, what to leave alone. **`section`** names the field or pairing section One
+  works on; without it, the whole form. A form may have several buttons, for
+  example one per pairing table with its own `section`, placed where it should
+  appear.
+- **`collapse: true`** (off by default, and only with `section`) moves the
+  button into that section, right after its title and description, and starts
+  the section's content collapsed under a "Show the full form" toggle beside it.
+  Collapsed fields stay in the form: they keep their values, validate and are
+  saved, and one with an error opens. Secret, file and hidden fields never
+  collapse. Change the toggle's text with `labels.showForm` and
+  `labels.hideForm`. Without a `section`, `collapse` is ignored with a console
+  warning; where the button isn't shown, nothing collapses.
+- **`{{field}}` and `{{variable}}`** in `prompt` and `context` are filled in
+  from the form's current values when the user clicks. Only plain names, no
+  Mustache sections. Secret, file and hidden fields (and anything holding one),
+  and variables that only feed secret fields, are filled in as empty.
+- **What One does.** It reads the form as it stands, with the user's edits,
+  and proposes: values for the fields the user has not changed, and a
+  suggestion with a reason for each open pairing row, marked **Suggested by
+  One**. On a confirmed row it disagrees with, the pair stays and the row offers
+  **One suggests X** with **Use**. It never fills a secret, file or hidden
+  field, never touches a field the user changed or a row they dismissed, and
+  **never saves the form or runs the process**: the user reviews and saves. After
+  the save, One reports the result in the same conversation.
+- **What One knows of your app** is the button's texts and the form's titles,
+  descriptions and choices. Write `context` for a person setting the app up for
+  the first time. The user's company data One looks up itself.
+- **Never put secrets in `prompt` or `context`**: they go to One. Do not ask One
+  to choose notification recipients or to tick confirmations for the user; it
+  won't.
+- **Where the button shows** is the host's decision: on forms opened from
+  Factorial (Integrations, the App's page, trigger forms) for users and
+  companies with One. It renders nothing in the form card One itself shows in
+  a conversation, in the hosted `forms.js`, and in any host that doesn't offer
+  One, so the schema stays valid everywhere.
+
+A complete sample, with a button for a pairing table, is in `fcode-examples` (`references/pairing-table.md`).
 
 ## Automatic file uploads
 

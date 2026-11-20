@@ -53,10 +53,27 @@ fallback: an empty pairing object, used when the pre-render does not run.
     }
   },
   "properties": {
+    "pairWithOne": {
+      "type": "object",
+      "ui": {
+        "ui:field": "launch-one",
+        "ui:options": {
+          "label": "Pair departments with One",
+          "prompt": "Pair our teams with Acme departments",
+          "context": "Pair each Factorial team with the Acme department its people belong to: same name first, then the closest by meaning (\"Customer Success\" is \"Support\"). Leave a team unpaired when no department fits.",
+          "section": "departments"
+        }
+      }
+    },
     "departments": { "$ref": "#/variables/departmentsField" }
   }
 }
 ```
+
+`pairWithOne` is optional: a "Set up with One" button above the table that asks
+One to suggest a department for the open rows, each with a reason, for the admin
+to accept. It submits nothing, and where the host offers no One it renders
+nothing. Contract in `fcode-forms` §Set up with One.
 
 ## Pre-render — build the section
 

@@ -73,6 +73,10 @@ so its `ui:` options apply.
   (accounts, tax codes, cost centers, wage types, absence codes, positions).
   Contract and semantics in `fcode-forms` §Pairing tables; see `accountPairing`
   in the sample.
+- **Let One fill the form** — a `"type": "object"` property with
+  `"ui": { "ui:field": "launch-one", "ui:options": { "label", "prompt", … } }`
+  renders a "Set up with One" button inside Factorial and submits nothing; see
+  `fcode-forms` §Set up with One.
 - **Employees** — Factorial's employee picker (search, filters, avatars). An
   `array` of `string` picks several people and a `string` picks one; mark it with
   `"x-fcode-entity": "employee"` and draw it with `"ui:widget": "employee"`. The
