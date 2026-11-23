@@ -58,6 +58,16 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 - **Mapping many Factorial records to another system is a pairing table**
   (`"ui:field": "pairing"`), not a dropdown per record. A row's proposal goes in
   `x-fcode-suggestion`, never in `default`. See "Pairing tables".
+- **Any other grid of values is a table** (`"ui:field": "table"`): fixed rows
+  from an `object`, a list the user edits from an `array` of objects. See
+  "Tables".
+- **A second way to submit is an action button, not a checkbox the user ticks
+  before submitting**: a `boolean` with `"ui:field": "button"`, which the
+  process receives as `true`. An irreversible action is confirmed with a
+  checkbox named in the button's `enabledWhen`, never a second dialog (the
+  form is already in one). See "Submit and action buttons".
+- **A settings form split with `ui:steps` uses `"navigation": "free"`** (tabs,
+  save from any of them); the default is a wizard. See "Multi-step forms".
 - **A "Set up with One" button is a `"type": "object"` property drawn by
   `"ui:field": "launch-one"`** that hands the form to One to fill in, never to
   save. Its
@@ -250,6 +260,13 @@ return { status: 400, body: { errorMessage: "**Sync failed** — retry." } }; //
 return { redirect: { url: "https://example.com", timeout: 2000 } };         // redirect after submit
 ```
 
+When a submit fails, with the process's `formErrors` or the form's own
+validation, the form brings the first error into view and focuses its field,
+opening its step first in a `ui:steps` form, so a field error is seen even on a
+long form submitted from its foot: there is no need to repeat it in a global
+message. An error drawn only inside a table's or a pairing table's cells does
+not move the view.
+
 **Messages are markdown, not HTML.** `message`, `errorMessage` and a schema's
 `markdown.before`/`markdown.after` blocks render as GitHub Flavored Markdown —
 tables, headings, links, images, code blocks, task lists. Raw HTML is
@@ -322,18 +339,52 @@ parameter exactly as a one-page form would — process code needs no changes.
 ```
 
 - `config` (optional): `layout` — `"tabs"` (default) or `"sidebar"`;
-  `nextLabel` / `backLabel` — button labels, default `"Next"` / `"Back"`.
-  `ui:submitButtonOptions` applies to the **last** step's button.
+  `navigation` — `"linear"` (default, the wizard described here) or `"free"`
+  (tabs of a settings screen, below); `nextLabel` / `backLabel` — button
+  labels, default `"Next"` / `"Back"`. An unknown `layout` or `navigation`
+  falls back to its default with a console warning. `ui:submitButtonOptions`
+  (its `variant` and `enabledWhen` included) applies to the **last** step's
+  button; the "Next" buttons keep the primary look.
 - A step can set its own `nextLabel` / `backLabel`, which win over `config`
   for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
   "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
+- **Write the button labels in the form's language.** The defaults ("Next",
+  "Back", the submit's "Submit") are English whatever the `locale`: set
+  `nextLabel`, `backLabel` and `ui:submitButtonOptions.submitText` with
+  `fcode.i18n` tokens (`fcode-i18n`) in any form that isn't English-only.
 - "Next" validates only the fields on screen (including that step's share of
-  `required`); a Back button and the step navigation revisit completed steps
-  without losing input, and unreached steps stay disabled.
+  `required`), and the view moves to the first error; a Back button and the
+  step navigation revisit completed steps without losing input, and unreached
+  steps stay disabled.
+- **The form's own heading shows once**, above the step navigation: its root
+  `title` and `description` (or `ui:title` / `ui:description`), with each
+  step's own title and description under it. Don't repeat the form's title in
+  every step.
 - Properties not listed in any step are appended to the last one; an unusable
   `ui:steps` falls back to the ordinary one-page form with a console warning.
 - Supports root-level `properties` + `required` + `dependencies`; root-level
   `oneOf`/`allOf` compositions are not split into steps.
+
+**Tabs for a settings form (`"navigation": "free"`).** A wizard suits an
+install flow; a `settings` form split into sections should not make the admin
+press "Next" through every section to change something in the last one. Set
+`"config": { "layout": "tabs", "navigation": "free" }` and the steps become
+tabs of one form:
+
+- Every step is reachable from the start, in any order. Moving between steps
+  validates nothing and keeps what was typed; no step shows as completed.
+- The submit button is on every step, with its `ui:submitButtonOptions`
+  (`submitText`, `variant`, `enabledWhen`, `disabledReason`). There are no
+  "Next" or "Back" buttons, so `nextLabel` / `backLabel` don't apply.
+- Submitting validates the whole form, steps never opened included, and sends
+  every step's values (the defaults of unopened steps too), as a one-page form
+  would. If anything fails nothing is submitted: every step with an error is
+  marked in the navigation, the first one opens with its field focused. Field
+  errors the process returns are marked and opened the same way.
+- The submit's `enabledWhen` may name a property on any step.
+- It applies to a form's own steps only: a form that declares `process` steps,
+  and a process step's form, ignore it with a console warning (a flow stays
+  linear).
 
 ### Multi-process flows (`process` steps)
 
@@ -388,6 +439,8 @@ The rules:
 - **The entry form owns the flow.** Only the first form declares the flow's
   steps and its `config` (`layout`, `nextLabel`, `backLabel`), which applies
   throughout. A later form's own `process` steps and `config` are ignored.
+  A flow is always linear (`navigation: "free"` is ignored), and each page
+  keeps its own form's heading.
 - **A `process` step can have sub-steps.** When that process's own form
   declares `ui:steps` with two or more `fields` steps, they show one level
   below the process step in the navigation (`2.1`, `2.2`, …) once the form
@@ -643,6 +696,95 @@ A complete sample — pre-render starting the flow, the completion process, the 
 process verifying the connection — is in `fcode-examples`
 (`references/oauth-connect.md`).
 
+## Submit and action buttons
+
+**The submit button** is set in the root `ui` node's `ui:submitButtonOptions`:
+`submitText`, and `variant`, its look — `default` (the primary button, used
+when absent), `outline`, `neutral`, `critical` (a destructive action, in red)
+or `ghost`. An unknown variant logs a warning and keeps `default`.
+
+**Action buttons** give a form more than one way to submit it: **Check
+connection** next to **Save**, **Skip for now** next to **Continue**,
+**Disconnect** on a settings form. Declare a `boolean` property with
+`"ui:field": "button"` for each one. It renders as a button where the property
+sits among the fields, and a click sets that property to `true` and submits the
+form:
+
+```json
+"checkConnection": {
+  "title": "Check connection",
+  "description": "Tries the credentials without saving them.",
+  "type": "boolean",
+  "ui": { "ui:field": "button", "ui:options": { "variant": "outline" } }
+}
+```
+
+Clicking it submits every value plus `"checkConnection": true`; **Save** submits
+the same values without the key. The process branches on it (test the
+credentials and return a `message`, or store them).
+
+- **Label** — the property's `ui:title`, then `title`, then its name. The
+  `description` (markdown) shows under the button.
+- **Look** — `ui:options.variant`, the same values as the submit's; `outline`
+  when absent (the usual secondary action). An unknown value logs a warning and
+  keeps `outline`.
+- **Validation runs as for the submit button**: with a required field empty
+  nothing is submitted. So an action can't skip validation; a "Back to the
+  list" action only works on a form with nothing left `required`.
+- **The `true` only travels in the submission the click triggered.** After
+  that submit the property goes back to what it held, so a later **Save**
+  doesn't carry it.
+- **Enter** in a text field always submits through the submit button, never
+  an action button.
+- **In a `ui:steps` form, put action buttons on the last step.** On an earlier
+  step a click validates that step and moves on, like "Next", and the `true`
+  stays with the values submitted at the end.
+
+**Enable a button only after confirming.** Install, uninstall and action
+forms already open in a dialog inside Factorial, so an irreversible action is
+not confirmed with a second dialog on top: ask for a checkbox ("I understand
+that disconnecting stops the sync") and keep the button disabled until it is
+ticked. Name that root `boolean` property in `enabledWhen`, and say why the
+button is disabled in `disabledReason` (its tooltip):
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "confirm": { "title": "I understand that disconnecting stops the sync", "type": "boolean" }
+  },
+  "required": ["confirm"],
+  "ui": {
+    "ui:submitButtonOptions": {
+      "submitText": "Disconnect",
+      "variant": "critical",
+      "enabledWhen": "confirm",
+      "disabledReason": "Tick the box to confirm"
+    }
+  }
+}
+```
+
+- The button is enabled only while the property is exactly `true`, and
+  follows it live (untick and it disables again). While it is disabled, Enter
+  doesn't submit either.
+- `enabledWhen` names a property at the **root** of the form (no `"a.b"`
+  paths). `disabledReason` is optional and shows only while the button is
+  disabled. A non-string `enabledWhen`, or one naming a property the form
+  doesn't have, logs a warning and is ignored.
+- An action button takes the same two keys in its `ui:options`
+  (`{ "variant": "critical", "enabledWhen": "confirm", "disabledReason": "…" }`);
+  each button follows its own rule.
+- In a linear `ui:steps` form the submit's `enabledWhen` reads the last step's
+  values, so put the confirmation on the last step; "Next" is never disabled by
+  it. With `navigation: "free"` it reads the whole form.
+- **It only changes the form on screen.** The process still checks the value
+  (`if (confirm !== true) …`) before doing anything irreversible: a submission
+  can reach it without going through the form.
+
+With "Set up with One", One never clicks an action button nor ticks the
+property an `enabledWhen` names (see "Set up with One").
+
 ## Pairing tables
 
 Integrations map Factorial records to their counterparts elsewhere: expense
@@ -786,6 +928,129 @@ doesn't know the pairing contract: rows that rely on `x-fcode-choices` render as
 free text, and rows with their own `oneOf` are pre-filled with its first choice,
 so don't ship a pairing section to such a host.
 
+## Tables
+
+When a section is a grid of values (one line per expense category, a list of
+invoice lines), mark it `"ui:field": "table"` and Factorial draws it as one
+table instead of a stack of fields. The schema decides the columns, the rows
+and what each cell holds; the table adds only cell editing, a **select all**
+checkbox over a yes/no column and, on a list, adding, removing and reordering
+rows. For mapping records to another system, with suggestions and statuses,
+use a pairing table instead.
+
+**Fixed rows — an `object` with one `object` property per row.** The row
+property's `title` labels the row, its properties are the row's cells. Use it
+when the app knows the rows (build them in a `preRenderProcess`).
+
+```json
+"categories": {
+  "type": "object",
+  "title": "Expense categories",
+  "ui": {
+    "ui:field": "table",
+    "ui:options": {
+      "rowHeader": "Category",
+      "selectAll": "billable",
+      "columns": [
+        { "key": "account", "title": "Account" },
+        { "key": "tax", "title": "Tax", "width": 180 },
+        { "key": "billable", "title": "Billable" },
+        { "key": "state", "title": "State", "width": 140 }
+      ]
+    }
+  },
+  "x-fcode-choices": {
+    "tax": [ { "const": "vat21", "title": "VAT 21%" }, { "const": "vat10", "title": "VAT 10%" } ]
+  },
+  "properties": {
+    "cat_12": {
+      "type": "object",
+      "title": "Travel",
+      "required": ["account"],
+      "properties": {
+        "account": { "type": "string", "default": "6100" },
+        "tax": { "type": "string" },
+        "billable": { "type": "boolean" },
+        "state": { "type": "string", "default": "Synced", "ui": { "ui:widget": "badge", "ui:options": { "variant": "positive" } } }
+      }
+    }
+  }
+}
+```
+
+Once filled in, that submits `{ "categories": { "cat_12": { "account": "6100",
+"tax": "vat21", "billable": true, "state": "Synced" } } }`, one entry per row.
+
+**A list — an `array` of objects.** Every row shares the `items` schema and the
+user adds and removes rows (`minItems` / `maxItems` respected); a new row starts
+with each cell's `default`. It submits an array of row objects.
+
+```json
+"lines": {
+  "type": "array",
+  "title": "Invoice lines",
+  "minItems": 1,
+  "ui": { "ui:field": "table", "ui:options": { "orderable": true, "labels": { "addRow": "Add line" } } },
+  "items": {
+    "type": "object",
+    "required": ["concept"],
+    "properties": {
+      "concept": { "type": "string", "title": "Concept" },
+      "amount": { "type": "number", "title": "Amount", "minimum": 0, "ui": { "ui:options": { "units": "€", "maxDecimals": 2 } } }
+    }
+  }
+}
+```
+
+**A cell is whatever the row's property is**, so with fixed rows two rows can
+hold different things in one column, and a row without the property leaves the
+cell empty:
+
+| The property is… | The cell is… |
+|---|---|
+| `string` | Text input; `format` `email` / `uri`, or `ui:options.inputType` (`text`, `email`, `url`, `tel`), sets the input type |
+| `string` with `"format": "date"` | Date picker; the value is a day (`2026-11-20`) |
+| `number` / `integer` | Number input; `minimum` / `maximum`, and `ui:options` `units`, `unitsPosition` (`"before"` / `"after"`, default after), `maxDecimals` (an `integer` takes none) |
+| `boolean` | A Yes / No choice (`display: "switch"` doesn't apply in a table) |
+| `string` with `oneOf` of `{ const, title }` or `enum` | Searchable select; nothing chosen until the user picks, unless there is a `default` |
+| `array` whose `items` are such a string | Multiselect; the value is the list of chosen values |
+| any of these with `"readOnly": true` | The value as plain text (a choice's title for a select) |
+| any of these with `"ui:widget": "badge"` | A coloured, non-editable badge: `ui:options.variant` `neutral` (default), `info`, `positive`, `warning` or `critical`; on a list, where rows share a schema, colour by value with `"variants": { "draft": "warning", "sent": "positive" }` |
+
+The contract:
+
+- **Read-only and badge cells show a value the app set** (a `default`, usually
+  from the pre-render), and it is submitted back as it came.
+- **A property's `description` becomes a hint** on its cell (an info icon).
+- **One list of choices per column.** `x-fcode-choices` on the section is keyed
+  by **column** (unlike a pairing table's single list): every cell of that
+  column with no `oneOf` / `enum` of its own uses it, as a select (a string) or
+  a multiselect (an array). A cell can still carry its own list.
+- **Select all.** `ui:options.selectAll` names a yes/no column; its header gets
+  a checkbox that sets every row's cell to `true` or `false`. The submission is
+  still each row's own value.
+- **Validation and clearing.** A property in the row's `required` must be
+  filled, and errors show on the cell. Clearing a cell leaves its key out of
+  the submission.
+- **On fixed rows, keep a column to one kind of input.** A text cell's input
+  type and a number cell's decimals, `minimum` and `maximum` are set per column
+  from the first row that has such a cell; `units` can differ per row.
+- **`ui:options`** (all optional): `columns` (property names or
+  `{ key, title, width }`, `width` in pixels; default every property the rows
+  have, titled by the property's `title`), `rowHeader` (fixed rows: header of a
+  first column with each row's `title`), `addable` / `removable` (lists,
+  default `true`), `orderable` (lists, default `false`), `selectAll`, and
+  `labels` overriding the table's English text — `addRow`, `removeRow`,
+  `selectAll`, `yes`, `no`, `placeholder`, `empty` — translated with
+  `fcode.i18n` tokens. A bad option falls back to its default with a console
+  warning; a fixed row that is not an object is left out, and a cell that is an
+  object or an array shows empty.
+- **Size.** Each edit re-renders every row: tens of rows, not thousands.
+
+The table is drawn inside Factorial (the f0 theme). The hosted `forms.js`
+renders the same section as ordinary fields (a badge as plain text), which
+submit the same values.
+
 ## Set up with One
 
 A long setup, or a pairing table with hundreds of rows, can be handed to One
@@ -840,7 +1105,8 @@ nothing, and inside Factorial opens a new conversation with One about this form.
   the section's content collapsed under a "Show the full form" toggle beside it.
   Collapsed fields stay in the form: they keep their values, validate and are
   saved, and one with an error opens. Secret, file and hidden fields never
-  collapse. Change the toggle's text with `labels.showForm` and
+  collapse, nor do action buttons and the confirmation an `enabledWhen` names:
+  they stay in sight. Change the toggle's text with `labels.showForm` and
   `labels.hideForm`. Without a `section`, `collapse` is ignored with a console
   warning; where the button isn't shown, nothing collapses.
 - **`{{field}}` and `{{variable}}`** in `prompt` and `context` are filled in
@@ -852,7 +1118,9 @@ nothing, and inside Factorial opens a new conversation with One about this form.
   suggestion with a reason for each open pairing row, marked **Suggested by
   One**. On a confirmed row it disagrees with, the pair stays and the row offers
   **One suggests X** with **Use**. It never fills a secret, file or hidden
-  field, never touches a field the user changed or a row they dismissed, and
+  field, never proposes a value for an action button or for the property an
+  `enabledWhen` names (only the admin confirms), never touches a field the
+  user changed or a row they dismissed, and
   **never saves the form or runs the process**: the user reviews and saves. After
   the save, One reports the result in the same conversation.
 - **What One knows of your app** is the button's texts and the form's titles,

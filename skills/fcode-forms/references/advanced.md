@@ -50,8 +50,10 @@ schema:
   form's navigation uses `.fcode-steps-*` classes; an OAuth connect field
   renders inside `.fcode-oauth[data-status="idle|pending|connected"]`; set
   `embedFormOptions.className` for a custom wrapper class.
-- **Submit button text** — in the schema:
-  `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!" } }`.
+- **Submit button text and look** — in the schema:
+  `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!", "variant": "outline" } }`
+  (variants, action buttons and `enabledWhen` in `SKILL.md` "Submit and action
+  buttons").
 
 Forms render with
 [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
@@ -102,10 +104,18 @@ same markdown renders as plain elements.
   props still win. Merge order: default theme < `rjsfTheme` < individual props.
 - With `ui:steps` (see `SKILL.md`) the theme renders the navigation with f0
   components (sidebar → table of
-  contents, tabs → button strip) — `rjsfTheme={Theme}` brings it along.
+  contents, tabs → button strip, and `navigation: "free"` tabs → f0's `Tabs`,
+  as Factorial's settings pages draw theirs) — `rjsfTheme={Theme}` brings it
+  along.
 - The f0 theme renders the OAuth connect button (`ui:widget: "oauth"`, see
-  `SKILL.md`) as an `F0Button` — the flow itself (popup, completion, form
-  reaction) lives in the SDK, the theme only draws the control.
+  `SKILL.md`) and action buttons (`ui:field: "button"`) as an `F0Button` — the
+  behaviour (popup, completion, submitting) lives in the SDK, the theme only
+  draws the control.
+- **Only the f0 theme draws** the pairing table, the table (`ui:field:
+  "table"`) and checkbox cards (`ui:options.display: "cards"`). The hosted
+  `forms.js` renders the same schema as ordinary fields and plain checkboxes,
+  which submit the same values. A switch (`display: "switch"`) is drawn by
+  both.
 
 **Never pull the f0 theme into a hosted-embed page** — f0 cannot be tree-shaken
 (~3.2 MB gzip against the ~270 KB hosted bundle); only the React component path

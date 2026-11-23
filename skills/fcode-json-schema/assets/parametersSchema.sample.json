@@ -35,6 +35,17 @@
       "title": "One boolean field with [link](https://code.factorialhr.com)",
       "type": "boolean"
     },
+    "oneSwitchField": {
+      "title": "Import sick leaves every day",
+      "description": "An on/off setting drawn as a switch. The value is still true or false.",
+      "type": "boolean",
+      "default": true,
+      "ui": {
+        "ui:options": {
+          "display": "switch"
+        }
+      }
+    },
     "oneEmailField": {
       "title": "One email field",
       "type": "string",
@@ -99,8 +110,11 @@
             "type": "string"
           },
           "anotherProperty": {
-            "description": "Another property",
-            "type": "string"
+            "description": "Another property, a textarea in every entry: a ui inside items applies to the whole list",
+            "type": "string",
+            "ui": {
+              "ui:widget": "textarea"
+            }
           }
         }
       }
@@ -141,6 +155,34 @@
         ]
       },
       "uniqueItems": true
+    },
+    "oneCardsField": {
+      "title": "What do you want to enable?",
+      "description": "A checkboxes list drawn as selectable cards inside Factorial; the hosted forms.js keeps the checkboxes.",
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "oneOf": [
+          {
+            "const": "absences",
+            "title": "Sick leaves",
+            "description": "Import new sick leaves every morning."
+          },
+          {
+            "const": "contracts",
+            "title": "Contract changes",
+            "description": "Send contract and working-hours changes."
+          }
+        ]
+      },
+      "ui": {
+        "ui:widget": "checkboxes",
+        "ui:options": {
+          "display": "cards"
+        }
+      }
     },
     "oneSelectField": {
       "title": "One string select field",
@@ -250,6 +292,100 @@
           "type": "string",
           "title": "Gifts"
         }
+      }
+    },
+    "oneTableField": {
+      "type": "object",
+      "title": "Expense categories",
+      "description": "Renders one editable table inside Factorial: each property is a fixed row, its properties are the row's cells, and each cell's kind comes from its schema. x-fcode-choices gives a column its choices once.",
+      "ui": {
+        "ui:field": "table",
+        "ui:options": {
+          "rowHeader": "Category",
+          "selectAll": "billable",
+          "columns": [
+            "account",
+            "tax",
+            "billable",
+            {
+              "key": "state",
+              "title": "State",
+              "width": 140
+            }
+          ]
+        }
+      },
+      "x-fcode-choices": {
+        "tax": [
+          {
+            "const": "vat21",
+            "title": "VAT 21%"
+          },
+          {
+            "const": "vat10",
+            "title": "VAT 10%"
+          }
+        ]
+      },
+      "properties": {
+        "cat_travel": {
+          "type": "object",
+          "title": "Travel",
+          "required": [
+            "account"
+          ],
+          "properties": {
+            "account": {
+              "type": "string",
+              "title": "Account",
+              "default": "6100"
+            },
+            "tax": {
+              "type": "string",
+              "title": "Tax"
+            },
+            "billable": {
+              "type": "boolean",
+              "title": "Billable"
+            },
+            "state": {
+              "type": "string",
+              "default": "Synced",
+              "ui": {
+                "ui:widget": "badge",
+                "ui:options": {
+                  "variant": "positive"
+                }
+              }
+            }
+          }
+        },
+        "cat_meals": {
+          "type": "object",
+          "title": "Meals",
+          "properties": {
+            "account": {
+              "type": "string",
+              "title": "Account"
+            },
+            "tax": {
+              "type": "string",
+              "title": "Tax"
+            },
+            "billable": {
+              "type": "boolean",
+              "title": "Billable"
+            }
+          }
+        }
+      }
+    },
+    "oneActionButton": {
+      "title": "Check connection",
+      "description": "A button beside the submit: a click sets this property to true and submits the form, so the process knows which action was taken.",
+      "type": "boolean",
+      "ui": {
+        "ui:field": "button"
       }
     }
   },
