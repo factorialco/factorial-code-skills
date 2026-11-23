@@ -261,11 +261,12 @@ return { redirect: { url: "https://example.com", timeout: 2000 } };         // r
 ```
 
 When a submit fails, with the process's `formErrors` or the form's own
-validation, the form brings the first error into view and focuses its field,
-opening its step first in a `ui:steps` form, so a field error is seen even on a
-long form submitted from its foot: there is no need to repeat it in a global
-message. An error drawn only inside a table's or a pairing table's cells does
-not move the view.
+validation, the form brings the first error into view, opening its step first
+in a `ui:steps` form: a field's error with its field focused, or, when only the
+form as a whole has one (a `global` error), its message. A field error is seen
+even on a long form submitted from its foot, so there is no need to repeat it
+in a global message. An error inside a table's or a pairing table's cells is
+marked there but does not move the view.
 
 **Messages are markdown, not HTML.** `message`, `errorMessage` and a schema's
 `markdown.before`/`markdown.after` blocks render as GitHub Flavored Markdown —
@@ -359,7 +360,8 @@ parameter exactly as a one-page form would — process code needs no changes.
 - **The form's own heading shows once**, above the step navigation: its root
   `title` and `description` (or `ui:title` / `ui:description`), with each
   step's own title and description under it. Don't repeat the form's title in
-  every step.
+  every step. `"ui:label": false` in the root `ui` (or in its `ui:options` or
+  `ui:globalOptions`) hides it, as on a single-page form.
 - Properties not listed in any step are appended to the last one; an unusable
   `ui:steps` falls back to the ordinary one-page form with a console warning.
 - Supports root-level `properties` + `required` + `dependencies`; root-level
