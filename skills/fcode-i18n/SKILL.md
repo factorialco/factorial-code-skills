@@ -155,7 +155,17 @@ header. Changing it refetches the schema, and the submit carries the same
 header, so the execution runs in the language the form was rendered in.
 Embedding mechanics in `fcode-forms`. (`fallbackLocale` in the embed options
 plays no part here — it only selects the language of rjsf's built-in
-validation messages when `locale` isn't one it ships.)
+validation messages and texts when `locale` isn't one it ships.)
+
+The form library's own texts follow `locale` too, in the same language as its
+validation messages: the buttons to add, remove and reorder a list's items, the
+empty-list message, the file dropzone and its read-error alert and the like
+are in Spanish for `es` and English for `en`, and in English for any other
+language. A region or a different case reads the same (`es-ES`, `ES`), for the
+validation messages too. The default **Submit**, **Next** and **Back** labels
+stay in English: set `ui:submitButtonOptions.submitText`, `nextLabel` and
+`backLabel` in the schema's language, with tokens like any other schema text,
+and the `labels` of a table or pairing table.
 
 ## How the execution locale is chosen
 

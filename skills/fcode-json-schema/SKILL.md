@@ -40,13 +40,38 @@ so its `ui:` options apply.
   protected, and the CLI warns on push about a password widget or a
   secret-looking name (token, password, API key, client secret…) without it.
 - **Numbers** — `integer` / `number` with `minimum` / `maximum`.
-- **Boolean** — `"type": "boolean"`.
+- **Boolean** — `"type": "boolean"`, a checkbox. An on/off setting ("Import
+  sick leaves every day") is a switch: `"ui": { "ui:options": { "display":
+  "switch" } }`; keep the checkbox for agreeing or confirming. Only the drawing
+  changes (the value is still `true` / `false`). See `oneSwitchField` in the
+  sample.
+- **Action button** — a `boolean` with `"ui": { "ui:field": "button" }` is a
+  button that sets it to `true` and submits the form, for a second action
+  beside the submit ("Check connection", "Disconnect"). Contract, button looks
+  and `enabledWhen` in `fcode-forms` §Submit and action buttons; see
+  `oneActionButton` in the sample.
 - **Choices** — `enum` (select), `oneOf` of `{ const, title }` (labeled radio
   with `ui:widget: "radio"`), or an array with `ui:widget: "checkboxes"` +
-  `uniqueItems`.
+  `uniqueItems`. When each choice of a `checkboxes` list needs a sentence,
+  add `"ui:options": { "display": "cards" }` and give the items as a `oneOf` of
+  `{ const, title, description }`: each choice is a selectable card with its
+  description. The value is the same array, in the choices' order. Cards are
+  drawn inside Factorial; the hosted `forms.js` keeps the checkboxes. See
+  `oneCardsField` in the sample.
 - **Structured** — nested `object` with its own `properties`/`required`; arrays
   of strings or of objects (`type: "array"` + `items`); raw JSON via
-  `"ui": { "ui:field": "json" }`.
+  `"ui": { "ui:field": "json" }`. A `ui` inside `items` applies to every entry
+  of the list (`ui:widget`, `ui:options`, `ui:enumNames`, `"ui:widget":
+  "hidden"`…), and in a list of objects each item property's `ui` applies to
+  that field in every entry, at any depth. A tuple (`items` as a list of
+  schemas) takes each position's `ui` from its own schema. The form-level `ui`
+  map applies by property name at every depth, list items included: a root
+  `"email"` entry reaches every `email` field, so give a list field its own
+  `ui` when only it should change.
+- **Grid of values** — an `object` of fixed rows (each an `object`) or an
+  `array` of objects with `"ui": { "ui:field": "table" }` renders as one
+  editable table whose columns, rows and cells come from the schema. Contract
+  in `fcode-forms` §Tables; see `oneTableField` in the sample.
 - **Conditional fields** — use top-level `dependencies` to show/hide fields based
   on another field's value (see `anotherBooleanField` in the sample).
 - **Content around a field** — a per-field `markdown` object with `before` /
@@ -54,7 +79,8 @@ so its `ui:` options apply.
   the field. Detail and a worked example in `fcode-forms`
   (`references/advanced.md`).
 - **Long forms** — split roughly ten or more fields into steps with a root-level
-  `ui:steps` node; see `fcode-forms` §Multi-step forms. The same node can
+  `ui:steps` node (a wizard by default, tabs with `"navigation": "free"` for a
+  settings form); see `fcode-forms` §Multi-step forms. The same node can
   declare `process` steps that span several processes' forms (a multi-process
   flow, owned by `fcode-forms`).
 - **Connect an external account** — a `string` or `boolean` with
@@ -122,6 +148,12 @@ so its `ui:` options apply.
   when the choices include a `""` option (without one the SDK drops it), and
   never a blank. Keep both on the row (`x-fcode-*` is what Factorial One
   reads; `ui` only draws the table).
+- **A switch or cards is `ui:options.display`, never a `ui:widget`.** An
+  unknown `ui:widget` (`"switch"`) stops the whole form from rendering, while an
+  unknown option is ignored: a host on an older forms SDK keeps the checkbox(es).
+    `"switch"` applies only to a boolean checkbox (nullable
+  `["boolean", "null"]` too) and `"cards"` only to a `checkboxes` list; anywhere else `display` logs a console warning and is
+  ignored.
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
 - **An oauth field's `authorizationUrl` must be injected with

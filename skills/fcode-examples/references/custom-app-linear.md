@@ -524,7 +524,35 @@ async function main() {
 
 Reverses setup using the install records. Every step is wrapped in its own
 try/catch and logged, so a **partial** install can still be cleaned; a
-`confirm` parameter guards against accidental runs:
+`confirm` parameter guards against accidental runs. The form asks for it as a
+checkbox that keeps the red **Disconnect** button disabled until it is ticked
+(`enabledWhen`, `fcode-forms` §Submit and action buttons) — no second
+confirmation dialog:
+
+```json
+{
+  "title": "Disconnect Linear",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "title": "I understand that disconnecting stops the sync with Linear",
+      "type": "boolean"
+    }
+  },
+  "required": ["confirm"],
+  "ui": {
+    "ui:submitButtonOptions": {
+      "submitText": "Disconnect",
+      "variant": "critical",
+      "enabledWhen": "confirm",
+      "disabledReason": "Tick the box to confirm"
+    }
+  }
+}
+```
+
+The button only gates the form on screen, so the process still checks the
+flag:
 
 ```javascript
 async function main() {

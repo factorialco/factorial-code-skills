@@ -52,6 +52,7 @@ Where to find a specific pattern, regardless of which app you build:
 | Creating webhooks + schedules at install, recording them for uninstall | custom-app-linear |
 | Polling with a datastore cursor + idempotency (dedup map, or vendor upsert when available) | custom-app-linear |
 | Best-effort uninstall / teardown | custom-app-linear |
+| Confirming an irreversible action in the form: a checkbox that enables a `critical` submit (`enabledWhen`), re-checked in the process | custom-app-linear |
 | Storage upload + signed download URL + email with `fcode.sendMail` | utility-processes |
 | Reading a form-uploaded file from Storage | utility-processes |
 | Calling the Factorial API SDK (`factorial-sdk` module) | all three |
