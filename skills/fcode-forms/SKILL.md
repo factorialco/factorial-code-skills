@@ -381,8 +381,10 @@ tabs of one form:
 - Submitting validates the whole form, steps never opened included, and sends
   every step's values (the defaults of unopened steps too), as a one-page form
   would. If anything fails nothing is submitted: every step with an error is
-  marked in the navigation, the first one opens with its field focused. Field
-  errors the process returns are marked and opened the same way.
+    marked in the navigation, the first one opens with its field focused. An
+  error that depends on another field (a condition, a check across steps)
+  clears as soon as that field is fixed. Field errors the process returns are
+  marked and opened the same way.
 - The submit's `enabledWhen` may name a property on any step.
 - It applies to a form's own steps only: a form that declares `process` steps,
   and a process step's form, ignore it with a console warning (a flow stays
@@ -772,14 +774,16 @@ button is disabled in `disabledReason` (its tooltip):
   doesn't submit either.
 - `enabledWhen` names a property at the **root** of the form (no `"a.b"`
   paths). `disabledReason` is optional and shows only while the button is
-  disabled. A non-string `enabledWhen`, or one naming a property the form
-  doesn't have, logs a warning and is ignored.
+  disabled (on hover, and to screen readers). **Mistakes fail closed:** a
+  non-string `enabledWhen`, or one naming a property the form doesn't have (a
+  typo), keeps the button disabled for good and logs a console error — check
+  the name when a button never enables.
 - An action button takes the same two keys in its `ui:options`
   (`{ "variant": "critical", "enabledWhen": "confirm", "disabledReason": "…" }`);
   each button follows its own rule.
-- In a linear `ui:steps` form the submit's `enabledWhen` reads the last step's
-  values, so put the confirmation on the last step; "Next" is never disabled by
-  it. With `navigation: "free"` it reads the whole form.
+- In a `ui:steps` form the submit's `enabledWhen` reads the whole form, so
+  the confirmation may sit on any step (the last one, next to the button,
+  reads best); "Next" is never disabled by it.
 - **It only changes the form on screen.** The process still checks the value
   (`if (confirm !== true) …`) before doing anything irreversible: a submission
   can reach it without going through the form.
@@ -1030,7 +1034,8 @@ The contract:
   a multiselect (an array). A cell can still carry its own list.
 - **Select all.** `ui:options.selectAll` names a yes/no column; its header gets
   a checkbox that sets every row's cell to `true` or `false`. The submission is
-  still each row's own value.
+  still each row's own value. A column the table doesn't have, or one with no
+  yes/no cell, is not offered and logs a console warning.
 - **Validation and clearing.** A property in the row's `required` must be
   filled, and errors show on the cell. Clearing a cell leaves its key out of
   the submission.

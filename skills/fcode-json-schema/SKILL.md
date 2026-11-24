@@ -64,7 +64,10 @@ so its `ui:` options apply.
   of the list (`ui:widget`, `ui:options`, `ui:enumNames`, `"ui:widget":
   "hidden"`…), and in a list of objects each item property's `ui` applies to
   that field in every entry, at any depth. A tuple (`items` as a list of
-  schemas) takes each position's `ui` from its own schema.
+  schemas) takes each position's `ui` from its own schema. The form-level `ui`
+  map applies by property name at every depth, list items included: a root
+  `"email"` entry reaches every `email` field, so give a list field its own
+  `ui` when only it should change.
 - **Grid of values** — an `object` of fixed rows (each an `object`) or an
   `array` of objects with `"ui": { "ui:field": "table" }` renders as one
   editable table whose columns, rows and cells come from the schema. Contract
@@ -148,8 +151,8 @@ so its `ui:` options apply.
 - **A switch or cards is `ui:options.display`, never a `ui:widget`.** An
   unknown `ui:widget` (`"switch"`) stops the whole form from rendering, while an
   unknown option is ignored: a host on an older forms SDK keeps the checkbox(es).
-  `"switch"` applies only to a boolean checkbox and `"cards"` only to a
-  `checkboxes` list; anywhere else `display` logs a console warning and is
+    `"switch"` applies only to a boolean checkbox (nullable
+  `["boolean", "null"]` too) and `"cards"` only to a `checkboxes` list; anywhere else `display` logs a console warning and is
   ignored.
 - **`isSensitive: true`** only affects display/masking — still read the value
   from a secret variable, never hardcode it.
