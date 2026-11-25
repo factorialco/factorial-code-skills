@@ -74,6 +74,7 @@ own rules and note the mix in the report header.
 | FORM-15 | Every process in a multi-process flow has its form enabled with the same access as the entry form, and, when the flow starts from a UI trigger, the same `uiTrigger.locationId` (a step that isn't exposed answers not found mid-flow) | B | `fcode-forms` §Multi-step forms |
 | FORM-16 | An `install`/`settings`/`uninstall` process with `agentTool` enabled sets `effect` explicitly: `WRITE` for install and settings, `DESTRUCTIVE` for uninstall — unset means `DESTRUCTIVE`, so One would warn that installing cannot be undone | W | `fcode-factorial-actions` §Reserved lifecycle slugs |
 | FORM-17 | No choice field (`enum`, `oneOf` of `{ const, title }`, `selectField` / `multiSelectField`) is built from a directory that grows with the company (employees, projects, cost centers) — e.g. every employee from an unfiltered `.all()` in a `preRenderProcess`. Small organisational lists (teams, legal entities, locations, roles) are fine; it becomes unusable for large companies and crashes validation on older forms SDKs | W | `fcode-json-schema` §Gotchas |
+| FORM-18 | A wizard step whose answer the next step needs (pick at least one option, an authorisation box) holds its "Next" with the step's own `enabledWhen` instead of a `required` error after the click, and a flow page that must be confirmed gates its own submit; the process still checks the value | S | `fcode-forms` §Multi-step forms |
 
 ## I18N — internationalization
 
