@@ -165,7 +165,8 @@ language. A region or a different case reads the same (`es-ES`, `ES`), for the
 validation messages too. The default **Submit**, **Next** and **Back** labels
 stay in English: set `ui:submitButtonOptions.submitText`, `nextLabel` and
 `backLabel` in the schema's language, with tokens like any other schema text,
-and the `labels` of a table or pairing table.
+and the `labels` of a pairing table. A table's own texts (Yes, No, Select,
+Select all, Add row…) follow `locale` like the library's.
 
 ## How the execution locale is chosen
 

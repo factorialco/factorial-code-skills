@@ -68,6 +68,9 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   form is already in one). See "Submit and action buttons".
 - **A settings form split with `ui:steps` uses `"navigation": "free"`** (tabs,
   save from any of them); the default is a wizard. See "Multi-step forms".
+- **A wizard step whose answer the next one needs holds its "Next"** with the
+  step's own `enabledWhen` (a choice of at least one option, an authorisation
+  box), rather than a `required` error after the click. See "Multi-step forms".
 - **A "Set up with One" button is a `"type": "object"` property drawn by
   `"ui:field": "launch-one"`** that hands the form to One to fill in, never to
   save. Its
@@ -349,6 +352,25 @@ parameter exactly as a one-page form would — process code needs no changes.
 - A step can set its own `nextLabel` / `backLabel`, which win over `config`
   for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
   "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
+- **A step can hold its "Next" until it is answered** with its own
+  `enabledWhen` and `disabledReason`, the submit button's keys (§Submit and
+  action buttons): "Next" stays disabled, with the reason as its tooltip,
+  until the named root property is `true` or a list with at least one item.
+  Use it for a step whose answer the next one depends on — a choice of at
+  least one option, an authorisation box — instead of letting the user press
+  "Next" and showing a required-field error:
+
+  ```json
+  { "title": "What to sync", "fields": ["capabilities"],
+    "enabledWhen": "capabilities",
+    "disabledReason": "Pick at least one option to continue." }
+  ```
+
+  On the last step it holds the submit too, together with the submit's own
+  `enabledWhen`. It applies to `fields` steps of a linear form only: free tabs
+  have no "Next", and a `process` step that carries one is ignored with a
+  console warning (gate that process's own form instead, below). The process
+  still checks the answer: a submission can reach it without the form.
 - **Write the button labels in the form's language.** The defaults ("Next",
   "Back", the submit's "Submit") are English whatever the `locale`: set
   `nextLabel`, `backLabel` and `ui:submitButtonOptions.submitText` with
@@ -468,6 +490,10 @@ The rules:
 - **No `nextProcessId` on the default path.** After each successful submit the
   SDK moves to the next declared step. Every submit button but the last is
   labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
+  Each page's button, "Next" included, waits for its own form's
+  `ui:submitButtonOptions.enabledWhen`: a page that must be confirmed before
+  the flow moves on (a certificate's authorisation) gates its own submit. On
+  a page with sub-steps it holds the sub-step that submits it.
   Per-step `nextLabel` / `backLabel` work on `process` steps too; when that
   form has sub-steps, `nextLabel` goes on the sub-step that submits it and
   `backLabel` on the first one, whose Back leaves it.
@@ -769,8 +795,10 @@ button is disabled in `disabledReason` (its tooltip):
 }
 ```
 
-- The button is enabled only while the property is exactly `true`, and
-  follows it live (untick and it disables again). While it is disabled, Enter
+- The button is enabled only while the property is exactly `true`, or a list
+  with at least one item — "pick at least one" for a `checkboxes` list or
+  cards, with no `required` asterisk and no error after a click. It follows the
+  value live (untick and it disables again). While it is disabled, Enter
   doesn't submit either.
 - `enabledWhen` names a property at the **root** of the form (no `"a.b"`
   paths). `disabledReason` is optional and shows only while the button is
@@ -783,7 +811,8 @@ button is disabled in `disabledReason` (its tooltip):
   each button follows its own rule.
 - In a `ui:steps` form the submit's `enabledWhen` reads the whole form, so
   the confirmation may sit on any step (the last one, next to the button,
-  reads best); "Next" is never disabled by it.
+  reads best); "Next" is never disabled by it. To hold a "Next", give that
+  step its own `enabledWhen` (§Multi-step forms).
 - **It only changes the form on screen.** The process still checks the value
   (`if (confirm !== true) …`) before doing anything irreversible: a submission
   can reach it without going through the form.
@@ -1047,9 +1076,11 @@ The contract:
   have, titled by the property's `title`), `rowHeader` (fixed rows: header of a
   first column with each row's `title`), `addable` / `removable` (lists,
   default `true`), `orderable` (lists, default `false`), `selectAll`, and
-  `labels` overriding the table's English text — `addRow`, `removeRow`,
-  `selectAll`, `yes`, `no`, `placeholder`, `empty` — translated with
-  `fcode.i18n` tokens. A bad option falls back to its default with a console
+  `labels` overriding the table's own text — `addRow`, `removeRow`,
+  `selectAll`, `yes`, `no`, `placeholder`, `empty` — with `fcode.i18n` tokens.
+  Those defaults follow the form's `locale` (Spanish and English; English for
+  any other language), so set `labels` only for other wording or another
+  language. A bad option falls back to its default with a console
   warning; a fixed row that is not an object is left out, and a cell that is an
   object or an array shows empty.
 - **Size.** Each edit re-renders every row: tens of rows, not thousands.
