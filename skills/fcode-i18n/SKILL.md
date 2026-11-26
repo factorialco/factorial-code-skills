@@ -159,13 +159,16 @@ validation messages and texts when `locale` isn't one it ships.)
 
 The form library's own texts follow `locale` too, in the same language as its
 validation messages: the buttons to add, remove and reorder a list's items, the
-empty-list message, the file dropzone and its read-error alert and the like
-are in Spanish for `es` and English for `en`, and in English for any other
-language. A region or a different case reads the same (`es-ES`, `ES`), for the
-validation messages too. The default **Submit**, **Next** and **Back** labels
-stay in English: set `ui:submitButtonOptions.submitText`, `nextLabel` and
-`backLabel` in the schema's language, with tokens like any other schema text,
-and the `labels` of a table or pairing table.
+empty-list message, the file dropzone and its read-error alert, a table's own
+texts (yes / no cells, the empty select, add and remove row, select all) and
+the like are in Spanish for `es` and English for `en`, and in English for any
+other language. A region or a different case reads the same (`es-ES`, `ES`),
+for the validation messages too. The default **Submit**, **Next** and **Back**
+labels, the `ui:steps` leave confirmation (`leaveTitle`, `leaveMessage`,
+`leaveConfirmLabel`, `leaveCancelLabel`) and a pairing table's `labels` stay
+in English: set them in the schema's language, with tokens like any other
+schema text (`ui:submitButtonOptions.submitText`, `nextLabel`, `backLabel`,
+the `leave*` keys of `ui:steps.config`).
 
 ## How the execution locale is chosen
 
