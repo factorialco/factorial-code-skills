@@ -203,10 +203,12 @@ those nodes:
   "title": "Map Linear teams to Factorial teams",
   "type": "object",
   "preRenderProcess": "settings-prerender",
-  "variables": {
-    "linearTeamField": { "title": "Linear team", "type": "string" },
-    "factorialTeamField": { "title": "Factorial team", "type": "string" },
-    "teamMappingsScaffold": []
+  "embedFormOptions": {
+    "variables": {
+      "linearTeamField": { "title": "Linear team", "type": "string" },
+      "factorialTeamField": { "title": "Factorial team", "type": "string" },
+      "teamMappingsScaffold": []
+    }
   },
   "properties": {
     "team_mappings": {
@@ -385,10 +387,12 @@ otherwise a user who only wants to re-map a team cannot submit:
 ```json
 {
   "preRenderProcess": "settings-prerender",
-  "variables": {
-    "pollIntervalDefault": 1,
-    "apiKeyLabel": "Linear API key",
-    "statusMarkdown": {}
+  "embedFormOptions": {
+    "variables": {
+      "pollIntervalDefault": 1,
+      "apiKeyLabel": "Linear API key",
+      "statusMarkdown": {}
+    }
   },
   "properties": {
     "linear_api_key": {

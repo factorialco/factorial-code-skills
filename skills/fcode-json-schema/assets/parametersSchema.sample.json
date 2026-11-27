@@ -158,7 +158,7 @@
     },
     "oneCardsField": {
       "title": "What do you want to enable?",
-      "description": "A checkboxes list drawn as selectable cards inside Factorial; the hosted forms.js keeps the checkboxes.",
+      "description": "A checkboxes list drawn as selectable cards.",
       "type": "array",
       "uniqueItems": true,
       "minItems": 1,

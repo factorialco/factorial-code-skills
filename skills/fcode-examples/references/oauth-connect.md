@@ -78,8 +78,9 @@ authenticate.
 
 ## The form — `processes/star-repository/parametersSchema.json`
 
-Everything dynamic points at `#/variables`; the values in `variables` are the
-fallbacks when the pre-render does not run. The `authorizationUrl` **must** be a
+Everything dynamic points at `#/variables`; the values in
+`embedFormOptions.variables` are the fallbacks when the pre-render does not run
+(a root-level `variables` key would be ignored). The `authorizationUrl` **must** be a
 `$ref` — a `{{mustache}}` token would be HTML-escaped and refused.
 
 ```json
@@ -88,11 +89,13 @@ fallbacks when the pre-render does not run. The `authorizationUrl` **must** be a
   "description": { "$ref": "#/variables/intro" },
   "type": "object",
   "preRenderProcess": "star-repository-prerender",
-  "variables": {
-    "authorizeUrl": "",
-    "githubAccountDefault": "",
-    "connectedLabel": "Connected",
-    "intro": "Connect your GitHub account, then pick a repository."
+  "embedFormOptions": {
+    "variables": {
+      "authorizeUrl": "",
+      "githubAccountDefault": "",
+      "connectedLabel": "Connected",
+      "intro": "Connect your GitHub account, then pick a repository."
+    }
   },
   "properties": {
     "github_account": {
@@ -127,7 +130,8 @@ its `default` with the login, which is what renders the button as
 "Connected as …".
 
 The fallback for `authorizeUrl` is `""` on purpose, and the pre-render below
-catches its own errors to reach it: an invalid URL renders the button disabled,
+catches its own errors to reach it: a `$ref` to `""` drops the
+`authorizationUrl` node, and a missing URL renders the button disabled,
 which is the right outcome when the flow cannot be started. It only works
 because the pre-render returns — an error thrown out of it is answered with a
 502 and the form is never served at all.

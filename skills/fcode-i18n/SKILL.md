@@ -12,8 +12,8 @@ A workspace keeps one **locale** per language it speaks: a YAML file of
 translation keys under `i18n/`, synced by the CLI like any other resource.
 `fcode.i18n("key")` resolves a key against the locale the current execution is
 using — in process code, in module code, and (substituted server-side) in form
-schemas. Platform model in `fcode-core-concepts`; CLI flow in `fcode-cli`; form
-embedding in `fcode-forms`.
+schemas. Platform model in `fcode-core-concepts`; CLI flow in `fcode-cli`; forms
+in `fcode-forms`.
 
 ## Gotchas
 
@@ -149,13 +149,10 @@ Arguments follow relaxed JavaScript syntax (single quotes, unquoted field
 names, trailing commas all accepted) but must stay a **flat object of
 scalars** — a nested value leaves the whole token unsubstituted (see Gotchas).
 
-The reader's locale comes from the embed: `locale` in the embed options or the
-`data-fcode-form-locale` attribute, sent to the platform as the `Fcode-Locale`
-header. Changing it refetches the schema, and the submit carries the same
-header, so the execution runs in the language the form was rendered in.
-Embedding mechanics in `fcode-forms`. (`fallbackLocale` in the embed options
-plays no part here — it only selects the language of rjsf's built-in
-validation messages and texts when `locale` isn't one it ships.)
+The reader's locale comes from Factorial, which requests the schema in the
+user's language (the `Fcode-Locale` header or `?locale=`). The submit carries
+the same locale, so the execution runs in the language the form was rendered
+in. Forms themselves are in `fcode-forms`.
 
 The form library's own texts follow `locale` too, in the same language as its
 validation messages: the buttons to add, remove and reorder a list's items, the

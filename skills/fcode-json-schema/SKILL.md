@@ -55,8 +55,7 @@ so its `ui:` options apply.
   `uniqueItems`. When each choice of a `checkboxes` list needs a sentence,
   add `"ui:options": { "display": "cards" }` and give the items as a `oneOf` of
   `{ const, title, description }`: each choice is a selectable card with its
-  description. The value is the same array, in the choices' order. Cards are
-  drawn inside Factorial; the hosted `forms.js` keeps the checkboxes. See
+  description. The value is the same array, in the choices' order. See
   `oneCardsField` in the sample.
 - **Structured** — nested `object` with its own `properties`/`required`; arrays
   of strings or of objects (`type: "array"` + `items`); raw JSON via
@@ -128,11 +127,11 @@ so its `ui:` options apply.
 - **A file field** (`"ui:widget": "file"`) is auto-uploaded to Storage before
   the process runs; the parameter arrives as an `fcode.storage://…` reference,
   not the file contents. Strip the prefix before `fcode.storage.download(...)`.
-- **The employee picker only exists inside Factorial.** Anywhere else (an
-  embedded form, the hosted `forms.js`) the field falls back to a plain select
+- **The employee picker only exists inside Factorial.** On a public form
+  (`factorial.form.public`) the field falls back to a plain select
   when it lists its choices with `enum` / `oneOf`, and to a short notice
-  otherwise (`ui:options.unavailableMessage` replaces the text). Expose a form
-  with an employee field through Factorial (`fcode-factorial-actions`).
+  otherwise (`ui:options.unavailableMessage` replaces the text). Keep a form
+  with an employee field private (`fcode-factorial-actions`).
 - **Keep both keys on an employee field.** `x-fcode-entity` says what the field
   means and is what Factorial One reads; `ui:widget` only draws it, and One never
   sees `ui` keys. Without `x-fcode-entity`, One does not know to pass employee IDs.
@@ -161,19 +160,16 @@ so its `ui:` options apply.
   `{{x}}`, which Mustache HTML-escapes into a URL the widget refuses (the
   button renders disabled with a console warning).
 - The schema is the single source of the form's fields — to change fields, edit
-  the schema, not the form embed code.
+  the schema.
 - **The schema is data, not code** — no executable JavaScript, and all form
-  text is markdown (raw HTML is never rendered). Client-side behaviour belongs
-  in the embedding page — see `fcode-forms`.
+  text is markdown (raw HTML is never rendered). React to input with
+  conditional fields, action buttons or steps — see `fcode-forms`.
 - **Size a choice field for the biggest customer.** Every option of an
   `enum`, a `oneOf` of `{ const, title }` or the `fcode-forms` module's
   `selectField` / `multiSelectField` ships inside the schema, so a list fed
   from a directory that grows with the company (every employee, every
   manager, all projects or cost centers) turns into thousands of options for
-  a large account. Nobody can pick from that, and hosts on a forms SDK older
-  than `@factorialco/fcode-react-forms` 3.7.1 fail validation with "Maximum
-  call stack size exceeded" from about 1,000 options: the submit button
-  silently does nothing. Small organisational lists (teams, legal entities,
+  a large account. Nobody can pick from that. Small organisational lists (teams, legal entities,
   locations, roles) stay in the tens even for large accounts and are fine to
   list whole. The forms SDK has no searchable or remote-loading picker, so for
   people, projects or cost centers ask for something bounded instead: a team,

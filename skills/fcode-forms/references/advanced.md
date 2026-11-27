@@ -1,155 +1,98 @@
 # Factorial Code Forms — advanced
 
-Read this when styling/theming a form, reacting to user input client-side, or
-rendering the form in a modal. Core embedding, result handling, multi-step,
-and file uploads are in `SKILL.md`; translating form text is in `fcode-i18n`.
+Read this for what you control of a form's look, variables, the server-side
+pre-render, and reacting to user input. Enabling, where forms appear,
+results, multi-step, and file uploads are in `SKILL.md`; translating form text
+is in `fcode-i18n`.
 
-## Initial values, async, headers, API host
+## How forms look inside Factorial
 
-Configurable via data attributes, `Fcode.initForm` options, or React props:
+Factorial draws every form with its own design system (f0), so a form matches
+the product around it with no styling of yours — there is no stylesheet,
+theme or script to bring. What you control lives in the schema:
 
-- **Process version** — `processVersion` (`data-fcode-form-process-version`):
-  always pin `stable` (see `SKILL.md`).
-- **Initial / hidden values** — `defaultValues` (`data-fcode-form-default-values`):
-  JSON of pre-filled field values.
-- **Async execution** — `async: true` (`data-fcode-form-async`): returns `201` +
-  execution ID immediately instead of waiting (use for long-running processes).
-- **Submission headers** — `headers` (`data-fcode-form-headers`): extra request
-  headers.
-- **Locale** — `locale` (`data-fcode-form-locale`): the language the form loads
-  and submits in. Model in `fcode-i18n`.
-- **API host override** — `hostUrl` (`data-fcode-form-host-url`): point the embed
-  at a different backend (default `https://code.factorialhr.com/platform`).
+- **Fields and widgets** — each property's `ui` object, with the
+  [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
+  (rjsf **6**) `uiSchema` keys and Factorial Code's own widgets
+  (`fcode-json-schema`; tables, pairing tables, OAuth, action buttons in
+  `SKILL.md`).
+- **Text** — titles, descriptions and `markdown` blocks in markdown (raw HTML
+  is dropped), translated with `fcode.i18n` tokens.
+- **The form's heading** — its root `title` / `description` (or `ui:title` /
+  `ui:description` in the root `ui`); `"ui:label": false` there hides it.
+- **Buttons** — `"ui": { "ui:submitButtonOptions": { "submitText": "Save", "variant": "outline" } }`
+  and action buttons (`SKILL.md` "Submit and action buttons").
+- **Layout** — steps, as a wizard or tabs, in a strip or a sidebar
+  (`SKILL.md` "Multi-step forms").
+- **The submit overlay message** — `embedFormOptions.loadingOverlayContent` at
+  the schema root, shown under the spinner while a submission runs.
 
-## Styling & appearance
+How the f0 rendering maps a few fields: a **file** field is a dropzone with
+one chip per picked file (name, size, remove), its text overridable with
+`ui:options.dropzoneText`; **`range`** renders as a number input rather than a
+slider; the `sourceCode` field keeps its (non-f0) Monaco editor; `radio` maps
+to f0's card select, because f0 has no radio control. A **select with no
+`default` opens empty** (the user must pick); every other `const` opens as its
+default.
 
-Configured via the embed-side `options` object or `embedFormOptions` in the
-schema:
+## Variables
+
+A schema can hold placeholders filled in each time the form is served:
+
+- **Mustache tokens** inside any text, default or list — `{{newPlan}}`, or a
+  section such as `{{#benefits}}* {{.}}\n{{/benefits}}`.
+- **`$ref` references** that replace a whole node — `{"$ref": "#/variables/name"}`
+  in place of a property, an `enum`, a `default`, a title or a `markdown`
+  object.
 
 ```json
 {
-  "theme": "light (default)",
-  "loadingOverlayDisabled": false,
-  "loadingOverlayContent": "Sending information...",
-  "loadingContent": "Loading form..."
+  "title": "Upgrade to {{newPlan}}",
+  "type": "object",
+  "properties": {
+    "team": { "title": "Team to upgrade", "type": "string", "enum": { "$ref": "#/variables/teamNames" } }
+  },
+  "embedFormOptions": {
+    "variables": { "newPlan": "Growth", "teamNames": [] }
+  }
 }
 ```
 
-- **`theme`** — `"light"` (default) or `"none"`. `light` injects the SDK's
-  standalone stylesheet
-  (`https://code.factorialhr.com/sdk/styles-theme-light.css`); `"none"` injects
-  nothing, which is what you want when the host app brings its own styling (see
-  the f0 theme below). Custom theme: extend that CSS file and set
-  `embedFormOptions.themeStylesheet` (a URL or inline CSS).
-- **`loadingContent`** — the message shown while the form itself is loading (as
-  opposed to `loadingOverlayContent`, shown while a submission runs). Worth
-  setting when a `preRenderProcess` makes opening the form slow.
-- **CSS hooks** — `.fcode-form-container`, `.fcode-form-wrapper`,
-  `form.fcode-form`; the result views that replace the form after submit are
-  `.fcode-form-success-message` / `.fcode-form-error-message`; a `ui:steps`
-  form's navigation uses `.fcode-steps-*` classes; an OAuth connect field
-  renders inside `.fcode-oauth[data-status="idle|pending|connected"]`; set
-  `embedFormOptions.className` for a custom wrapper class.
-- **Submit button text and look** — in the schema:
-  `"ui": { "ui:submitButtonOptions": { "submitText": "Click me!", "variant": "outline" } }`
-  (variants, action buttons and `enabledWhen` in `SKILL.md` "Submit and action
-  buttons").
+Values come from, in increasing order of precedence:
 
-Forms render with
-[react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
-(rjsf **6**), so its full `uiSchema` is available. Markdown rendering rules are
-in `SKILL.md` (raw HTML is dropped; CSS injection via `stylesheet` /
-`themeStylesheet` is unaffected by that stripping).
+1. **`embedFormOptions.variables`** in the schema itself — fixed values, and
+   the fallbacks used when nothing else sets a variable. **Only this key is
+   read**: a `variables` key at the schema root is ignored by the form, so its
+   values never reach a `$ref` or a token.
+2. The `variables` a `preRenderProcess` returns (merged into
+   `embedFormOptions.variables` when the schema is served).
+3. The `variables` an earlier step returned, in a multi-process flow or a
+   `nextProcessId` chain (`SKILL.md` "Multi-step forms"). Only these are
+   sent back on submit, in `fcode.context.parameters.metadata.variables`.
 
-## The f0 theme — for React apps inside Factorial
+Two rules:
 
-There are two rendering themes, and which one to use depends on where the form
-is embedded:
+- **Use `$ref` for values that must stay intact**, such as URLs. Mustache
+  HTML-escapes what it inserts (`/` → `&#x2F;`), so an OAuth `authorizationUrl`
+  inserted with `{{…}}` is refused by the connect button.
+- **A `$ref` to a missing or empty variable removes the node.** A reference
+  whose variable is absent, `null`, `false`, `0` or `""` is dropped from the
+  schema, together with any object left empty. Set a variable to `null` to
+  remove a property on purpose, and never `$ref` a value that may legitimately
+  be `0`, `false` or `""` (a numeric default, a boolean): use a Mustache token
+  or a literal, or wrap it in an object (`{ "before": "" }` survives, `""`
+  doesn't).
 
-| Where the form renders | Theme |
-|---|---|
-| Inside Factorial (the Factorial Code dashboard, the monolith) — anything already running f0 | **`@factorialco/rjsf-f0`** — real f0 components |
-| An arbitrary third-party page, via the hosted `forms.js` embed | The SDK's built-in stylesheet theme (`light`) |
-
-**Inside Factorial, use the f0 theme** — real f0 controls that match the
-surrounding product:
-
-```jsx
-import FcodeForm from "@factorialco/fcode-react-forms";
-import { Theme, markdownComponents } from "@factorialco/rjsf-f0";
-import "@factorialco/rjsf-f0/styles.css";
-
-<FcodeForm
-  team="<fcode-team-slug>"
-  processId="<fcode-process-slug>"
-  processVersion="stable"
-  rjsfTheme={Theme}
-  markdownComponents={markdownComponents}
-  // theme: "none" stops the SDK injecting its standalone stylesheet, whose
-  // `all: revert` reset exists to survive third-party pages and would fight
-  // the host app's own styles.
-  options={{ theme: "none", locale: "en" }}
-/>;
-```
-
-`markdownComponents` makes result messages
-and a schema's `markdown` blocks render with f0 components too — a GFM table in
-a `message` becomes the f0 table card, export included. Omit the prop and the
-same markdown renders as plain elements.
-
-- The host app must already render f0's `F0Provider` above the form and import
-  `@factorialco/f0-react/dist/styles.css`. Peers: `react`, `react-dom`,
-  `@rjsf/core`, `@rjsf/utils`, `@factorialco/f0-react`.
-- `rjsfTheme` swaps the theme wholesale; explicit `templates`/`widgets`/`fields`
-  props still win. Merge order: default theme < `rjsfTheme` < individual props.
-- With `ui:steps` (see `SKILL.md`) the theme renders the navigation with f0
-  components (sidebar → table of
-  contents, tabs → button strip, and `navigation: "free"` tabs → f0's `Tabs`,
-  as Factorial's settings pages draw theirs) — `rjsfTheme={Theme}` brings it
-  along.
-- The f0 theme renders the OAuth connect button (`ui:widget: "oauth"`, see
-  `SKILL.md`) and action buttons (`ui:field: "button"`) as an `F0Button` — the
-  behaviour (popup, completion, submitting) lives in the SDK, the theme only
-  draws the control.
-- **Only the f0 theme draws** the pairing table, the table (`ui:field:
-  "table"`) and checkbox cards (`ui:options.display: "cards"`). The hosted
-  `forms.js` renders the same schema as ordinary fields and plain checkboxes,
-  which submit the same values. A switch (`display: "switch"`) is drawn by
-  both.
-
-**Never pull the f0 theme into a hosted-embed page** — f0 cannot be tree-shaken
-(~3.2 MB gzip against the ~270 KB hosted bundle); only the React component path
-can opt in.
-
-Three gaps in the f0 mapping worth knowing, since they look inconsistent in a
-rendered form: **file fields** keep rjsf's native `<input type="file">`,
-**`range`** renders as a number input rather than a slider, and the SDK's
-`sourceCode` field keeps its (non-f0) Monaco editor. `radio` maps to f0's
-`cardSelect`, because f0 has no radio control.
-
-## Variables replacement
-
-Provide a `variables` node inside `options` to replace
-[mustache](https://mustache.github.io/) tokens across the schema (titles,
-descriptions, defaults, enums):
-
-```json
-{ "title": "Upgrade to {{newPlan}} plan", "description": "{{#benefits}}* {{.}}\n{{/benefits}}" }
-```
-
-Use `$ref` to `#/variables/<name>` to replace whole schema nodes (e.g. an
-`enum`'s options) per embed. Variables are also sent on submit — read them in
-process code via `fcode.context.parameters.metadata.variables`.
-
-### Server-side pre-render (`preRenderProcess`)
+## Server-side pre-render (`preRenderProcess`)
 
 To compute `variables` on the server before the form is shown (a dropdown loaded
 from an API, config from team variables), add a `preRenderProcess` at the schema
 root set to a process slug/id. When the form is served the API runs that process
 **synchronously** and merges the `variables` it returns into the schema, so the
 `$ref`s resolve — without a throwaway first step. The process must return
-`{ variables: { ... } }`. Form query-string params arrive as
-`fcode.context.parameters`. Since it runs before any user input, it can't use
+`{ variables: { ... } }`; they land in `embedFormOptions.variables`, on top of
+the schema's own fallbacks. The form's context arrives as
+`fcode.context.parameters` (never trusted, below). Since it runs before any user input, it can't use
 data derived from user-submitted secrets — for that, put the secret in an
 earlier step of a multi-process flow and give the pre-render to the next
 step's form (`SKILL.md` "Multi-step forms").
@@ -157,14 +100,13 @@ It is also where an OAuth connect field's `authorizationUrl` comes from: the
 pre-render calls `fcode.oauth.start()` and injects the `authorizationUrl` it
 returns. The platform mints the `state` and the PKCE pair, so never build
 either by hand (see `SKILL.md` "Connect an external account").
-The form is only served once the pre-render finishes, so set `loadingContent`
-(above).
+The form is only served once the pre-render finishes, so keep it fast.
 
-#### Who is opening the form (`fcode.context.factorial`)
+### Who is opening the form (`fcode.context.factorial`)
 
 **`fcode.context.parameters` are never trusted** in a pre-render: on a form
 opened from Factorial they are the form's context as the browser chose it, and
-on a public or embedded URL they are the query string. An `access_id` or
+on a public form they are whatever the request sent. An `access_id` or
 `company_id` there proves nothing.
 
 **When Factorial reads the schema for a person** (an action form, a
@@ -175,7 +117,7 @@ location_id? }, product, actor: { service?, type: "user", access_id } }`. The
 platform sets it from Factorial's own authenticated request, never from the
 parameters, and the actor is always a person (`type: "user"`). It is **absent**
 (`undefined` in JavaScript, `None` in Python) when the form is served from its
-public or embedded URL, and when a service reads the schema without naming a
+public link, and when a service reads the schema without naming a
 person's access. Treat absence as "unknown viewer" and render the restrictive
 version.
 
@@ -190,7 +132,7 @@ to `null` is dropped on every surface, One included:
 {
   "type": "object",
   "preRenderProcess": "menu-edit-prerender",
-  "variables": { "notice": { "before": "" } },
+  "embedFormOptions": { "variables": { "notice": { "before": "" } } },
   "markdown": { "$ref": "#/variables/notice" },
   "properties": {
     "menu": { "$ref": "#/variables/menuField" }
@@ -229,8 +171,7 @@ Two limits to state in the App, not work around:
 ### Pre-filling current values (install & settings forms)
 
 An `install` or `settings` form (the reserved lifecycle slugs) re-opened later should **show what is configured
-now**, not an empty form. Since the schema is static and the embed lives inside
-Factorial (so you can't set `defaultValues` on it), the pre-render process is
+now**, not an empty form. The schema is static, so the pre-render process is
 the place: read the current state from team variables and the datastore, and
 return it as `#/variables` nodes the schema's `default`s point at. A worked
 example is in `fcode-examples` (`references/custom-app-linear.md`).
@@ -239,15 +180,18 @@ example is in `fcode-examples` (`references/custom-app-linear.md`).
 {
   "type": "object",
   "preRenderProcess": "acme-settings-prerender",
-  "variables": {
-    "syncIntervalDefault": 60,
-    "apiKeyLabel": "Acme API key",
-    "statusMarkdown": { "before": "" }
+  "embedFormOptions": {
+    "variables": {
+      "syncIntervalDefault": 60,
+      "apiKeyLabel": "Acme API key",
+      "statusMarkdown": { "before": "" }
+    }
   },
   "properties": {
     "sync_interval_minutes": {
       "type": "integer",
       "title": "Sync interval (minutes)",
+      "minimum": 1,
       "default": { "$ref": "#/variables/syncIntervalDefault" }
     },
     "acme_api_key": {
@@ -268,7 +212,8 @@ async function main() {
 
   return {
     variables: {
-      // Plain config round-trips as the field's default.
+      // Plain config round-trips as the field's default. A stored 0 would drop the
+      // default (a `$ref` to 0 removes the node), so the schema's minimum is 1.
       syncIntervalDefault: stored.syncIntervalMinutes ?? 60,
       // A secret is NEVER echoed — only whether one exists.
       apiKeyLabel: configured
@@ -307,40 +252,15 @@ browser, so the rule stands. Two more things:
 
 ## Reacting to user input
 
-**A schema cannot carry executable code** (see the gotcha in `SKILL.md`) —
-reformatting a value or deriving one field from another belongs in the
-embedding page:
+A schema cannot run code in the browser, so a form cannot reformat a value or
+compute one field from another while the user types, and there is no page of
+yours around it to hook into. Use what the schema and the server offer:
 
-- **React embed** — the `onChange` prop on `FcodeForm`.
-- **Hosted script** — the events the SDK dispatches on `document`:
-  `fcode-forms-sdk-init`, `fcode-forms-init-form`,
-  `fcode-forms-on-submit-success`, `fcode-forms-on-next-step` and
-  `fcode-forms-on-submit-error`.
-
-```html
-<script>
-  document.addEventListener("fcode-forms-on-submit-success", (event) => {
-    const { formId, formSubmittedData, processExecutionResult } = event.detail;
-    analytics.track("User Registered", formSubmittedData);
-  });
-</script>
-```
-
-For submission results specifically, the `onSuccess` / `onNextStep` / `onError`
-callbacks (see `SKILL.md`) carry the same information.
-
-## Modal window
-
-Render the form in a modal triggered by an element: add all the form config plus
-the `data-fcode-form-modal` attribute to that element.
-
-```html
-<button
-  data-fcode-form-modal
-  data-fcode-form-team="<fcode-team-slug>"
-  data-fcode-form-process="<fcode-process-slug>"
-  data-fcode-form-process-version="stable"
->
-  Open the form
-</button>
-```
+- **Show or hide fields** from another field's value with conditional fields
+  (top-level `dependencies`, `fcode-json-schema`).
+- **Round-trip to the server** with an action button (such as **Check
+  connection**) whose process answers with a message or inline errors, or with
+  a multi-step form whose next step is built from what the previous one stored
+  (`SKILL.md`).
+- **Normalise values in the process** that receives the submission, which has
+  to check them anyway.

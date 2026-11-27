@@ -44,12 +44,14 @@ fallback: an empty pairing object, used when the pre-render does not run.
   "title": "Acme ERP settings",
   "type": "object",
   "preRenderProcess": "settings-prerender",
-  "variables": {
-    "departmentsField": {
-      "type": "object",
-      "title": "Departments",
-      "ui": { "ui:field": "pairing" },
-      "properties": {}
+  "embedFormOptions": {
+    "variables": {
+      "departmentsField": {
+        "type": "object",
+        "title": "Departments",
+        "ui": { "ui:field": "pairing" },
+        "properties": {}
+      }
     }
   },
   "properties": {

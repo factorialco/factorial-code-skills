@@ -150,6 +150,12 @@ Resolution is the same for all of them: the workspace first, then its
   Local runs get the placeholder — put real values in `variables.local.env`.
 - **A workspace version never publishes inherited resources** — only owned ones
   get the tag (see Versioning & aliases).
+- **Seven settings inherit too** — timezone, parameters validation, error
+  handler, `webhookAuth`, primary locale, agent description and Available in
+  Factorial One — each only when the workspace doesn't set (or clear) it
+  itself. So an installation workspace gets its App's webhook auth and error
+  handler without repeating them. States, `null` and `settings.inherited.json`
+  are in `fcode-cli`.
 
 #### Pinning a parent to one of its versions
 
@@ -168,7 +174,8 @@ that parent contributes **the release, not its working copy**:
   is how a base app rolls a fix out to its installations.
 - **Dependencies follow the pin too** — the child installs the packages the
   pinned release was cut with, not the ones the parent installs today.
-- **Variables always resolve live**, pin or no pin: they have no versioned form.
+- **Variables and settings always resolve live**, pin or no pin: they have no
+  versioned form.
 - **The child cannot pick a version of an inherited resource.** The pin decides
   it. In the web UI an inherited process, module or locale shows its version
   read-only (the pinned tag, or *Live*) and has no Versions tab; publishing and
@@ -268,8 +275,7 @@ always exists and points at the workspace's stable version. Webhooks, forms and
 schedules accept an alias wherever they accept a tag, so
 moving `stable` to another version re-points the whole workspace in one
 operation — **rollout and rollback are a single alias change**. Always pin
-consumers (webhook URLs, form embeds) to `stable`; how in `fcode-cli` and
-`fcode-forms`.
+external consumers (webhook URLs) to `stable`; how in `fcode-cli`.
 
 Two consequences of that model:
 
@@ -371,6 +377,7 @@ A local workspace managed by the `fcode` CLI (see `fcode-cli`):
 ┃   ┗ 📜 package.json      #   optional process-scoped dependencies
 ┣ 📜 datastore.json
 ┣ 📜 settings.json         # workspace settings: inheritance, timezone, error handler, webhook auth
+┣ 📜 settings.inherited.json # settings taken from parent workspaces (read-only, gitignored)
 ┣ 📜 variables.env         # team variables this workspace owns (KEY=VALUE)
 ┣ 📜 variables.inherited.env  # variables from parent workspaces (read-only, gitignored)
 ┣ 📜 variables.local.env   # local overrides (not shared)
