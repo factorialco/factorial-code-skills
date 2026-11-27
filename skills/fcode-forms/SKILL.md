@@ -279,7 +279,21 @@ parameter exactly as a one-page form would — process code needs no changes.
   labels, default `"Next"` / `"Back"`. An unknown `layout` or `navigation`
   falls back to its default with a console warning. `ui:submitButtonOptions`
   (its `variant` and `enabledWhen` included) applies to the **last** step's
-  button; the "Next" buttons keep the primary look.
+  button; the "Next" buttons keep the primary look and are never held by the
+  submit's `enabledWhen`.
+- **A step can hold its "Next" until it is answered** with its own
+  `enabledWhen` and `disabledReason`, the keys of §Submit and action buttons:
+  `{ "title": "What to do", "fields": ["capabilities"], "enabledWhen":
+  "capabilities", "disabledReason": "Tick at least one" }`. "Next" stays
+  disabled, with the reason as its tooltip, until that root property is `true`
+  or a list with at least one item, and the step navigation doesn't go past
+  the step either. On the last step it holds the submit too, together with the
+  submit's own `enabledWhen`. Use it for a step that needs an answer ("tick at
+  least one" under a checkboxes or cards list, an authorisation box) instead of
+  `required`, which draws a "*" and lets the user press "Next" into an error.
+  Only a `fields` step takes it: a `process` step ignores it with a console
+  warning (its form's own submit `enabledWhen` holds it, §Multi-process
+  flows), and with `navigation: "free"` there is no "Next" to hold.
 - A step can set its own `nextLabel` / `backLabel`, which win over `config`
   for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
   "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
@@ -321,7 +335,8 @@ tabs of one form:
   validates nothing and keeps what was typed; no step shows as completed.
 - The submit button is on every step, with its `ui:submitButtonOptions`
   (`submitText`, `variant`, `enabledWhen`, `disabledReason`). There are no
-  "Next" or "Back" buttons, so `nextLabel` / `backLabel` don't apply.
+  "Next" or "Back" buttons, so `nextLabel` / `backLabel` and a step's own
+  `enabledWhen` don't apply.
 - Submitting validates the whole form, steps never opened included, and sends
   every step's values (the defaults of unopened steps too), as a one-page form
   would. If anything fails nothing is submitted: every step with an error is
@@ -412,9 +427,14 @@ The rules:
 - **No `nextProcessId` on the default path.** After each successful submit the
   SDK moves to the next declared step. Every submit button but the last is
   labelled `config.nextLabel`; the last honours `ui:submitButtonOptions`.
-  Per-step `nextLabel` / `backLabel` work on `process` steps too; when that
-  form has sub-steps, `nextLabel` goes on the sub-step that submits it and
-  `backLabel` on the first one, whose Back leaves it.
+  A page that moves the flow on still submits its form to its process, so its
+  "Next" waits for that form's own `ui:submitButtonOptions.enabledWhen` (on
+  its last sub-step when it has sub-steps): put a confirmation needed before
+  moving on (an authorisation box) in the later form's submit options, not on
+  the entry form's `process` step. Per-step `nextLabel` / `backLabel` work on
+  `process` steps too; when that form has sub-steps, `nextLabel` goes on the
+  sub-step that submits it and `backLabel` on the first one, whose Back
+  leaves it.
 - **State carries forward as in a chain**: each process receives the earlier
   forms' data and results in `fcode.context.parameters.steps`, and a returned
   `variables` node reaches the following forms.
@@ -714,9 +734,12 @@ button is disabled in `disabledReason` (its tooltip):
 }
 ```
 
-- The button is enabled only while the property is exactly `true`, and
-  follows it live (untick and it disables again). While it is disabled, Enter
-  doesn't submit either.
+- The button is enabled only while the property is exactly `true`, or a list
+  with at least one item (a `checkboxes` or cards list where something is
+  ticked: "pick at least one" without `required`); anything else (empty,
+  `false`, a string, an empty list) keeps it disabled. It follows the value
+  live (untick and it disables again). While it is disabled, Enter doesn't
+  submit either.
 - `enabledWhen` names a property at the **root** of the form (no `"a.b"`
   paths). `disabledReason` is optional and shows only while the button is
   disabled (on hover, and to screen readers). **Mistakes fail closed:** a
@@ -728,7 +751,10 @@ button is disabled in `disabledReason` (its tooltip):
   each button follows its own rule.
 - In a `ui:steps` form the submit's `enabledWhen` reads the whole form, so
   the confirmation may sit on any step (the last one, next to the button,
-  reads best); "Next" is never disabled by it.
+  reads best); "Next" is never disabled by it. A step holds its own "Next"
+  with its own `enabledWhen` (§Steps within a single form), and in a
+  multi-process flow a later form's submit `enabledWhen` holds the "Next"
+  that submits it.
 - **It only changes the form on screen.** The process still checks the value
   (`if (confirm !== true) …`) before doing anything irreversible: a submission
   can reach it without going through the form.
@@ -985,9 +1011,11 @@ The contract:
   have, titled by the property's `title`), `rowHeader` (fixed rows: header of a
   first column with each row's `title`), `addable` / `removable` (lists,
   default `true`), `orderable` (lists, default `false`), `selectAll`, and
-  `labels` overriding the table's English text — `addRow`, `removeRow`,
-  `selectAll`, `yes`, `no`, `placeholder`, `empty` — translated with
-  `fcode.i18n` tokens. A bad option falls back to its default with a console
+  `labels` overriding the table's own text — `addRow`, `removeRow`,
+  `selectAll`, `yes`, `no`, `placeholder`, `empty`. Those texts already follow
+  the form's `locale` (Spanish for `es`, English otherwise, `fcode-i18n`), so
+  set a label only for other wording, with `fcode.i18n` tokens; a label set
+  there stays as written. A bad option falls back to its default with a console
   warning; a fixed row that is not an object is left out, and a cell that is an
   object or an array shows empty.
 - **Size.** Each edit re-renders every row: tens of rows, not thousands.

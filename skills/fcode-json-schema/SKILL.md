@@ -43,8 +43,10 @@ so its `ui:` options apply.
 - **Boolean** — `"type": "boolean"`, a checkbox. An on/off setting ("Import
   sick leaves every day") is a switch: `"ui": { "ui:options": { "display":
   "switch" } }`; keep the checkbox for agreeing or confirming. Only the drawing
-  changes (the value is still `true` / `false`). See `oneSwitchField` in the
-  sample.
+  changes (the value is still `true` / `false`). The `title` is the label
+  beside the box or switch and the `description` shows under it: put there
+  what the user agrees to (a consent's wording) or what turning the switch on
+  does. See `oneSwitchField` in the sample.
 - **Action button** — a `boolean` with `"ui": { "ui:field": "button" }` is a
   button that sets it to `true` and submits the form, for a second action
   beside the submit ("Check connection", "Disconnect"). Contract, button looks
@@ -52,7 +54,11 @@ so its `ui:` options apply.
   `oneActionButton` in the sample.
 - **Choices** — `enum` (select), `oneOf` of `{ const, title }` (labeled radio
   with `ui:widget: "radio"`), or an array with `ui:widget: "checkboxes"` +
-  `uniqueItems`. When each choice of a `checkboxes` list needs a sentence,
+  `uniqueItems`. A select or radio with no `default` opens with nothing
+  chosen; with the field in `required`, the user has to pick one. Give a
+  `default` when one choice is the right answer for most companies, and never
+  rely on the form opening on the first choice. When each choice of a
+  `checkboxes` list needs a sentence,
   add `"ui:options": { "display": "cards" }` and give the items as a `oneOf` of
   `{ const, title, description }`: each choice is a selectable card with its
   description. The value is the same array, in the choices' order. See
