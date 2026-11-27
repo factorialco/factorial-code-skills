@@ -1,7 +1,7 @@
 # Troubleshooting the platform journey
 
 Common questions and pitfalls, by journey stage. For code-level problems
-(process errors, CLI usage, form embedding), route to the owning skill
+(process errors, CLI usage, forms), route to the owning skill
 instead — see the routing table in `SKILL.md`.
 
 ## Access & team

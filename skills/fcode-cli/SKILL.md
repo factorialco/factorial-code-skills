@@ -34,7 +34,7 @@ When making and testing changes in an already-cloned workspace:
 6. **`fcode push`** — deploy to cloud when ready.
 
 Pushing updates the **current** (unversioned) code only: consumers pinned to the
-`stable` alias — which webhook URLs and form embeds should always be — keep
+`stable` alias — which webhook URLs should always be — keep
 running the released version until the alias moves. Releases (publishing a
 workspace version and re-pointing `stable`) happen separately, normally from the
 web UI (see below).
@@ -102,7 +102,8 @@ webhook-triggered processes and forms can be exercised without deploying.
 `--auth-user` / `--auth-password` protect the **whole** local server with basic
 auth. Per-process webhook auth is separate, and enforced exactly as the cloud
 does it: the server reads `webhook.authMode` from the process's `metadata.json`,
-resolves `TEAM` against `webhookAuth` in `settings.json`, and requires the named
+resolves `TEAM` against the workspace's `webhookAuth` — its own in `settings.json`,
+else the inherited one in `settings.inherited.json` — and requires the named
 variable's value in the configured header — `Bearer <token>` in `Authorization`,
 the raw value in any other header. Values come from the workspace variables in
 the precedence every local run uses — `variables.inherited.env`, overridden by
@@ -424,8 +425,8 @@ settings in the cloud, no dashboard needed. Changes show as 🔺 modified in
 | `name` | string | Display name (defaults to the slug) |
 | `description` | string, optional | Process description |
 | `tags` | string[] | Tags (defaults to `[]`) |
-| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, inheriting the workspace `webhookAuth` from `settings.json`, or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
-| `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`appTool`, offer the form on the App's own page in Factorial; `public`, deprecated), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
+| `webhook` | object, optional | Webhook trigger: `enabled` (boolean) turns the process's webhook endpoint on; `authMode` (`NONE` \| `TEAM` \| `CUSTOM`) says how callers authenticate — public, the workspace's `webhookAuth` (its own in `settings.json`, else inherited), or its own; `auth` (`{ headerName?, variableKey }`, only with `CUSTOM`) names the header and the team variable holding the expected token |
+| `factorial` | object, optional | How the process is exposed to Factorial as a **Factorial Action** (see `fcode-factorial-actions`): `enabled` (boolean, master switch); `awaitResult` (boolean, default `true`, Factorial waits for the result); `requiredPolicies` (`string[][]`, OR of AND-groups of Factorial policy keys); and one sub-block per entry point, each with its own `enabled` — `uiTrigger` (`locationId`, required when enabled, ≤ 200 chars; `label`, the only field taking `fcode.i18n("key")` tokens; `icon`), `form` (`appTool`, offer the form on the App's own page in Factorial; `public`, open the form to anyone holding its link with no Factorial account — the switch for the legacy `form.authMode`, see `fcode-factorial-actions`), `agentTool` (the Factorial One tool contract: `description`, `effect` `READ` \| `WRITE` \| `DESTRUCTIVE` — unset counts as destructive —, `whenToUse`, `whenNotToUse[]`, `preconditions[]`, `doesNotDo[]`, `degradation`, `simulatesFor`) and `backend` |
 | `form` | object, optional | **Legacy**, mirrored with `factorial.form`: `enabled` (boolean) is the Forms flag (see `fcode-forms`); `authMode` (`FACTORIAL`, `NONE`) decides whether a caller needs a Factorial account, and `factorial.form.public` is the switch for it. `form.appRole` is retired: `fcode push` refuses a process that carries it (lifecycle forms are the reserved slugs, see `fcode-factorial-actions`) |
 | `uiTrigger` | object, optional | **Legacy**, mirrored with `factorial.uiTrigger` (see `fcode-ui-triggers`): `enabled`, `locationId`, `label`, `icon`, and `awaitResult` (now `factorial.awaitResult`) |
 | `lifecycleRole` | — | Not a file field: `INSTALL` \| `SETTINGS` \| `UNINSTALL` \| `SYNC`, derived by the platform from the reserved slugs `install`, `settings`, `uninstall`, `sync`; reported by the CLI and API, never written to `metadata.json` (see `fcode-factorial-actions`) |
@@ -493,8 +494,9 @@ Notes:
   so the file is safe to commit. The variable doesn't have to exist yet; until it
   does, every call to the webhook is rejected with `403`. Both plain and secret
   variables work.
-- **`authMode: TEAM` inherits `webhookAuth` from `settings.json`.** When that
-  configuration is missing, the webhook rejects every call — it never reads as
+- **`authMode: TEAM` uses the workspace's `webhookAuth`** — its own in
+  `settings.json`, else the one it inherits from a parent. When neither
+  exists, the webhook rejects every call — it never reads as
   public. Through MCP this matters: an agent can set `authMode: TEAM` but there is
   no team-settings tool, so the configuration has to exist already (set it in
   `settings.json` and `fcode settings:push`).
@@ -599,7 +601,7 @@ exists first).
 
 | Field | Type | Meaning |
 |---|---|---|
-| `parentTeams` | array | Teams this workspace inherits processes, modules **and variables** from (direct parents only, max 5). Each entry is a plain slug (parent resolves live) or `{ slug, version }` to pin that parent to one of its workspace versions — a tag or an alias |
+| `parentTeams` | array | Teams this workspace inherits processes, modules, variables, locales, dependencies **and settings** from (direct parents only, max 5). Each entry is a plain slug (parent resolves live) or `{ slug, version }` to pin that parent to one of its workspace versions — a tag or an alias |
 | `zoneId` | string, optional | Team timezone (e.g. for schedules) |
 | `errorHandlerConfig` | object, optional | `{ "processSlug": "<slug>", "tag": null }` — process invoked when an execution errors; `tag` pins it to a version tag or alias (`null` = current version) |
 | `webhookAuth` | object, optional | `{ headerName?, variableKey }` — the configuration every `authMode: TEAM` webhook inherits |
@@ -640,15 +642,83 @@ towards the content hash (edits show as modified in `fcode status`) and
 the `name` → `tag` pairings are compared — a published version's `comment` can
 no longer be changed, and `createdAt` is server-assigned.
 
+### The error handler process
+
+The platform runs the handler every time another execution of the workspace
+ends in **error**, with `fcode.context.parameters`:
+
+```json
+{
+  "execution": {
+    "id": "6a1f…",
+    "comment": "…",
+    "process": { "id": "3c9e…", "name": "Order sync", "version": { "tag": "1.4.0" } },
+    "parameters": { "dateFrom": "2026-01-01", "apiKey": "******" },
+    "triggeredBy": { "id": "factorial:access:5678", "name": "…" },
+    "schedule": { "id": "91b2…", "comment": "…" }
+  },
+  "error": { "message": "Request failed with status code 401", "stacktrace": "…" }
+}
+```
+
+- `execution.process.version` is present only when the failed execution ran at
+  a version; `execution.schedule` only when a schedule started it;
+  `execution.comment` and `schedule.comment` only when set.
+- `execution.parameters` are the failed execution's parameters with sensitive
+  values masked (`"******"`, or `{ "******": "******" }` for an encrypted
+  object) — the handler never sees a secret the run received.
+- **The handler has no `fcode.context.factorial`**: read who started the failed
+  run from `execution.triggeredBy`.
+- **It does not run** for its own failures (no loop), for killed or rejected
+  executions (not errors), or when it can't run — its process was deleted, or
+  the workspace can't resolve its pinned `tag` — in which case the failure is
+  handled as if there were no handler.
+- It is an inherited setting (below): an installation workspace uses its App's
+  handler unless it sets its own. If the handler has a parameters schema, it
+  must describe this shape — above all with parameters validation on.
+
+### Inherited settings
+
+Seven settings inherit through `parentTeams`: the timezone (`zoneId`), parameters
+schema validation (console only, not in the file), the error handler
+(`errorHandlerConfig`), `webhookAuth`, `primaryLocale`, and
+`factorial.agentDescription` / `factorial.availableInOne`. Each is in one of three
+states:
+
+- **Absent ⇒ inherit**: the value comes from the first direct parent (in
+  `parentTeams` order) that sets one of its own, else the platform default
+  (`Europe/Madrid`, validation off, no handler, no webhook auth, the first
+  locale, no description, available in One). A parent that itself inherits or
+  cleared the setting is skipped. Not transitive, and version pins don't apply:
+  settings always resolve live.
+- **A value ⇒ own**, which wins over every parent.
+- **`null` ⇒ none**: neither a value nor inheritance. Only `errorHandlerConfig`,
+  `webhookAuth` and `factorial.agentDescription` accept it; the others always
+  have a value.
+
+`fcode pull` writes only the workspace's own values (and `null`s) to
+`settings.json`, and the inherited ones to `settings.inherited.json` —
+read-only, gitignored, never pushed, removed when nothing is inherited. Local
+runs read it: `fcode http` takes the inherited `webhookAuth` and the locale
+resolver the inherited `primaryLocale` when `settings.json` has none. Removing
+a parent keeps every setting the workspace took from it as its own, at the same
+value — except an error handler whose process came from that parent, which goes
+back to inheriting.
+
+### Webhook auth (`webhookAuth`)
+
 `webhookAuth` is one shared configuration for the whole workspace, so a token used
 by several webhooks is named — and rotated — in one place. Two things about it:
 
-- **It is per-workspace and not inherited through `parentTeams`.** Auth is
-  resolved against the workspace addressed in the webhook URL, not the one that
-  owns the code, so an app inheriting a webhook process from a base app still
-  needs its own `webhookAuth` entry.
-- **Removing the object and pushing clears the cloud configuration**, which makes
-  every webhook inheriting it reject all calls.
+- **Auth is resolved against the workspace addressed in the webhook URL**, not
+  the one that owns the code, using that workspace's effective `webhookAuth`: its
+  own, else the inherited one. So an installation inheriting a `TEAM` webhook
+  from its App is protected by the App's configuration unless it sets its own.
+- **`"webhookAuth": null` and pushing leaves the workspace with none**, which
+  makes every `TEAM` webhook there reject all calls; it never falls back to
+  public. Removing the key only goes back to inheriting.
+
+### Factorial One (`factorial`)
 
 `factorial` holds what Factorial One (Factorial's AI agent) reads to decide
 whether the App fits what a user asked for — not the marketplace tagline. It is
@@ -667,7 +737,7 @@ set in the App workspace's `settings.json` (`app/settings.json` in a team clone)
 - **`agentDescription`** — English only, plain text, at most 300 characters,
   written for AI agents: One reads it as data, never as instructions. Absent ⇒
   inherited from the parent workspaces; `null` ⇒ none; a string ⇒ the
-  workspace's own. With none, One falls back to the tagline
+  workspace's own (see Inherited settings above). With none, One falls back to the tagline
   (`shortDescription`). What to write in it: see `fcode-ama`.
 - **`availableInOne`** — boolean: `false` keeps the App out of Factorial One
   (when off, One does not use the App). Leave it out to inherit it; the default

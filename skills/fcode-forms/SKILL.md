@@ -1,6 +1,6 @@
 ---
 name: fcode-forms
-description: Embed a Factorial Code process's input-parameter form on a webpage — embed methods, version pinning to the stable alias, what a public form means for the process behind it, driving behavior from the process return value, styling and themes, multi-step flows, and file uploads. Use when embedding, configuring, styling, or wiring up a Factorial Code (fcode) form.
+description: Build a Factorial Code process's input-parameter form shown inside Factorial — enabling it, where it appears (install/settings/uninstall, App page, action dialogs, Factorial One), who may open it and what a public form means for the process behind it, driving behavior from the process return value, multi-step flows, OAuth connect, pairing tables, tables, Set up with One, pre-render and variables, and file uploads. Use when configuring, building, or wiring up a Factorial Code (fcode) form.
 license: MIT
 metadata:
   category: factorial-code
@@ -8,49 +8,48 @@ metadata:
 
 # Factorial Code — Forms
 
-A Factorial Code Form embeds a process's input-parameter form on any webpage.
-Each submission starts a process execution with the form data, and the result is
-handled in-page (messages, redirects, callbacks). For the schema itself, see
-`fcode-json-schema`.
+A Factorial Code Form is a process's input-parameter form shown **inside
+Factorial**. Each submission starts a process execution with the form data, and
+the process's return value decides what the user sees next (a message, inline
+errors, the next step). For the schema itself, see `fcode-json-schema`.
+
+Forms are not embedded on external pages: there is no supported script,
+React component or modal for third-party sites. A form a user meets lives in
+Factorial (table below), or — only with `factorial.form.public` — behind its
+own link.
 
 ## Gotchas
 
 - **The form *is* the process's `parametersSchema.json`** — there is no separate
-  form definition. To change fields/validation/labels, edit the schema, **not**
-  the embed code.
-- **`team` and `process`/`processId` are both mandatory** on every embed, and
-  both take **slugs** — not the per-workspace UUIDs.
-- **Always pin the embed to the `stable` alias**
-  (`data-fcode-form-process-version="stable"` / `processVersion: "stable"`).
-  An unpinned form runs the current version, so every `fcode push` changes it
-  immediately. Details below.
-- **An unknown version or alias doesn't fail the form** — it silently runs the
-  current version (see "Pin the form to a version").
-- **An employee field (`"ui:widget": "employee"`) has no picker in an embedded
-  form** — it renders a plain select when the field lists its choices, and a
-  notice otherwise. The picker only exists in forms opened from Factorial; see
-  `fcode-json-schema`.
+  form definition. To change fields/validation/labels, edit the schema.
+- **An employee field (`"ui:widget": "employee"`) has a picker only inside
+  Factorial** — on a public form it renders a plain select when the field lists
+  its choices, and a notice otherwise; see `fcode-json-schema`.
 - **The `Forms` flag must be enabled** — in the **Trigger from Factorial**
   section of the process Dashboard, or via `factorial.form.enabled` (legacy:
   `"form": { "enabled": true }`) in the process's `metadata.json` + `fcode push`
-  — or the embed won't render.
-- **A form requires a Factorial identity unless you release it.** By default a
-  form is reached through Factorial, which authenticates the person and injects
-  the trusted context, and an anonymous visitor with the team and process slugs
-  cannot read the schema or submit it. `factorial.form.public` opts out of that
-  for the forms that genuinely need it. Either way the process behind the form is
-  the guard for *what* the caller may do (below).
-- **A form opened from inside Factorial is configured in `factorial.form`**, the
-  Factorial Action block (`fcode-factorial-actions`). `form.enabled` still works
-  and is kept mirrored. A form offered to users on the App's own page is
-  `factorial.form.appTool`; the install / settings / uninstall forms are the
-  processes with those reserved slugs (`fcode-factorial-actions`).
-  `factorial.form.public` releases the form to
-  anyone holding its link, for a form meant for people outside Factorial.
-- **A schema can't carry executable JavaScript.** `embedFormOptions.onChange`
-  and field `transformFn` were removed, and messages are markdown — raw HTML is
-  never rendered. Client-side behaviour lives in the embedding page.
-- **Never put secrets in embed code or `options`** — they run in the browser.
+  — or the form isn't offered anywhere.
+- **A form requires a Factorial identity unless you release it.** A form is
+  reached through Factorial, which authenticates the person and injects the
+  trusted `fcode.context.factorial`; an anonymous request with the team and
+  process slugs gets a `404`. `factorial.form.public` opts out of that for the
+  forms that genuinely need it. Either way the process behind the form is the
+  guard for *what* the caller may do (below).
+- **A form is configured in `factorial.form`**, the Factorial Action block
+  (`fcode-factorial-actions`). `form.enabled` still works and is kept mirrored.
+  A form offered to users on the App's own page is `factorial.form.appTool`;
+  the install / settings / uninstall forms are the processes with those
+  reserved slugs (`fcode-factorial-actions`).
+- **A schema can't carry executable JavaScript or CSS**, and messages are
+  markdown — raw HTML is never rendered. React to input with conditional
+  fields, action buttons or steps (`references/advanced.md` "Reacting to user
+  input").
+- **Never put secrets in the schema or its variables** — they reach the
+  browser (see "What a form may trust").
+- **Fallback `variables` go in `embedFormOptions.variables`** at the schema
+  root — a root-level `variables` key is never read. And a `$ref` to a
+  variable that is missing, `null`, `false`, `0` or `""` **removes the node**
+  (`references/advanced.md` "Variables").
 - **Connecting a third-party account (Slack, GitHub, …) is a schema feature** —
   `"ui:widget": "oauth"` plus an `fcode.oauth` flow whose completion redirects to the
   SDK's callback page. Never ask users to paste an API token into a form when
@@ -82,8 +81,8 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
   slugs) and return no `nextProcessId` on the default path. The user can go
   back and re-submit, so every process in a flow must be safe to re-run. See
   "Multi-step forms".
-- Prefer driving UX from the **process return value** (below); reserve
-  `onSuccess`/`onError` for client-only logic.
+- Drive the UX from the **process return value** (below): there is no
+  client-side callback to hook into.
 
 ## Enable a form
 
@@ -102,154 +101,82 @@ handled in-page (messages, redirects, callbacks). For the schema itself, see
 
 The form is one entry point of a **Factorial Action** — the same `factorial`
 block also holds the button, the Factorial One tool and the backend job
-(`fcode-factorial-actions`, field reference in `fcode-cli`). The legacy
-top-level `"form": { "enabled": true }` still works and is kept mirrored with
+(`fcode-factorial-actions`, field reference in `fcode-cli`), and its
+`requiredPolicies` decide who may run it. The legacy top-level
+`"form": { "enabled": true }` still works and is kept mirrored with
 `factorial.form.enabled`; prefer `factorial` in new work.
-
-The **lifecycle forms** of a marketplace app are its install, settings and
-uninstall forms: the processes slugged `install`, `settings` and `uninstall`.
-A form the App offers its own users, on the App's page in Factorial, is
-`"factorial": { "form": { "enabled": true, "appTool": true } }`. The rules,
-including what never to write, are in `fcode-factorial-actions`.
-
-An `install` or `settings` form is re-opened after the app is configured, so it
-should show the **current** values rather than an empty form — the
-`preRenderProcess` pattern for that is in `references/advanced.md`.
 
 Read submitted values in process code like any parameters:
 `const { context: { parameters } } = fcode;`
+
+## Where forms appear in Factorial
+
+| Form | Where the user meets it | How it is declared |
+|---|---|---|
+| **Install** | When a company installs the App, under Integrations | The process slugged `install` |
+| **Settings** | When an installed company configures the App | The process slugged `settings` |
+| **Uninstall** | When a company removes the App | The process slugged `uninstall` |
+| **App tool** | A tab on the App's page in Factorial | `factorial.form.appTool: true` |
+| **Action form** | A dialog opened from a button the action places in Factorial (`fcode-ui-triggers`) | `factorial.uiTrigger` next to `factorial.form` |
+| **Factorial One** | A card in the One chat, when One opens a lifecycle form | The lifecycle forms above; see "Set up with One" |
+
+The lifecycle slugs are reserved — the slug alone makes a process that form;
+the rules, including what never to write, are in `fcode-factorial-actions`. An
+`install` or `settings` form is re-opened after the app is configured, so it
+should show the **current** values rather than an empty form — the
+`preRenderProcess` pattern for that is in `references/advanced.md`.
+
+Factorial draws every form with its own design system (f0); install, uninstall
+and action forms open in a dialog, App tools as a tab. Design for that: confirm
+an irreversible action with a checkbox in the form, not a second dialog.
 
 ## What a form may trust
 
 A form is reached through Factorial, which authenticates the person opening it:
 the install / settings / uninstall screens, the forms an App offers on its own
-page and the UI-trigger dialog (`fcode-ui-triggers`) all submit through
-Factorial's backend, and `requiredPolicies` is enforced before anything runs
-(`fcode-factorial-actions`). An anonymous visitor holding the team and process
-slugs reaches nothing.
+page and the action dialogs all submit through Factorial's backend, which
+enforces `requiredPolicies` before anything runs (`fcode-factorial-actions`)
+and injects the trusted `fcode.context.factorial`. An anonymous request holding
+the team and process slugs gets the same `404` as a form that doesn't exist.
 
-Unless the form sets `factorial.form.public`. That flag releases it to anyone
-with the link, and then nothing has authenticated the caller at all: the
-`company_id` and `access_id` such a submission carries are whatever the page
-sent. Turn it on only for a form meant for people outside Factorial, and treat
-everything below as the only protection it has.
+Unless the form sets `factorial.form.public`
+(`"factorial": { "enabled": true, "form": { "enabled": true, "public": true } }`).
+That flag releases it to anyone holding its link, with no Factorial account,
+and then nothing has authenticated the caller at all: the `company_id` and
+`access_id` such a submission carries are whatever the request sent, and
+`fcode.context.factorial` is absent. Turn it on only for a form meant for
+people outside Factorial, and treat everything below as the only protection it
+has. It is the **Authentication** field next to the Form switch on the
+Dashboard and the legacy `form.authMode` (`NONE` when public), kept mirrored;
+a push from a file without `"public": true` makes the form private again
+(`fcode-cli`).
 
 That settles *who* is calling. It settles nothing about *what* they submitted,
 so the process behind the form is still the guard:
 
-- **Treat every submitted parameter as caller-controlled** — including the ones
-  an embedding page pre-filled (`company_id`, `triggered_from_location`,
-  `access_id`). Never authorize on them.
+- **Treat every submitted parameter as caller-controlled** — including values
+  the form pre-filled or hid (`company_id`, `triggered_from_location`,
+  `access_id`). Never authorize on them: read the company and the person from
+  `fcode.context.factorial`, and check every value before acting on it.
 - **Return nothing the caller shouldn't already have** — the result of a
   submission, and a `preRenderProcess`'s `variables`, reach whoever opened the
-  URL. A pre-render has no trusted viewer on a public URL
+  form. A pre-render has no trusted viewer on a public form
   (`references/advanced.md` "Who is opening the form").
 - **Keep credentials one-way**: a settings form reports only *whether* a secret
   is set, never its value (`references/advanced.md`). The platform strips the
   `default`/`examples`/`const` of `isSensitive` fields from the schema it
   serves, but a secret put in a label, a markdown block or a `variables` node
   still reaches the caller.
-
-## Embed a form
-
-Two mandatory inputs, both **slugs**, plus the version pin you should always
-add:
-
-- **`fcode-team-slug`** — from `https://code.factorialhr.com/platform/<fcode-team-slug>`
-- **`fcode-process-slug`** — the **Slug** field on the process Dashboard (e.g.
-  `send-welcome-email`)
-- **process version** — pin it to the `stable` alias (next section)
-
-**Use the slug, not the process ID.** IDs are per-workspace UUIDs, so an
-id-based embed breaks when the snippet moves between workspaces; slugs survive
-(existing id-based embeds keep working, and the React prop is still named
-`processId` — feed it a slug). Slugs are editable with no redirect for the old
-value, so settle them before handing out embed code — renaming one breaks every
-embed already pasted into a page.
-
-Load the SDK once (needed for the data-attribute and `Fcode.initForm` methods):
-
-```html
-<script defer src="https://code.factorialhr.com/sdk/forms.js"></script>
-```
-
-**Method 1 — data attributes** (SDK replaces the element):
-
-```html
-<div
-  data-fcode-form-team="<fcode-team-slug>"
-  data-fcode-form-process="<fcode-process-slug>"
-  data-fcode-form-process-version="stable"
-></div>
-```
-
-**Method 2 — `Fcode.initForm`** (selector or DOM element):
-
-```html
-<div id="my-fcode-form"></div>
-<script>
-  Fcode.initForm("#my-fcode-form", {
-    team: "<fcode-team-slug>",
-    process: "<fcode-process-slug>",
-    processVersion: "stable",
-  });
-</script>
-```
-
-**Method 3 — `FcodeForm` React component** (React 17/18; install
-`@factorialco/fcode-react-forms`):
-
-```jsx
-import FcodeForm from "@factorialco/fcode-react-forms";
-
-const MyComponent = () => (
-  <FcodeForm
-    team={"<fcode-team-slug>"}
-    processId={"<fcode-process-slug>"}
-    processVersion={"stable"}
-  />
-);
-```
-
-In SSR frameworks (e.g. Next.js), import it dynamically with `ssr: false`.
-
-## Pin the form to a version
-
-The version pin (`data-fcode-form-process-version` / `processVersion`) takes a
-published version tag (`v1.0.0`) or an alias — use `stable`, so releases and
-rollbacks happen by moving the alias, never by editing the embedded page
-(alias model in `fcode-core-concepts`; release commands in `fcode-cli`). The
-pin applies to **both** requests the form makes — loading the definition and
-submitting it — and the process Dashboard writes it for you: pick a version or
-alias in the selector next to the embed code and copy the generated snippet.
-
-**An unknown version or alias silently runs the current version** — the
-platform only logs a server-side warning, same as webhooks (see `fcode-cli`).
-A typo in the attribute is invisible: check the execution's version when a
-submission behaves unexpectedly. Direct calls to the form endpoints also accept
-the `version_tag` query parameter documented in `fcode-cli`.
+- **Hiding a field is not a permission.** Factorial One reads the schema
+  without its `ui` keys, and anyone can submit any values: a rule the form's
+  look enforces must be enforced again by the process.
 
 ## Handle submission results
 
-Default: a loading overlay shows during execution; on success the form is
-replaced with a success message, on error an error message.
-
-**Callbacks** (same shape across methods):
-
-```js
-Fcode.initForm("#my-fcode-form", {
-  team: "<fcode-team-slug>",
-  process: "<fcode-process-slug>",
-  onSuccess: (formId, processExecutionResult, formSubmittedData) => {},
-  onError: (formId, error, formSubmittedData) => {},
-});
-```
-
-With data attributes, point to global functions via
-`data-fcode-form-on-success="HANDLER_NAME"`,
-`data-fcode-form-on-next-step="..."` and `data-fcode-form-on-error="..."`.
-
-**Drive behavior from the process return value** (no client code needed):
+A loading overlay shows during execution (its text is
+`embedFormOptions.loadingOverlayContent` at the schema root); on success the
+form is replaced with a success message, on error an error message. **Drive
+what happens from the process return value:**
 
 ```js
 return { message: "Thanks, **we received your request**." };                // success message (markdown)
@@ -259,6 +186,12 @@ return { status: 400, body: { formErrors: {                                 // i
 return { status: 400, body: { errorMessage: "**Sync failed** — retry." } }; // error message (markdown)
 return { redirect: { url: "https://example.com", timeout: 2000 } };         // redirect after submit
 ```
+
+Without a `message`, a default confirmation is shown; a thrown error or a
+timeout shows a generic error. A `redirect` URL must be `http(s)` (any other
+scheme is ignored with a console warning). Install and uninstall forms record
+the installation first and then navigate, so a redirecting form that also wants
+its `message` read sets a `timeout`.
 
 When a submit fails, with the process's `formErrors` or the form's own
 validation, the form brings the first error into view, opening its step first
@@ -271,8 +204,7 @@ marked there but does not move the view.
 **Messages are markdown, not HTML.** `message`, `errorMessage` and a schema's
 `markdown.before`/`markdown.after` blocks render as GitHub Flavored Markdown —
 tables, headings, links, images, code blocks, task lists. Raw HTML is
-**dropped, never rendered** (so nothing authored can execute); put behaviour in
-the success / next-step / error callbacks instead.
+**dropped, never rendered** (so nothing authored can execute).
 
 ## Keep it fast, or go async
 
@@ -282,12 +214,14 @@ syncs — will blow the timeout and fail the submit.
 
 **Go async when the work can be slow:**
 
-- **Embed `async: true`** — the submission returns `201` + an execution ID
-  immediately instead of waiting for the result (see `references/advanced.md`).
 - **Hand off to another process** — kick off the heavy work with
   `fcode.processes.run("process-identifier", options)` (see `fcode-javascript` /
-  `fcode-python`) and return a quick acknowledgement (`message`/`redirect`)
+  `fcode-python`) and return a quick acknowledgement (`message`)
   rather than awaiting it inline.
+- **Make the action asynchronous** — with `factorial.awaitResult: false`
+  (`fcode-factorial-actions`) Factorial only learns that the execution
+  started; the process reports back itself (FactorialClient, a notification).
+  It applies to every entry point of the action.
 
 **Stay synchronous only when** the request is genuinely fast, or when data must
 flow between steps. For passing data, don't block the submit — instead:
@@ -349,6 +283,16 @@ parameter exactly as a one-page form would — process code needs no changes.
 - A step can set its own `nextLabel` / `backLabel`, which win over `config`
   for that step (`{ "title": "Credentials", "fields": ["apiKey"], "nextLabel":
   "Verify key" }`). On the last step, `nextLabel` replaces the submit text.
+- **A step can hold its "Next" until it is answered** with `enabledWhen` and
+  `disabledReason`, the same keys as the submit's: `{ "title": "What to do",
+  "fields": ["capabilities"], "enabledWhen": "capabilities", "disabledReason":
+  "Tick at least one" }`. "Next" stays disabled — and the step navigation
+  doesn't go past it — until that **root** property is `true` or a non-empty
+  list (a checkbox list with something ticked). On the last step it holds the
+  submit too, together with the submit's own `enabledWhen`. It doesn't apply
+  with `"navigation": "free"` (there is no "Next"), and only a step listing
+  `fields` takes it: a `process` step ignores it with a console warning, since
+  its process's form holds its "Next" with that form's submit `enabledWhen`.
 - **Write the button labels in the form's language.** The defaults ("Next",
   "Back", the submit's "Submit") are English whatever the `locale`: set
   `nextLabel`, `backLabel` and `ui:submitButtonOptions.submitText` with
@@ -509,7 +453,7 @@ The rules:
   - Have each step's process store what the next step needs (a team variable
     or the datastore) and read it back in the next step's pre-render, as the
     Linear setup does with its API key: a pre-render only receives the form's
-    query-string parameters (`fcode.context.parameters`), and the `variables`
+    context parameters (`fcode.context.parameters`), and the `variables`
     a step returns resolve the next step's `$ref`s without reaching its
     pre-render.
   - Hidden fields are never proposed: they keep their default or the
@@ -692,9 +636,10 @@ error message.
 
 Limits worth knowing: the popup is opened from the click itself, so default
 popup blockers let it through — a browser set to block *all* pop-ups gets a
-message under the button instead; a `Cross-Origin-Opener-Policy` header on the
-embedding page or the provider can sever the link with the popup, in which case
-the flow ends as cancelled and `onComplete: "reload"` is the recovery path.
+message under the button instead. A provider served with a
+`Cross-Origin-Opener-Policy` header can sever the link with the popup; inside
+Factorial the completion still arrives, and `onComplete: "reload"` is the
+safest choice for such providers.
 
 A complete sample — pre-render starting the flow, the completion process, the form
 process verifying the connection — is in `fcode-examples`
@@ -924,15 +869,8 @@ number, same name…), `x-fcode-in-use` from what Factorial actually uses. Injec
 the whole section as one variable
 (`"accounts": { "$ref": "#/variables/accountsField" }`).
 
-The table is drawn inside Factorial. The hosted `forms.js` and any host without
-the f0 theme render the same section as ordinary dropdowns (text inputs for
-typed rows), which submit the same values. A complete app — pre-render building the section, settings process
+A complete app — pre-render building the section, settings process
 storing the pairs — is in `fcode-examples` (`references/pairing-table.md`).
-
-A host on an old forms SDK (`@factorialco/fcode-react-forms` 3.7 or earlier)
-doesn't know the pairing contract: rows that rely on `x-fcode-choices` render as
-free text, and rows with their own `oneOf` are pre-filled with its first choice,
-so don't ship a pairing section to such a host.
 
 ## Tables
 
@@ -1054,9 +992,6 @@ The contract:
   object or an array shows empty.
 - **Size.** Each edit re-renders every row: tens of rows, not thousands.
 
-The table is drawn inside Factorial (the f0 theme). The hosted `forms.js`
-renders the same section as ordinary fields (a badge as plain text), which
-submit the same values.
 
 ## Set up with One
 
@@ -1139,8 +1074,8 @@ nothing, and inside Factorial opens a new conversation with One about this form.
 - **Where the button shows** is the host's decision: on forms opened from
   Factorial (Integrations, the App's page, trigger forms) for users and
   companies with One. It renders nothing in the form card One itself shows in
-  a conversation, in the hosted `forms.js`, and in any host that doesn't offer
-  One, so the schema stays valid everywhere.
+  a conversation, on a public form, or for a company without One, so the
+  schema stays valid everywhere.
 
 A complete sample, with a button for a pairing table, is in `fcode-examples` (`references/pairing-table.md`).
 
@@ -1181,10 +1116,8 @@ if only needed transiently.
 
 ## Advanced
 
-For styling and the two themes (including the f0 theme to use when embedding in a
-React app inside Factorial), markdown message rendering with f0 components
-(`markdownComponents`), initial/hidden values, async submission, custom
-headers, API-host override, variables replacement, pre-rendering current values
-into install/settings forms, reacting to user input from your own page (the
-React `onChange` prop, the `fcode-forms-*` DOM events), and modal rendering,
-read `references/advanced.md`.
+For what you control of a form's look, variables (`embedFormOptions.variables`,
+`$ref` and Mustache, precedence, the empty-value rule), the server-side
+pre-render (who is opening the form, pre-filling current values into
+install/settings forms) and reacting to user input without client code, read
+`references/advanced.md`.

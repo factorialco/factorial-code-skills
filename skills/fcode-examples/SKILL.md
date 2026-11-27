@@ -81,7 +81,7 @@ modules (see integration-inbound).
 
 Note: the `fcode-forms` **module** above (form-schema builders you
 `fcode.import`) is unrelated to the `fcode-forms` **skill**, which documents
-embedding forms on webpages.
+forms shown inside Factorial.
 
 The references keep code compact and omit routine logging; real
 implementations should log verbosely through the shared `fcode-logs` module

@@ -224,7 +224,7 @@ a secret — see `fcode-cli`) — alongside Re-install / Uninstall.
 ### The app's forms
 
 The marketplace views render each of the app's forms according to the role the
-platform resolves for it (field reference in `fcode-cli`; embedding in
+platform resolves for it (field reference in `fcode-cli`; forms in
 `fcode-forms`; the `factorial` block in `fcode-factorial-actions`):
 
 | Form | How it is declared | Shown |

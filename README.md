@@ -5,7 +5,7 @@ Official [Agent Skills](https://agentskills.io/) for building on the
 canonical home of the Factorial Code AI rules — install them into any
 skills-compatible coding agent (Claude Code, Codex, Cursor, …) so it knows how
 to write processes and modules, use the CLI, author input-parameter schemas,
-and embed forms.
+and build forms.
 
 ## Install
 
@@ -30,7 +30,7 @@ npx skills add factorialco/factorial-code-skills --skill fcode-javascript
 | [`fcode-json-schema`](skills/fcode-json-schema) | Authoring `parametersSchema.json` input-parameter schemas. |
 | [`fcode-agent`](skills/fcode-agent) | The iterative, confirmation-driven workflow for building on Factorial Code end to end. |
 | [`fcode-cli`](skills/fcode-cli) | Using the `fcode` CLI for local development and cloud sync. |
-| [`fcode-forms`](skills/fcode-forms) | Embedding a process's input-parameter form on a webpage. |
+| [`fcode-forms`](skills/fcode-forms) | A process's input-parameter form, shown inside Factorial. |
 | [`fcode-factorial-actions`](skills/fcode-factorial-actions) | Exposing a process to Factorial as a Factorial Action: the `factorial` metadata block, the Factorial One tool contract, reserved lifecycle slugs, the legacy `form` / `uiTrigger` mirror. |
 | [`fcode-ui-triggers`](skills/fcode-ui-triggers) | Surfacing an app process as a button inside the Factorial UI: `factorial.uiTrigger` settings, the result envelope, form-backed triggers. |
 | [`fcode-i18n`](skills/fcode-i18n) | Workspace locales and translations: locale files, the `fcode.i18n` helper, translated form schemas, and the `i18n:*` CLI commands. |

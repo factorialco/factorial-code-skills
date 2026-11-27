@@ -176,7 +176,7 @@ What to tell users:
 | CLI commands, `metadata.json` / `settings.json` fields, webhook auth, `FACTORIAL_TOKEN` | `fcode-cli` — docs: `/docs/cli/` |
 | Writing process/module code | `fcode-javascript` / `fcode-python` — docs: `/docs/processes/` |
 | Input-parameter schemas (forms definition) | `fcode-json-schema` |
-| Embedding forms on webpages, themes, pre-fill | `fcode-forms` — docs: `/docs/forms/` |
+| Forms inside Factorial, public forms, pre-render and pre-fill | `fcode-forms` — docs: `/docs/forms/` |
 | Exposing a process to Factorial (`factorial` block, Factorial One tool contract, lifecycle slugs) | `fcode-factorial-actions` — docs: `/docs/factorial-actions/` |
 | Buttons inside Factorial (`factorial.uiTrigger`, locations, result envelope) | `fcode-ui-triggers` |
 | Recommended agent working method, MCP tools | `fcode-agent` — docs: `/docs/mcp-server/` |
